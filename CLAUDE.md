@@ -252,6 +252,19 @@ Manual completo: `tablero-contable-v2/docs/marca/IDENTIDAD-MARCA.md`. Lo mínimo
 
 - **Las migraciones se corren con el CLI**, no pegando SQL a mano: `npm run db:push`. Los tipos
   se generan con `npm run db:tipos` y hay un chequeo en CI que falla si quedaron viejos.
+- **`supabase db push` pide confirmación y se cuelga esperándola** en un shell no interactivo.
+  Los scripts llevan `--yes`. Sin eso el comando queda colgado hasta que lo mata el timeout, y
+  no imprime nada que explique por qué.
+- **Una migración VACÍA se aplica sin error y queda registrada como aplicada.** Pasó el
+  19/08/2026: `supabase migration new` creó el archivo, el comando que iba a escribirlo se
+  colgó, y se empujaron cero bytes. El CLI dijo "up to date" y el esquema no había cambiado —
+  el constraint que se daba por aplicado no existía. Lo cubre `npm run migraciones`, que corre
+  en el pre-commit. **Y la lección que vale más que el script: se descubrió porque se probó
+  que el constraint BLOQUEARA, no porque el comando dijera "Finished".**
+- **Se puede correr SQL sin la clave secreta**, con el token de cuenta contra
+  `POST https://api.supabase.com/v1/projects/<ref>/database/query`. Es lo que usa el editor SQL
+  del panel. Sirve para las comprobaciones de cada migración; **no reemplaza** las pruebas de
+  permisos, que van contra la API real con usuarios reales.
   **Consecuencia: acá no existe `esquema.ts`.** Ese archivo en el Tablero es código de producción
   cuyo único trabajo es sobrevivir a que el esquema del código y el de la base se separen; acá el
   problema no llega a existir.

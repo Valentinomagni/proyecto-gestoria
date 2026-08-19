@@ -16,10 +16,11 @@
     "deadcode": "knip",
     "secretos": "node scripts/sin-secretos.mjs",
     "db:nueva": "supabase migration new",
-    "db:seco": "supabase db push --dry-run --project-ref drsooohkwwpnijonxwwt",
-    "db:push": "supabase db push --project-ref drsooohkwwpnijonxwwt",
+    "db:seco": "supabase db push --dry-run --project-ref drsooohkwwpnijonxwwt --yes",
+    "db:push": "supabase db push --project-ref drsooohkwwpnijonxwwt --yes",
     "db:tipos": "node scripts/tipos.mjs",
-    "tipos:al-dia": "node scripts/tipos.mjs --verificar"
+    "tipos:al-dia": "node scripts/tipos.mjs --verificar",
+    "migraciones": "node scripts/migraciones-sanas.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
