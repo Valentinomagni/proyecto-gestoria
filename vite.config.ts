@@ -10,6 +10,14 @@ import path from "node:path";
 // escritos a mano en 20 valores distintos. Aca color y tipografia son el mismo bloque.
 export default defineConfig({
   plugins: [react(), tailwind()],
+  // Poda de Sentry. Medido: sin estas dos banderas su pedazo pesa 155,85 kB comprimidos, que
+  // los paga entera la gestora con datos moviles. Son las que la propia documentacion de
+  // Sentry indica para sacar el codigo de depuracion y el de trazas de rendimiento, que este
+  // proyecto no usa (tracesSampleRate va en 0).
+  define: {
+    __SENTRY_DEBUG__: false,
+    __SENTRY_TRACING__: false,
+  },
   resolve: {
     alias: { "@": path.resolve(import.meta.dirname, "./src") },
   },

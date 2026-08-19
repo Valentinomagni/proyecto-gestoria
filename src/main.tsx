@@ -1,17 +1,16 @@
 import { StrictMode, Suspense, lazy } from "react";
 import { createRoot } from "react-dom/client";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { iniciarMonitoreo } from "./lib/monitoreo";
 import "./index.css";
+
+iniciarMonitoreo();
 
 /**
  * SistemaVisual es una HERRAMIENTA DE VERIFICACION, no una pantalla del producto.
  *
- * Existe porque los tokens de color y la escala tipografica no se pueden verificar leyendo
- * codigo: hay que mirarlos juntos. La regla del proyecto dice que una pantalla no esta lista
- * hasta que alguien la miro, y esto es donde se mira.
- *
- * `import.meta.env.DEV` lo reemplaza Vite por `false` al compilar para produccion, asi que este
- * `import()` NO entra al paquete que baja el usuario. Se comprueba mirando que el build no
- * genere un pedazo con ese nombre.
+ * `import.meta.env.DEV` lo reemplaza Vite por `false` al compilar, asi que este `import()` NO
+ * entra al paquete que baja el usuario. Se comprueba mirando que el build no genere su pedazo.
  *
  * Se descarta el dia que existan suficientes pantallas reales como para que sobre.
  */
@@ -24,10 +23,12 @@ if (!raiz) throw new Error("Falta el elemento #root en index.html");
 
 createRoot(raiz).render(
   <StrictMode>
-    {SistemaVisual ? (
-      <Suspense fallback={null}>
-        <SistemaVisual />
-      </Suspense>
-    ) : null}
+    <ErrorBoundary donde="raiz">
+      {SistemaVisual ? (
+        <Suspense fallback={null}>
+          <SistemaVisual />
+        </Suspense>
+      ) : null}
+    </ErrorBoundary>
   </StrictMode>,
 );
