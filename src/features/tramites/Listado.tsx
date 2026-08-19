@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { Inbox, Search } from "lucide-react";
+import { toast } from "sonner";
+import { Download, Inbox, Search } from "lucide-react";
 import { Panel } from "../../components/Panel";
 import { SkeletonLineas } from "../../components/Skeleton";
 import { EmptyState } from "../../components/EmptyState";
 import { formatearFecha } from "../../lib/fechas";
 import { aCentavos, formatear } from "../../lib/plata";
 import { useTramites } from "../../lib/datos";
-import { CAMPO_ADENTRO, CAMPO_CON_ICONO, CAMPO_SUELTO } from "../../lib/campos";
+import { BOTON_SUAVE, CAMPO_ADENTRO, CAMPO_CON_ICONO, CAMPO_SUELTO } from "../../lib/campos";
+import { clasificarFalla } from "../../lib/fallas";
 
 /**
  * El listado de tramites. Reemplaza la planilla.
@@ -39,14 +41,71 @@ const TIPOS: Record<string, string> = {
   transferencia_al_concesionario: "Transferencia al concesionario",
 };
 
+const MODALIDADES: Record<string, string> = {
+  plan_ahorro: "Plan de ahorro",
+  credito: "Crédito",
+  contado: "Contado",
+};
+
 export function Listado({ alAbrir }: { alAbrir: (id: string) => void }) {
   const [buscar, setBuscar] = useState("");
   const [estado, setEstado] = useState("");
+  const [bajando, setBajando] = useState(false);
   const tramites = useTramites({ ...(estado !== "" && { estado }), ...(buscar !== "" && { buscar }) });
+
+  /*
+    ============================================================================
+     SE BAJA LO QUE SE ESTA MIRANDO, con los filtros puestos. No "todo".
+    ============================================================================
+
+    Un boton que baja siempre la tabla entera obliga a filtrar de nuevo en Excel, que es
+    exactamente el trabajo del que se venia escapando. Si en pantalla hay siete trámites
+    frenados, el archivo trae esos siete.
+
+    Y el aviso dice CUANTOS salieron. "Se bajaron 43 trámites" se puede comparar de un vistazo
+    con lo que hay en pantalla; "Listo" no dice si salieron todos.
+  */
+  async function bajar(): Promise<void> {
+    const filas = tramites.data ?? [];
+    if (filas.length === 0) return;
+    setBajando(true);
+    try {
+      // ============================================================================
+      //  SE CARGA RECIEN CUANDO SE APRIETA. Son 20 kB comprimidos.
+      // ============================================================================
+      //
+      // Quien más los pagaría es la gestora, con datos móviles, parada en el registro — y ella
+      // es justamente la que menos va a bajar planillas. Que el peso lo pague quien usa la
+      // función, y no todos en cada carga.
+      const { bajarTramites } = await import("../../lib/excel");
+      const cuantos = await bajarTramites(filas, {
+        estado: nombreDeEstado,
+        tipo: (v) => TIPOS[v] ?? v,
+        subtipo: (v) => (v === null ? "" : (MODALIDADES[v] ?? v)),
+      });
+      toast.success(`Se bajaron ${cuantos} trámites`);
+    } catch (e) {
+      const falla = clasificarFalla(e, navigator.onLine);
+      toast.error(falla.titulo, { description: falla.explicacion });
+    } finally {
+      setBajando(false);
+    }
+  }
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-4 p-6">
-      <h1 className="text-xl">Trámites</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl">Trámites</h1>
+        <button
+          type="button"
+          disabled={bajando || (tramites.data ?? []).length === 0}
+          onClick={() => void bajar()}
+          className={BOTON_SUAVE}
+        >
+          <Download aria-hidden="true" size={14} />
+          {bajando ? "Armando el archivo" : "Bajar a Excel"}
+        </button>
+      </div>
 
       <Panel className="flex flex-wrap items-end gap-3">
         <label className="flex min-w-56 flex-1 flex-col gap-1">

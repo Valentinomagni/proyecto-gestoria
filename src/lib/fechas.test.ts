@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  aFechaDeExcel,
   aFechaArgentina,
   formatearFecha,
   formatearFechaHora,
@@ -104,5 +105,28 @@ describe("el corte de depósitos", () => {
   it("respeta una hora de corte distinta, porque es un dato y no una constante", () => {
     expect(antesDelCorte("14:30", new Date("2026-08-19T17:29:00Z"))).toBe(true);
     expect(antesDelCorte("14:30", new Date("2026-08-19T17:31:00Z"))).toBe(false);
+  });
+});
+
+describe("aFechaDeExcel", () => {
+  /*
+    LA TRAMPA: un tramite dado de alta el 19/08 a las 20:30 de Argentina es, en UTC, el 20/08 a
+    las 23:30. La libreria de Excel convierte usando UTC, asi que `new Date(iso)` a secas
+    escribiria 20 DE AGOSTO en la planilla — un dia corrido, adentro de un archivo que se manda
+    por mail y donde ya no hay forma de darse cuenta.
+  */
+  it("un alta de la noche argentina NO se corre al dia siguiente", () => {
+    const d = aFechaDeExcel("2026-08-19T23:30:00.000Z"); // 20:30 del 19 en Argentina
+    expect(d.toISOString()).toBe("2026-08-19T00:00:00.000Z");
+  });
+
+  it("la madrugada UTC tampoco se corre al dia anterior", () => {
+    const d = aFechaDeExcel("2026-08-19T02:00:00.000Z"); // 23:00 del 18 en Argentina
+    expect(d.toISOString()).toBe("2026-08-18T00:00:00.000Z");
+  });
+
+  it("el mediodia es el dia obvio", () => {
+    expect(aFechaDeExcel("2026-08-18T12:00:00.000Z").toISOString())
+      .toBe("2026-08-18T00:00:00.000Z");
   });
 });

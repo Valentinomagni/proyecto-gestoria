@@ -118,6 +118,29 @@ export function minutosHasta(horaCorte: string, ahora: Date = new Date()): numbe
  * anterior a un feriado va a figurar como acreditado un dia antes de lo real. Es un error
  * conocido, acotado y escrito — no uno silencioso.
  */
+/**
+ * Un instante -> la fecha que hay que escribir en una celda de Excel.
+ *
+ * ============================================================================
+ *  POR QUE NO ALCANZA CON `new Date(iso)`, QUE ES LO QUE PARECE OBVIO
+ * ============================================================================
+ *
+ *  Excel guarda una fecha SIN ZONA: es un dia de calendario y nada mas. La libreria convierte
+ *  el `Date` de JavaScript usando UTC. Entonces un tramite dado de alta el 19/08 a las 21:00 de
+ *  Argentina —que en UTC ya es el 20/08 a las 00:00— aparece en la planilla como 20 DE AGOSTO.
+ *
+ *  Es la MISMA falla que el Tablero tuvo tres veces con las fechas, y es peor en un archivo:
+ *  la planilla se manda por mail, se abre en otra computadora y ahi ya no hay forma de darse
+ *  cuenta de que el dia esta corrido. Un numero equivocado adentro de un Excel no se discute,
+ *  se cree.
+ *
+ *  Por eso: se saca el dia CALENDARIO argentino y se arma la medianoche UTC de ESE dia. Asi lo
+ *  que la libreria escribe es exactamente el dia que la persona vio en pantalla.
+ */
+export function aFechaDeExcel(instante: string | Date): Date {
+  return new Date(`${aFechaArgentina(instante)}T00:00:00Z`);
+}
+
 export function proximoDiaHabil(desde: Date = new Date()): string {
   const d = new Date(desde);
   do {
