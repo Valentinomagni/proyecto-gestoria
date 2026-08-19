@@ -14,6 +14,258 @@ export type Database = {
   }
   public: {
     Tables: {
+      cobros: {
+        Row: {
+          actualizado_at: string
+          creado_at: string
+          creado_por: string | null
+          monto_cobrado: number
+          observacion: string | null
+          tramite_id: string
+        }
+        Insert: {
+          actualizado_at?: string
+          creado_at?: string
+          creado_por?: string | null
+          monto_cobrado: number
+          observacion?: string | null
+          tramite_id: string
+        }
+        Update: {
+          actualizado_at?: string
+          creado_at?: string
+          creado_por?: string | null
+          monto_cobrado?: number
+          observacion?: string | null
+          tramite_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cobros_creado_por_fkey"
+            columns: ["creado_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cobros_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: true
+            referencedRelation: "tramites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cobros_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: true
+            referencedRelation: "v_tramite_totales"
+            referencedColumns: ["tramite_id"]
+          },
+          {
+            foreignKeyName: "cobros_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: true
+            referencedRelation: "v_tramites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conceptos: {
+        Row: {
+          activo: boolean
+          id: string
+          nombre: string
+          orden: number
+        }
+        Insert: {
+          activo?: boolean
+          id?: string
+          nombre: string
+          orden?: number
+        }
+        Update: {
+          activo?: boolean
+          id?: string
+          nombre?: string
+          orden?: number
+        }
+        Relationships: []
+      }
+      encuestas_adopcion: {
+        Row: {
+          creado_at: string
+          id: number
+          momento: string
+          respuesta: Json
+          rol: string
+        }
+        Insert: {
+          creado_at?: string
+          id?: number
+          momento: string
+          respuesta: Json
+          rol: string
+        }
+        Update: {
+          creado_at?: string
+          id?: number
+          momento?: string
+          respuesta?: Json
+          rol?: string
+        }
+        Relationships: []
+      }
+      gestoras: {
+        Row: {
+          activa: boolean
+          id: string
+          nombre: string
+          perfil_id: string | null
+        }
+        Insert: {
+          activa?: boolean
+          id?: string
+          nombre: string
+          perfil_id?: string | null
+        }
+        Update: {
+          activa?: boolean
+          id?: string
+          nombre?: string
+          perfil_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gestoras_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      movimientos: {
+        Row: {
+          concepto: string | null
+          creado_at: string
+          creado_por: string | null
+          fecha: string
+          fecha_acreditacion: string
+          gestora_id: string | null
+          id: number
+          importe: number
+          observacion: string | null
+          origen: string
+          tarjeta_id: string
+          tipo: string
+          tramite_id: string | null
+        }
+        Insert: {
+          concepto?: string | null
+          creado_at?: string
+          creado_por?: string | null
+          fecha?: string
+          fecha_acreditacion?: string
+          gestora_id?: string | null
+          id?: number
+          importe: number
+          observacion?: string | null
+          origen?: string
+          tarjeta_id: string
+          tipo: string
+          tramite_id?: string | null
+        }
+        Update: {
+          concepto?: string | null
+          creado_at?: string
+          creado_por?: string | null
+          fecha?: string
+          fecha_acreditacion?: string
+          gestora_id?: string | null
+          id?: number
+          importe?: number
+          observacion?: string | null
+          origen?: string
+          tarjeta_id?: string
+          tipo?: string
+          tramite_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimientos_creado_por_fkey"
+            columns: ["creado_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimientos_gestora_id_fkey"
+            columns: ["gestora_id"]
+            isOneToOne: false
+            referencedRelation: "gestoras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimientos_tarjeta_id_fkey"
+            columns: ["tarjeta_id"]
+            isOneToOne: false
+            referencedRelation: "tarjetas_habitualista"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimientos_tarjeta_id_fkey"
+            columns: ["tarjeta_id"]
+            isOneToOne: false
+            referencedRelation: "v_saldos"
+            referencedColumns: ["tarjeta_id"]
+          },
+          {
+            foreignKeyName: "movimientos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "tramites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimientos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_tramite_totales"
+            referencedColumns: ["tramite_id"]
+          },
+          {
+            foreignKeyName: "movimientos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_tramites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parametros: {
+        Row: {
+          clave: string
+          descripcion: string
+          valor: string
+          verificado_el: string | null
+          verificado_por: string | null
+        }
+        Insert: {
+          clave: string
+          descripcion: string
+          valor: string
+          verificado_el?: string | null
+          verificado_por?: string | null
+        }
+        Update: {
+          clave?: string
+          descripcion?: string
+          valor?: string
+          verificado_el?: string | null
+          verificado_por?: string | null
+        }
+        Relationships: []
+      }
       perfiles: {
         Row: {
           activo: boolean
@@ -42,11 +294,729 @@ export type Database = {
           nombre?: string
           rol?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "perfiles_gestora_fk"
+            columns: ["gestora_id"]
+            isOneToOne: false
+            referencedRelation: "gestoras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      razones_sociales: {
+        Row: {
+          activa: boolean
+          cuit: string | null
+          id: string
+          nombre: string
+          orden: number
+          tarjeta_id: string | null
+        }
+        Insert: {
+          activa?: boolean
+          cuit?: string | null
+          id?: string
+          nombre: string
+          orden?: number
+          tarjeta_id?: string | null
+        }
+        Update: {
+          activa?: boolean
+          cuit?: string | null
+          id?: string
+          nombre?: string
+          orden?: number
+          tarjeta_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "razones_sociales_tarjeta_id_fkey"
+            columns: ["tarjeta_id"]
+            isOneToOne: false
+            referencedRelation: "tarjetas_habitualista"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "razones_sociales_tarjeta_id_fkey"
+            columns: ["tarjeta_id"]
+            isOneToOne: false
+            referencedRelation: "v_saldos"
+            referencedColumns: ["tarjeta_id"]
+          },
+        ]
+      }
+      requisitos: {
+        Row: {
+          activo: boolean
+          aplica_a: string
+          id: string
+          nombre: string
+          orden: number
+        }
+        Insert: {
+          activo?: boolean
+          aplica_a: string
+          id?: string
+          nombre: string
+          orden?: number
+        }
+        Update: {
+          activo?: boolean
+          aplica_a?: string
+          id?: string
+          nombre?: string
+          orden?: number
+        }
         Relationships: []
+      }
+      sucursales: {
+        Row: {
+          activa: boolean
+          gestionada_por: string
+          id: string
+          nombre: string
+        }
+        Insert: {
+          activa?: boolean
+          gestionada_por: string
+          id?: string
+          nombre: string
+        }
+        Update: {
+          activa?: boolean
+          gestionada_por?: string
+          id?: string
+          nombre?: string
+        }
+        Relationships: []
+      }
+      tarjetas_debito: {
+        Row: {
+          activa: boolean
+          alias: string | null
+          gestora_id: string
+          id: string
+          tarjeta_habitualista_id: string
+          ultimos4: string | null
+        }
+        Insert: {
+          activa?: boolean
+          alias?: string | null
+          gestora_id: string
+          id?: string
+          tarjeta_habitualista_id: string
+          ultimos4?: string | null
+        }
+        Update: {
+          activa?: boolean
+          alias?: string | null
+          gestora_id?: string
+          id?: string
+          tarjeta_habitualista_id?: string
+          ultimos4?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarjetas_debito_gestora_id_fkey"
+            columns: ["gestora_id"]
+            isOneToOne: false
+            referencedRelation: "gestoras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarjetas_debito_tarjeta_habitualista_id_fkey"
+            columns: ["tarjeta_habitualista_id"]
+            isOneToOne: false
+            referencedRelation: "tarjetas_habitualista"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarjetas_debito_tarjeta_habitualista_id_fkey"
+            columns: ["tarjeta_habitualista_id"]
+            isOneToOne: false
+            referencedRelation: "v_saldos"
+            referencedColumns: ["tarjeta_id"]
+          },
+        ]
+      }
+      tarjetas_habitualista: {
+        Row: {
+          activa: boolean
+          id: string
+          nombre: string
+          orden: number
+        }
+        Insert: {
+          activa?: boolean
+          id?: string
+          nombre: string
+          orden?: number
+        }
+        Update: {
+          activa?: boolean
+          id?: string
+          nombre?: string
+          orden?: number
+        }
+        Relationships: []
+      }
+      tramite_conceptos: {
+        Row: {
+          concepto_id: string
+          creado_at: string
+          creado_por: string | null
+          id: number
+          importe: number
+          momento: string
+          tramite_id: string
+        }
+        Insert: {
+          concepto_id: string
+          creado_at?: string
+          creado_por?: string | null
+          id?: number
+          importe: number
+          momento: string
+          tramite_id: string
+        }
+        Update: {
+          concepto_id?: string
+          creado_at?: string
+          creado_por?: string | null
+          id?: number
+          importe?: number
+          momento?: string
+          tramite_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tramite_conceptos_concepto_id_fkey"
+            columns: ["concepto_id"]
+            isOneToOne: false
+            referencedRelation: "conceptos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramite_conceptos_creado_por_fkey"
+            columns: ["creado_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramite_conceptos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "tramites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramite_conceptos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_tramite_totales"
+            referencedColumns: ["tramite_id"]
+          },
+          {
+            foreignKeyName: "tramite_conceptos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_tramites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tramite_eventos: {
+        Row: {
+          at: string
+          estado_desde: string | null
+          estado_hasta: string
+          id: number
+          nota: string | null
+          por: string | null
+          rol_al_momento: string | null
+          tramite_id: string
+        }
+        Insert: {
+          at?: string
+          estado_desde?: string | null
+          estado_hasta: string
+          id?: number
+          nota?: string | null
+          por?: string | null
+          rol_al_momento?: string | null
+          tramite_id: string
+        }
+        Update: {
+          at?: string
+          estado_desde?: string | null
+          estado_hasta?: string
+          id?: number
+          nota?: string | null
+          por?: string | null
+          rol_al_momento?: string | null
+          tramite_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tramite_eventos_por_fkey"
+            columns: ["por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramite_eventos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "tramites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramite_eventos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_tramite_totales"
+            referencedColumns: ["tramite_id"]
+          },
+          {
+            foreignKeyName: "tramite_eventos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_tramites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tramite_notas: {
+        Row: {
+          autor: string
+          creado_at: string
+          id: number
+          texto: string
+          tramite_id: string
+        }
+        Insert: {
+          autor: string
+          creado_at?: string
+          id?: number
+          texto: string
+          tramite_id: string
+        }
+        Update: {
+          autor?: string
+          creado_at?: string
+          id?: number
+          texto?: string
+          tramite_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tramite_notas_autor_fkey"
+            columns: ["autor"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramite_notas_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "tramites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramite_notas_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_tramite_totales"
+            referencedColumns: ["tramite_id"]
+          },
+          {
+            foreignKeyName: "tramite_notas_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_tramites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tramite_requisitos: {
+        Row: {
+          id: number
+          nota: string | null
+          requisito_id: string
+          respondido_at: string
+          respondido_por: string | null
+          respuesta: string
+          tramite_id: string
+        }
+        Insert: {
+          id?: number
+          nota?: string | null
+          requisito_id: string
+          respondido_at?: string
+          respondido_por?: string | null
+          respuesta: string
+          tramite_id: string
+        }
+        Update: {
+          id?: number
+          nota?: string | null
+          requisito_id?: string
+          respondido_at?: string
+          respondido_por?: string | null
+          respuesta?: string
+          tramite_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tramite_requisitos_requisito_id_fkey"
+            columns: ["requisito_id"]
+            isOneToOne: false
+            referencedRelation: "requisitos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramite_requisitos_respondido_por_fkey"
+            columns: ["respondido_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramite_requisitos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "tramites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramite_requisitos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_tramite_totales"
+            referencedColumns: ["tramite_id"]
+          },
+          {
+            foreignKeyName: "tramite_requisitos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_tramites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tramites: {
+        Row: {
+          actualizado_at: string
+          actualizado_por: string | null
+          asunto_mail: string | null
+          autorizado_en: string
+          autorizado_por: string | null
+          canal: string
+          cliente_cuenta: string | null
+          cliente_nombre: string
+          controlado_at: string | null
+          creado_at: string
+          creado_por: string | null
+          deposito_solicitado: number | null
+          devuelto_at: string | null
+          documentacion_entregada: string | null
+          documentacion_retirada: string | null
+          dominio: string | null
+          entregado_at: string | null
+          estado: string
+          gestora_id: string | null
+          id: string
+          medio_pago: string
+          motivo_anulacion: string | null
+          motivo_frenado: string | null
+          numero_pago_registro: string | null
+          observaciones: string | null
+          observaciones_gestora: string | null
+          oferta_referencia: string | null
+          origen: string
+          pagado_at: string | null
+          presentado_at: string | null
+          presupuestado_at: string | null
+          razon_social_id: string
+          recibido_at: string
+          retirado_at: string | null
+          seccional: string | null
+          subtipo: string | null
+          sucursal_id: string
+          tarjeta_id: string | null
+          tipo: string
+          vehiculo: string | null
+        }
+        Insert: {
+          actualizado_at?: string
+          actualizado_por?: string | null
+          asunto_mail?: string | null
+          autorizado_en?: string
+          autorizado_por?: string | null
+          canal?: string
+          cliente_cuenta?: string | null
+          cliente_nombre: string
+          controlado_at?: string | null
+          creado_at?: string
+          creado_por?: string | null
+          deposito_solicitado?: number | null
+          devuelto_at?: string | null
+          documentacion_entregada?: string | null
+          documentacion_retirada?: string | null
+          dominio?: string | null
+          entregado_at?: string | null
+          estado?: string
+          gestora_id?: string | null
+          id?: string
+          medio_pago?: string
+          motivo_anulacion?: string | null
+          motivo_frenado?: string | null
+          numero_pago_registro?: string | null
+          observaciones?: string | null
+          observaciones_gestora?: string | null
+          oferta_referencia?: string | null
+          origen?: string
+          pagado_at?: string | null
+          presentado_at?: string | null
+          presupuestado_at?: string | null
+          razon_social_id: string
+          recibido_at?: string
+          retirado_at?: string | null
+          seccional?: string | null
+          subtipo?: string | null
+          sucursal_id: string
+          tarjeta_id?: string | null
+          tipo: string
+          vehiculo?: string | null
+        }
+        Update: {
+          actualizado_at?: string
+          actualizado_por?: string | null
+          asunto_mail?: string | null
+          autorizado_en?: string
+          autorizado_por?: string | null
+          canal?: string
+          cliente_cuenta?: string | null
+          cliente_nombre?: string
+          controlado_at?: string | null
+          creado_at?: string
+          creado_por?: string | null
+          deposito_solicitado?: number | null
+          devuelto_at?: string | null
+          documentacion_entregada?: string | null
+          documentacion_retirada?: string | null
+          dominio?: string | null
+          entregado_at?: string | null
+          estado?: string
+          gestora_id?: string | null
+          id?: string
+          medio_pago?: string
+          motivo_anulacion?: string | null
+          motivo_frenado?: string | null
+          numero_pago_registro?: string | null
+          observaciones?: string | null
+          observaciones_gestora?: string | null
+          oferta_referencia?: string | null
+          origen?: string
+          pagado_at?: string | null
+          presentado_at?: string | null
+          presupuestado_at?: string | null
+          razon_social_id?: string
+          recibido_at?: string
+          retirado_at?: string | null
+          seccional?: string | null
+          subtipo?: string | null
+          sucursal_id?: string
+          tarjeta_id?: string | null
+          tipo?: string
+          vehiculo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tramites_actualizado_por_fkey"
+            columns: ["actualizado_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramites_autorizado_por_fkey"
+            columns: ["autorizado_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramites_creado_por_fkey"
+            columns: ["creado_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramites_gestora_id_fkey"
+            columns: ["gestora_id"]
+            isOneToOne: false
+            referencedRelation: "gestoras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramites_razon_social_id_fkey"
+            columns: ["razon_social_id"]
+            isOneToOne: false
+            referencedRelation: "razones_sociales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramites_sucursal_id_fkey"
+            columns: ["sucursal_id"]
+            isOneToOne: false
+            referencedRelation: "sucursales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramites_tarjeta_id_fkey"
+            columns: ["tarjeta_id"]
+            isOneToOne: false
+            referencedRelation: "tarjetas_habitualista"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramites_tarjeta_id_fkey"
+            columns: ["tarjeta_id"]
+            isOneToOne: false
+            referencedRelation: "v_saldos"
+            referencedColumns: ["tarjeta_id"]
+          },
+        ]
       }
     }
     Views: {
-      [_ in never]: never
+      v_saldos: {
+        Row: {
+          comprometido: number | null
+          contable: number | null
+          en_transito: number | null
+          nombre: string | null
+          tarjeta_id: string | null
+        }
+        Relationships: []
+      }
+      v_tramite_totales: {
+        Row: {
+          total_presupuesto: number | null
+          total_real: number | null
+          tramite_id: string | null
+        }
+        Relationships: []
+      }
+      v_tramites: {
+        Row: {
+          actualizado_at: string | null
+          actualizado_por: string | null
+          asunto_mail: string | null
+          autorizado_en: string | null
+          autorizado_por: string | null
+          canal: string | null
+          cliente_cuenta: string | null
+          cliente_nombre: string | null
+          controlado_at: string | null
+          creado_at: string | null
+          creado_por: string | null
+          deposito_solicitado: number | null
+          devuelto_at: string | null
+          documentacion_entregada: string | null
+          documentacion_retirada: string | null
+          dominio: string | null
+          entregado_at: string | null
+          estado: string | null
+          gestora_id: string | null
+          id: string | null
+          medio_pago: string | null
+          monto_cobrado: number | null
+          motivo_anulacion: string | null
+          motivo_frenado: string | null
+          numero_pago_registro: string | null
+          observaciones: string | null
+          observaciones_gestora: string | null
+          oferta_referencia: string | null
+          origen: string | null
+          pagado_at: string | null
+          presentado_at: string | null
+          presupuestado_at: string | null
+          razon_social_id: string | null
+          recibido_at: string | null
+          retirado_at: string | null
+          seccional: string | null
+          subtipo: string | null
+          sucursal_id: string | null
+          tarjeta_id: string | null
+          tipo: string | null
+          vehiculo: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tramites_actualizado_por_fkey"
+            columns: ["actualizado_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramites_autorizado_por_fkey"
+            columns: ["autorizado_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramites_creado_por_fkey"
+            columns: ["creado_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramites_gestora_id_fkey"
+            columns: ["gestora_id"]
+            isOneToOne: false
+            referencedRelation: "gestoras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramites_razon_social_id_fkey"
+            columns: ["razon_social_id"]
+            isOneToOne: false
+            referencedRelation: "razones_sociales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramites_sucursal_id_fkey"
+            columns: ["sucursal_id"]
+            isOneToOne: false
+            referencedRelation: "sucursales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramites_tarjeta_id_fkey"
+            columns: ["tarjeta_id"]
+            isOneToOne: false
+            referencedRelation: "tarjetas_habitualista"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramites_tarjeta_id_fkey"
+            columns: ["tarjeta_id"]
+            isOneToOne: false
+            referencedRelation: "v_saldos"
+            referencedColumns: ["tarjeta_id"]
+          },
+        ]
+      }
     }
     Functions: {
       es_contable: { Args: never; Returns: boolean }
@@ -54,6 +1024,8 @@ export type Database = {
       es_gestora: { Args: never; Returns: boolean }
       mi_gestora_id: { Args: never; Returns: string }
       mi_rol: { Args: never; Returns: string }
+      opero_esta_tarjeta: { Args: { p_tarjeta: string }; Returns: boolean }
+      orden_estado: { Args: { p: string }; Returns: number }
       puede_ver_cobros: { Args: never; Returns: boolean }
     }
     Enums: {
