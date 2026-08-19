@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabase";
 import { mensajeDeLogin } from "../lib/auth";
 import { Lockup } from "./Logo";
 import { Panel } from "./Panel";
+import { BOTON_ANCHO, CAMPO } from "../lib/campos";
 
 /**
  * La pantalla de entrada.
@@ -52,7 +53,7 @@ export function Login() {
                 onChange={(ev) => setEmail(ev.target.value)}
                 autoComplete="username"
                 required
-                className="rounded-md border border-line bg-surface2 px-3 py-2 text-base"
+                className={CAMPO}
               />
             </label>
 
@@ -64,7 +65,7 @@ export function Login() {
                 onChange={(ev) => setClave(ev.target.value)}
                 autoComplete="current-password"
                 required
-                className="rounded-md border border-line bg-surface2 px-3 py-2 text-base"
+                className={CAMPO}
               />
             </label>
 
@@ -77,7 +78,7 @@ export function Login() {
             <button
               type="submit"
               disabled={entrando}
-              className="mt-1 flex items-center justify-center gap-2 rounded-md bg-accent px-3 py-2 text-sm text-accent-ink disabled:opacity-60"
+              className={`mt-1 ${BOTON_ANCHO}`}
             >
               <LogIn aria-hidden="true" size={16} />
               {entrando ? "Entrando" : "Entrar"}

@@ -5,6 +5,7 @@ import { SkeletonLineas } from "../../components/Skeleton";
 import { aCentavos, aPesos, formatear, parsear, pesosDesdeTexto } from "../../lib/plata";
 import { formatearFechaHora } from "../../lib/fechas";
 import { supabase } from "../../lib/supabase";
+import { BOTON, CAMPO, CAMPO_SUELTO } from "../../lib/campos";
 import type { Database } from "../../lib/database.types";
 import {
   useConceptos, useConceptosDelTramite, useEventosDelTramite, useGestoras,
@@ -171,7 +172,7 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
               <select
                 value={valor("gestora_id", t.gestora_id)}
                 onChange={(e) => set("gestora_id", e.target.value)}
-                className={INPUT}
+                className={CAMPO}
               >
                 <option value="">Elegí</option>
                 {gestoras.data?.filter((g) => g.activa).map((g) => (
@@ -190,7 +191,7 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
                 inputMode="decimal"
                 value={valor("deposito_solicitado", t.deposito_solicitado?.toString() ?? null)}
                 onChange={(e) => set("deposito_solicitado", e.target.value)}
-                className={INPUT}
+                className={CAMPO}
               />
             </label>
           )}
@@ -202,7 +203,7 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
                 value={valor("seccional", t.seccional)}
                 onChange={(e) => set("seccional", e.target.value)}
                 placeholder="19005 - Marconi 29"
-                className={INPUT}
+                className={CAMPO}
               />
             </label>
           )}
@@ -216,7 +217,7 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
                 value={valor("numero_pago_registro", t.numero_pago_registro)}
                 onChange={(e) => set("numero_pago_registro", e.target.value)}
                 placeholder="0001420388"
-                className={INPUT}
+                className={CAMPO}
               />
             </label>
           )}
@@ -228,7 +229,7 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
                 value={valor("documentacion_retirada", t.documentacion_retirada)}
                 onChange={(e) => set("documentacion_retirada", e.target.value)}
                 placeholder="Título, cédula y chapas"
-                className={INPUT}
+                className={CAMPO}
               />
             </label>
           )}
@@ -237,7 +238,7 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
             type="button"
             onClick={() => avanzar.mutate(paso.estado)}
             disabled={avanzar.isPending}
-            className="w-fit rounded-md bg-accent px-4 py-2 text-sm text-accent-ink disabled:opacity-50"
+            className={BOTON}
           >
             {avanzar.isPending ? "Guardando" : paso.boton}
           </button>
@@ -285,7 +286,6 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
   );
 }
 
-const INPUT = "w-full rounded-md border border-line bg-surface2 px-3 py-2 text-sm";
 
 function Dato({ rotulo, valor, destacado = false }: { rotulo: string; valor: string | null; destacado?: boolean }) {
   return (
@@ -361,7 +361,7 @@ function Costos({
       )}
 
       <div className="flex flex-wrap items-end gap-2">
-        <select value={conceptoId} onChange={(e) => setConceptoId(e.target.value)} className="rounded-md border border-line bg-surface2 px-3 py-2 text-sm">
+        <select value={conceptoId} onChange={(e) => setConceptoId(e.target.value)} className={CAMPO_SUELTO}>
           <option value="">Concepto</option>
           {conceptos.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
         </select>
@@ -370,7 +370,7 @@ function Costos({
           value={importe}
           onChange={(e) => setImporte(e.target.value)}
           placeholder="450.000"
-          className="w-32 rounded-md border border-line bg-surface2 px-3 py-2 text-sm tnum"
+          className={`w-32 ${CAMPO_SUELTO} tnum`}
         />
         <button
           type="button"

@@ -4,6 +4,7 @@ import { SkeletonLineas } from "../../components/Skeleton";
 import { aPesos, formatear, parsear } from "../../lib/plata";
 import { hoyArgentina, proximoDiaHabil } from "../../lib/fechas";
 import { supabase } from "../../lib/supabase";
+import { BOTON, BOTON_SUAVE, CAMPO, CAMPO_SUELTO } from "../../lib/campos";
 import { nombreDeRol, type Rol } from "../../lib/roles";
 import { useGestoras, useGuardar, useRazonesSociales, useSaldos, useTarjetas } from "../../lib/datos";
 import { useQuery } from "@tanstack/react-query";
@@ -80,7 +81,7 @@ function CargarDinero() {
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="flex flex-col gap-1">
           <span className="text-xs text-ink2">Tarjeta</span>
-          <select value={tarjetaId} onChange={(e) => setTarjetaId(e.target.value)} className={INPUT}>
+          <select value={tarjetaId} onChange={(e) => setTarjetaId(e.target.value)} className={CAMPO}>
             <option value="">Elegí</option>
             {saldos.data?.map((s) => (
               <option key={s.tarjeta_id} value={s.tarjeta_id}>{s.nombre}</option>
@@ -93,7 +94,7 @@ function CargarDinero() {
           <select
             value={tipo}
             onChange={(e) => setTipo(e.target.value as "ingreso" | "saldo_inicial")}
-            className={INPUT}
+            className={CAMPO}
           >
             <option value="ingreso">Un depósito</option>
             <option value="saldo_inicial">El saldo inicial del corte</option>
@@ -108,7 +109,7 @@ function CargarDinero() {
           value={importe}
           onChange={(e) => setImporte(e.target.value)}
           placeholder="2.505.627,92"
-          className={`${INPUT} tnum`}
+          className={`${CAMPO} tnum`}
         />
         {centavos !== null && (
           <span className="text-2xs text-ink2 tnum">{formatear(centavos)}</span>
@@ -135,14 +136,14 @@ function CargarDinero() {
 
       <label className="flex flex-col gap-1">
         <span className="text-xs text-ink2">Observación</span>
-        <input value={observacion} onChange={(e) => setObservacion(e.target.value)} className={INPUT} />
+        <input value={observacion} onChange={(e) => setObservacion(e.target.value)} className={CAMPO} />
       </label>
 
       <button
         type="button"
         disabled={tarjetaId === "" || centavos === null || guardar.isPending}
         onClick={() => guardar.mutate(undefined)}
-        className="w-fit rounded-md bg-accent px-4 py-2 text-sm text-accent-ink disabled:opacity-50"
+        className={BOTON}
       >
         {guardar.isPending ? "Guardando" : "Cargar"}
       </button>
@@ -221,7 +222,7 @@ function FilaUsuario({
         <p className="text-2xs text-ink2">{nombreDeRol(perfil.rol as Rol)}</p>
       </div>
 
-      <select value={rol} onChange={(e) => setRol(e.target.value as Rol)} className={INPUT_CHICO}>
+      <select value={rol} onChange={(e) => setRol(e.target.value as Rol)} className={CAMPO_SUELTO}>
         <option value="sin_asignar">Sin asignar</option>
         <option value="gestora">Gestoría</option>
         <option value="contable">Contable</option>
@@ -229,7 +230,7 @@ function FilaUsuario({
       </select>
 
       {rol === "gestora" && (
-        <select value={gestoraId} onChange={(e) => setGestoraId(e.target.value)} className={INPUT_CHICO}>
+        <select value={gestoraId} onChange={(e) => setGestoraId(e.target.value)} className={CAMPO_SUELTO}>
           <option value="">Qué gestora</option>
           {gestoras.map((g) => <option key={g.id} value={g.id}>{g.nombre}</option>)}
         </select>
@@ -244,7 +245,7 @@ function FilaUsuario({
         type="button"
         disabled={!cambio}
         onClick={() => alGuardar(rol, activo, gestoraId === "" ? null : gestoraId)}
-        className="rounded-md border border-line px-3 py-2 text-sm disabled:opacity-40"
+        className={BOTON_SUAVE}
       >
         Guardar
       </button>
@@ -284,7 +285,7 @@ function RazonesYTarjetas() {
           <select
             value={r.tarjeta_id ?? ""}
             onChange={(e) => guardar.mutate({ id: r.id, tarjetaId: e.target.value || null })}
-            className={INPUT_CHICO}
+            className={CAMPO_SUELTO}
           >
             <option value="">Sin tarjeta</option>
             {tarjetas.data?.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
@@ -295,5 +296,3 @@ function RazonesYTarjetas() {
   );
 }
 
-const INPUT = "w-full rounded-md border border-line bg-surface2 px-3 py-2 text-sm";
-const INPUT_CHICO = "rounded-md border border-line bg-surface2 px-2 py-2 text-sm";

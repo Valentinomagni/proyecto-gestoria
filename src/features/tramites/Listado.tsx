@@ -6,6 +6,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { formatearFecha } from "../../lib/fechas";
 import { aCentavos, formatear } from "../../lib/plata";
 import { useTramites } from "../../lib/datos";
+import { CAMPO_ADENTRO, CAMPO_CON_ICONO, CAMPO_SUELTO } from "../../lib/campos";
 
 /**
  * El listado de tramites. Reemplaza la planilla.
@@ -50,12 +51,12 @@ export function Listado({ alAbrir }: { alAbrir: (id: string) => void }) {
       <Panel className="flex flex-wrap items-end gap-3">
         <label className="flex min-w-56 flex-1 flex-col gap-1">
           <span className="text-xs text-ink2">Buscar por cliente, dominio, referencia o cuenta</span>
-          <div className="flex items-center gap-2 rounded-md border border-line bg-surface2 px-3">
-            <Search aria-hidden="true" size={14} className="text-ink2" />
+          <div className={CAMPO_CON_ICONO}>
+            <Search aria-hidden="true" size={14} className="shrink-0 self-center text-ink2" />
             <input
               value={buscar}
               onChange={(e) => setBuscar(e.target.value)}
-              className="w-full bg-transparent py-2 text-sm outline-none"
+              className={CAMPO_ADENTRO}
             />
           </div>
         </label>
@@ -65,7 +66,7 @@ export function Listado({ alAbrir }: { alAbrir: (id: string) => void }) {
           <select
             value={estado}
             onChange={(e) => setEstado(e.target.value)}
-            className="rounded-md border border-line bg-surface2 px-3 py-2 text-sm"
+            className={CAMPO_SUELTO}
           >
             <option value="">Todos</option>
             {ESTADOS.map((e) => <option key={e.valor} value={e.valor}>{e.nombre}</option>)}
@@ -76,7 +77,49 @@ export function Listado({ alAbrir }: { alAbrir: (id: string) => void }) {
       {tramites.isLoading ? (
         <SkeletonLineas cantidad={6} />
       ) : tramites.data && tramites.data.length > 0 ? (
-        <Panel className="overflow-x-auto">
+        <>
+        {/*
+          ============================================================================
+           EN EL TELEFONO NO HAY TABLA. Es la pantalla que mas se usa parada.
+          ============================================================================
+
+          Se midio: la tabla de siete columnas necesita 445 px y en un telefono el panel tiene
+          326. Se puede arrastrar de costado, y ahi esta el problema — buscar un tramite
+          arrastrando una tabla con una sola mano, con el legajo en la otra, es exactamente el
+          momento en que se vuelve a la planilla.
+
+          Los mismos datos, apilados: el cliente arriba porque es por lo que se busca, la
+          referencia y el dominio abajo en chico, el estado y el deposito a la derecha.
+        */}
+        <Panel className="flex flex-col sm:hidden">
+          {tramites.data.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => alAbrir(t.id)}
+              className="flex items-baseline justify-between gap-3 border-b border-line py-3 text-left last:border-0"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm">{t.cliente_nombre}</p>
+                <p className="truncate text-2xs text-ink2 tnum">
+                  {[t.oferta_referencia, t.dominio, TIPOS[t.tipo] ?? t.tipo]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              </div>
+              <div className="shrink-0 text-right">
+                <Chip estado={t.estado} />
+                {t.deposito_solicitado !== null && (
+                  <p className="text-2xs tnum text-ink2">
+                    {formatear(aCentavos(t.deposito_solicitado))}
+                  </p>
+                )}
+              </div>
+            </button>
+          ))}
+        </Panel>
+
+        <Panel className="hidden overflow-x-auto sm:block">
           <table className="w-full text-sm">
             <thead className="text-2xs text-ink2">
               <tr className="border-b border-line">
@@ -114,6 +157,7 @@ export function Listado({ alAbrir }: { alAbrir: (id: string) => void }) {
             </tbody>
           </table>
         </Panel>
+        </>
       ) : (
         <Panel className="p-0 overflow-hidden">
           <EmptyState

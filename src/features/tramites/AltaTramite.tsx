@@ -3,6 +3,7 @@ import { FilePlus } from "lucide-react";
 import { Panel } from "../../components/Panel";
 import { parsearAsunto } from "../../lib/asunto";
 import { supabase } from "../../lib/supabase";
+import { BOTON, CAMPO } from "../../lib/campos";
 import { useGuardar, useRazonesSociales, useSucursales } from "../../lib/datos";
 
 /**
@@ -113,7 +114,7 @@ export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
             value={asunto}
             onChange={(e) => pegar(e.target.value)}
             rows={2}
-            className="rounded-md border border-line bg-surface2 px-3 py-2 text-sm"
+            className={CAMPO}
             placeholder="PATENTAMIENTO PLAN DE AHORRO- C.74344 MUÑOZ ELIZABETH (REF. 4097473)"
           />
         </label>
@@ -121,30 +122,30 @@ export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
 
       <Panel className="flex flex-col gap-3">
         <Campo etiqueta="Cliente" obligatorio>
-          <input value={cliente} onChange={(e) => setCliente(e.target.value)} required className={CLASE_INPUT} />
+          <input value={cliente} onChange={(e) => setCliente(e.target.value)} required className={CAMPO} />
         </Campo>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Campo etiqueta="Referencia de la oferta" ayuda="Con esto se ubica el trámite después">
-            <input value={referencia} onChange={(e) => setReferencia(e.target.value)} className={CLASE_INPUT} />
+            <input value={referencia} onChange={(e) => setReferencia(e.target.value)} className={CAMPO} />
           </Campo>
           <Campo etiqueta="Cuenta personal">
-            <input value={cuenta} onChange={(e) => setCuenta(e.target.value)} className={CLASE_INPUT} />
+            <input value={cuenta} onChange={(e) => setCuenta(e.target.value)} className={CAMPO} />
           </Campo>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Campo etiqueta="Vehículo">
-            <input value={vehiculo} onChange={(e) => setVehiculo(e.target.value)} className={CLASE_INPUT} />
+            <input value={vehiculo} onChange={(e) => setVehiculo(e.target.value)} className={CAMPO} />
           </Campo>
           <Campo etiqueta="Dominio" ayuda="Un 0km entra sin patente">
-            <input value={dominio} onChange={(e) => setDominio(e.target.value)} className={CLASE_INPUT} />
+            <input value={dominio} onChange={(e) => setDominio(e.target.value)} className={CAMPO} />
           </Campo>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Campo etiqueta="Tipo" obligatorio>
-            <select value={tipo} onChange={(e) => setTipo(e.target.value)} required className={CLASE_INPUT}>
+            <select value={tipo} onChange={(e) => setTipo(e.target.value)} required className={CAMPO}>
               <option value="">Elegí</option>
               <option value="patentamiento_0km">Patentamiento 0km</option>
               <option value="transferencia_a_cliente">Transferencia a cliente</option>
@@ -152,7 +153,7 @@ export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
             </select>
           </Campo>
           <Campo etiqueta="Modalidad">
-            <select value={subtipo} onChange={(e) => setSubtipo(e.target.value)} className={CLASE_INPUT}>
+            <select value={subtipo} onChange={(e) => setSubtipo(e.target.value)} className={CAMPO}>
               <option value="">Sin especificar</option>
               <option value="plan_ahorro">Plan de ahorro</option>
               <option value="credito">Crédito</option>
@@ -163,13 +164,13 @@ export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Campo etiqueta="Razón social" obligatorio>
-            <select value={razonId} onChange={(e) => setRazonId(e.target.value)} required className={CLASE_INPUT}>
+            <select value={razonId} onChange={(e) => setRazonId(e.target.value)} required className={CAMPO}>
               <option value="">Elegí</option>
               {razones.data?.map((r) => <option key={r.id} value={r.id}>{r.nombre}</option>)}
             </select>
           </Campo>
           <Campo etiqueta="Sucursal" obligatorio>
-            <select value={sucursalId} onChange={(e) => setSucursalId(e.target.value)} required className={CLASE_INPUT}>
+            <select value={sucursalId} onChange={(e) => setSucursalId(e.target.value)} required className={CAMPO}>
               <option value="">Elegí</option>
               {sucursales.data?.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
             </select>
@@ -178,14 +179,14 @@ export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Campo etiqueta="Medio de pago" obligatorio>
-            <select value={medioPago} onChange={(e) => setMedioPago(e.target.value)} className={CLASE_INPUT}>
+            <select value={medioPago} onChange={(e) => setMedioPago(e.target.value)} className={CAMPO}>
               <option value="tarjeta_habitualista">Tarjeta Habitualista</option>
               <option value="transferencia">Transferencia</option>
               <option value="efectivo">Efectivo</option>
             </select>
           </Campo>
           <Campo etiqueta="Canal" ayuda="RUNA lo maneja administración">
-            <select value={canal} onChange={(e) => setCanal(e.target.value)} className={CLASE_INPUT}>
+            <select value={canal} onChange={(e) => setCanal(e.target.value)} className={CAMPO}>
               <option value="presencial">Presencial</option>
               <option value="runa">RUNA</option>
             </select>
@@ -197,7 +198,7 @@ export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
             value={observaciones}
             onChange={(e) => setObservaciones(e.target.value)}
             rows={2}
-            className={CLASE_INPUT}
+            className={CAMPO}
           />
         </Campo>
       </Panel>
@@ -206,7 +207,7 @@ export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
         <button
           type="submit"
           disabled={!listo || guardar.isPending}
-          className="flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm text-accent-ink disabled:opacity-50"
+          className={BOTON}
         >
           <FilePlus aria-hidden="true" size={16} />
           {guardar.isPending ? "Guardando" : "Cargar trámite"}
@@ -219,7 +220,6 @@ export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
   );
 }
 
-const CLASE_INPUT = "w-full rounded-md border border-line bg-surface2 px-3 py-2 text-sm";
 
 function Campo({
   etiqueta, ayuda, obligatorio = false, children,

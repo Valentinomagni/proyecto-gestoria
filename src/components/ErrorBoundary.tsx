@@ -3,6 +3,7 @@ import { RefreshCw, RotateCcw } from "lucide-react";
 import { clasificarFalla, type Falla } from "../lib/fallas";
 import { reportar } from "../lib/monitoreo";
 import { Panel } from "./Panel";
+import { BOTON } from "../lib/campos";
 
 /**
  * La red que impide que un error de render deje la pantalla EN BLANCO.
@@ -66,7 +67,7 @@ export class ErrorBoundary extends Component<Props, Estado> {
             <button
               type="button"
               onClick={this.actualizar}
-              className="flex items-center gap-2 rounded-md bg-accent px-3 py-2 text-sm text-accent-ink"
+              className={BOTON}
             >
               <RefreshCw aria-hidden="true" size={16} />
               Actualizar
@@ -77,7 +78,7 @@ export class ErrorBoundary extends Component<Props, Estado> {
             <button
               type="button"
               onClick={this.reintentar}
-              className="flex items-center gap-2 rounded-md bg-accent px-3 py-2 text-sm text-accent-ink"
+              className={BOTON}
             >
               <RotateCcw aria-hidden="true" size={16} />
               Probar de nuevo

@@ -7,6 +7,7 @@ import { aCentavos, formatear } from "../../lib/plata";
 import { formatearFechaHora, hoyArgentina, minutosHasta, antesDelCorte } from "../../lib/fechas";
 import { useMovimientos, useSaldos } from "../../lib/datos";
 import { recordado, recordar } from "../../lib/recordar";
+import { CAMPO_SUELTO } from "../../lib/campos";
 
 /**
  * La pantalla de la Tarjeta Habitualista.
@@ -69,7 +70,7 @@ export function Tarjeta() {
         <select
           value={elegida ?? ""}
           onChange={(e) => elegir(e.target.value)}
-          className="rounded-md border border-line bg-surface2 px-3 py-2 text-sm"
+          className={CAMPO_SUELTO}
         >
           {saldos.data?.map((s) => (
             <option key={s.tarjeta_id} value={s.tarjeta_id}>{s.nombre}</option>

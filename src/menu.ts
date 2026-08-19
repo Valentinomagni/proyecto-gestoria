@@ -20,12 +20,21 @@ import { puedeAdministrar, type Rol } from "./lib/roles";
 
 export type Pantalla = "tarjeta" | "bandeja" | "tramites" | "alta" | "admin";
 
-export const MENU: { id: Pantalla; nombre: string; icono: typeof Wallet; soloGerencia?: boolean }[] = [
-  { id: "bandeja", nombre: "Pedidos de fondos", icono: HandCoins },
-  { id: "tarjeta", nombre: "Tarjeta", icono: Wallet },
-  { id: "tramites", nombre: "Trámites", icono: LayoutList },
-  { id: "alta", nombre: "Cargar trámite", icono: FilePlus },
-  { id: "admin", nombre: "Administración", icono: Settings, soloGerencia: true },
+/**
+ * `corto` es para la barra de abajo del telefono, donde cada boton tiene 75 pixeles.
+ *
+ * NO SE ABREVIA CON PUNTOS NI SE CORTA CON CSS. "Administraci..." obliga a adivinar, y una
+ * etiqueta que se adivina se toca mal. Se elige una palabra mas corta que siga siendo una
+ * palabra entera.
+ */
+export const MENU: {
+  id: Pantalla; nombre: string; corto: string; icono: typeof Wallet; soloGerencia?: boolean;
+}[] = [
+  { id: "bandeja", nombre: "Pedidos de fondos", corto: "Pedidos", icono: HandCoins },
+  { id: "tarjeta", nombre: "Tarjeta", corto: "Tarjeta", icono: Wallet },
+  { id: "tramites", nombre: "Trámites", corto: "Trámites", icono: LayoutList },
+  { id: "alta", nombre: "Cargar trámite", corto: "Cargar", icono: FilePlus },
+  { id: "admin", nombre: "Administración", corto: "Ajustes", icono: Settings, soloGerencia: true },
 ];
 
 /** Qué pantallas ve cada rol. NO decide permisos: evita mostrar botones que van a fallar. */
