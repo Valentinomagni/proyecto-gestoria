@@ -1,0 +1,9 @@
+# Configuracion de Cloudflare Pages, EN EL REPOSITORIO y no solo en el panel.
+#
+# POR QUE ACA: la configuracion que vive unicamente en un panel web no se versiona, no se
+# revisa en un diff, y nadie se entera cuando cambia. El primer despliegue de este proyecto
+# sirvio el index.html del codigo fuente —el que apunta a /src/main.tsx, que en produccion no
+# existe— porque la carpeta de salida no estaba configurada. Con esto, el repositorio dice
+# cual es.
+name = "proyecto-gestoria"
+pages_build_output_dir = "dist"

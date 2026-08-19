@@ -1,0 +1,41 @@
+name: Calidad
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+
+      # El orden importa: lo barato que atrapa mucho, primero.
+      - name: Secretos
+        run: node scripts/sin-secretos.mjs
+      - name: Migraciones sanas
+        run: node scripts/migraciones-sanas.mjs
+      - name: Tipos
+        run: npx tsc -b
+      - name: Lint
+        run: npx oxlint
+      - name: Tests
+        run: npx vitest run
+      - name: Build
+        run: npx vite build
+
+      # Los tipos generados contra la base real. Reemplaza al esquema.ts defensivo del Tablero:
+      # alla hay codigo de produccion cuyo unico trabajo es sobrevivir a que el esquema del
+      # codigo y el de la base se separen. Aca el problema no llega a existir, pero SOLO si
+      # algo lo verifica. Necesita el secreto SUPABASE_ACCESS_TOKEN cargado en GitHub.
+      - name: Los tipos estan al dia
+        if: ${{ env.HAY_TOKEN != '' }}
+        run: node scripts/tipos.mjs --verificar
+        env:
+          HAY_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
