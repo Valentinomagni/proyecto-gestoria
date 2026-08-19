@@ -105,3 +105,23 @@ export function antesDelCorte(horaCorte: string, ahora: Date = new Date()): bool
 export function minutosHasta(horaCorte: string, ahora: Date = new Date()): number {
   return Math.max(0, aMinutos(horaCorte) - horaArgentina(ahora));
 }
+
+/**
+ * El dia habil siguiente a una fecha, en formato `YYYY-MM-DD`.
+ *
+ * Un deposito ordenado el VIERNES antes del corte no acredita el sabado. Sin esto, la pantalla
+ * mostraria plata disponible un dia antes de que exista, que es el error que este sistema no
+ * puede cometer.
+ *
+ * PENDIENTE Y DECLARADO: todavia no contempla feriados. La tabla `feriados` y el calendario
+ * habil llegan con la capa de vencimientos; hasta entonces, un deposito ordenado el jueves
+ * anterior a un feriado va a figurar como acreditado un dia antes de lo real. Es un error
+ * conocido, acotado y escrito — no uno silencioso.
+ */
+export function proximoDiaHabil(desde: Date = new Date()): string {
+  const d = new Date(desde);
+  do {
+    d.setDate(d.getDate() + 1);
+  } while (d.getDay() === 0 || d.getDay() === 6);
+  return aFechaArgentina(d);
+}

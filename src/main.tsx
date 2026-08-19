@@ -3,8 +3,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { Shell } from "./components/Shell";
-import { Inicio } from "./features/inicio/Inicio";
+import { App } from "./App";
 import { iniciarMonitoreo } from "./lib/monitoreo";
 import "./index.css";
 
@@ -13,9 +12,9 @@ iniciarMonitoreo();
 const cliente = new QueryClient({
   defaultOptions: {
     queries: {
-      // Un saldo de hace cinco minutos es un saldo equivocado. Lo que manda la frescura en
-      // este sistema es Realtime, no un intervalo: cuando alguien carga un movimiento, la
-      // pantalla del otro se entera sola. Esto es solo la red por si esa suscripcion falla.
+      // Lo que manda la frescura del saldo es Realtime, no un intervalo: cuando alguien carga
+      // un movimiento, la pantalla del otro se entera sola. Esto es solo la red por si esa
+      // suscripcion falla.
       staleTime: 30_000,
       retry: 1,
     },
@@ -46,9 +45,7 @@ createRoot(raiz).render(
             <SistemaVisual />
           </Suspense>
         ) : (
-          <Shell>
-            <Inicio />
-          </Shell>
+          <App />
         )}
         <Toaster position="bottom-right" />
       </QueryClientProvider>

@@ -120,3 +120,18 @@ export function parsear(texto: string): number | null {
   const total = pesos * 100 + centavos;
   return exigirEnteroSeguro(negativo ? -total : total, texto);
 }
+
+/**
+ * Centavos enteros -> el numero que espera una columna `numeric` de Postgres.
+ *
+ * POR QUE EXISTE ESTA FUNCION EN VEZ DE UN `/ 100` EN LA PANTALLA: el guardian prohibe dividir
+ * importes fuera de este modulo, y con razon. Toda conversion entre pesos y centavos vive aca,
+ * en un solo lugar donde se puede revisar de una sola mirada.
+ *
+ * La division es exacta para cualquier importe dentro del rango seguro: los centavos son un
+ * entero y dividir por cien un entero menor a 2^53 no pierde nada relevante para dos decimales.
+ */
+export function aPesos(centavos: number): number {
+  exigirEnteroSeguro(centavos, centavos);
+  return centavos / 100;
+}
