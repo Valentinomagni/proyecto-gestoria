@@ -2,7 +2,8 @@
 
 Contado de nuevo el **19/08/2026**. Los números salen de correr los comandos, no de recordar.
 
-**Dónde estamos:** etapa 0 (fundación), tareas 1, 2, 3, 5, 6 y 8 terminadas. **Ninguna
+**Dónde estamos:** etapa 0 (fundación), **nueve de diez tareas terminadas**. Falta sólo el
+despliegue en Cloudflare, que depende de vos. **Ninguna
 funcionalidad del negocio existe todavía**: no hay trámites, ni saldos. La base existe con
 `perfiles` y los helpers de permisos, y nada más.
 
@@ -12,17 +13,19 @@ funcionalidad del negocio existe todavía**: no hay trámites, ni saldos. La bas
 
 | Qué | Cuánto | Comando |
 |---|---|---|
-| Tests, todos verdes | **60** | `npx vitest run` |
-| Archivos de prueba | 8 | idem |
-| Guardianes | 5 | `tipografia`, `Panel`, `casa`, `plata`, `fechas` |
-| Módulos de lógica en `src/lib` | 4 | `plata`, `fechas`, `fallas`, `ui` |
-| Con prueba propia | 3 de 4 | falta `ui.ts`, que son cuatro líneas sin lógica |
-| Peso de arranque | **63,81 kB** comprimidos | `npx vite build` |
+| Tests, todos verdes | **77** | `npx vitest run` |
+| Pruebas de permisos contra la API real | **9** | `npm run test:rls` |
+| Archivos de prueba | 11 | idem |
+| Guardianes | 6 | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `migraciones` |
+| Módulos de lógica en `src/lib` | 9 | `plata`, `fechas`, `fallas`, `roles`, `auth`, `respaldo`, `sesion`, `monitoreo`, `ui` |
+| Con prueba propia | 6 de 9 | sin prueba: `ui` (4 líneas), `sesion` y `monitoreo` (los ejercita el navegador) |
+| Peso de arranque | **79,52 kB** + 53,77 kB de Supabase | `npx vite build` |
 | Sentry, en pedazo aparte | 148,53 kB, **no bloquea el primer dibujo** | idem |
 | Duración del pre-commit | ~2,3 s | contra 90 a 180 s en el Tablero |
 | Commits sin publicar | **0** | `git rev-list --count origin/dev..dev` |
-| Migraciones corridas | **1** de 1 escrita | `npm run db:seco` dice "up to date" |
+| Migraciones corridas | **2** de 2 escritas | `npm run db:seco` dice "up to date" |
 | Tablas en la base | 1 (`perfiles`) | `npm run db:tipos` |
+| Cuentas creadas | 4, con roles asignados | verificado por la API |
 
 ---
 
@@ -34,12 +37,16 @@ En orden, y cada uno bloquea al siguiente:
 - [x] **Tarea 3 — migración 01 aplicada**: perfiles, alta automática, anti-autopromoción y los
       seis helpers. Corrida dos veces sin duplicar. **Falta designar la primera gerencia**, que
       necesita una cuenta real (abajo).
-- [ ] **Tarea 4 — arnés de pruebas de permisos.** **Bloqueada:** necesita tres usuarios de
-      prueba creados desde el panel (abajo).
-- [ ] **Tarea 7 — login, roles, ruteo y cáscara.**
+- [x] **Tarea 4 — arnés de permisos contra la API real.** Nueve pruebas, y **visto en rojo**
+      sacando el trigger anti-autopromoción a propósito.
+- [x] **Tarea 7 — login, roles y cáscara.** Probado en el navegador con las tres situaciones:
+      gerencia entra, un usuario sin asignar ve la pantalla que lo explica, y una contraseña
+      equivocada no revela cuál de los dos campos falló.
 - [x] **Tarea 8 — `ErrorBoundary` y monitoreo.** Falta el botón de avisar un problema, que
       necesita una tabla y va con la etapa 1.
-- [ ] **Tarea 10 — respaldo derivado del esquema, y restaurarlo una vez de verdad.**
+- [x] **Tarea 10 — respaldo derivado del esquema.** Falta **restaurarlo una vez de verdad**, que
+      necesita la segunda base.
+- [ ] **Tarea 9 — despliegue en Cloudflare.** Depende de vos.
 
 ## Lo que depende de vos
 
@@ -50,11 +57,10 @@ En orden, y cada uno bloquea al siguiente:
       proyecto y no es código.
 - [ ] **La encuesta del día 0 a las gestoras y a gerencia de San Juan.** Las tuyas ya están.
       Caduca: después del encendido no se puede reconstruir. Ver `docs/ENCUESTA-DIA-0.md`.
-- [ ] **Crear las cuentas en el panel de Supabase** (Authentication → Add user, con *Auto Confirm
-      User* tildado): la tuya real, y tres de prueba —`gestora.prueba@`, `contable.prueba@`,
-      `gerencia.prueba@`—. Sin ellas no se puede designar la primera gerencia ni correr las
-      pruebas de permisos. **Lo hacés vos y no yo**: crear usuarios por API exige la clave
-      secreta, y la regla del proyecto es que esa clave no la necesito nunca.
+- [x] ~~Crear las cuentas en el panel de Supabase.~~ Hechas: cuatro, con `gerencia1` y
+      `contable1` ya designados.
+- [ ] **Cambiar la contraseña genérica** antes de que el sistema tenga saldos reales.
+      `gerencia1` tiene acceso total.
 - [ ] **Contar las filas de la planilla, por hoja.** Hoy sólo sabemos que PARIS AUTOS pasa de
       6.868 y que hay cinco hojas más.
 - [ ] **Confirmar los plazos con las gestoras.** Los cinco de `docs/DOMINIO.md` §4 están sin
