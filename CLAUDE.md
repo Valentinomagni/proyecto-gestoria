@@ -53,6 +53,26 @@ esta misma regla habría ahorrado dos meses de trabajo inútil, dos veces.
 Supabase sólo lo necesita para el modo `--local`, y acá se trabaja siempre contra el proyecto
 remoto enlazado (`--linked`).
 
+**Ni `node` ni `npm` están en el PATH por defecto.** Están, pero hay que ponerlos: cualquier
+comando arranca con `export PATH="$HOME/tools/node-v22.17.0-win-x64:$PATH"`.
+
+**Consecuencia que ya costó tres intentos fallidos el 19/08/2026:** todo lo que arranca un
+proceso **desde afuera del shell** —`.claude/launch.json`, una tarea programada, cualquier
+integración— no hereda ese PATH y tiene que llamar al binario con ruta absoluta. Y no alcanza con
+apuntar a `npm.cmd`: ese script después invoca a `node`, que tampoco se encuentra, y el error que
+tira (`""node"" no se reconoce como un comando`) no dice de dónde viene.
+
+Lo que sí funciona, y es el patrón que ya usa el Tablero:
+
+```json
+"runtimeExecutable": "C:\\Users\\Vmagni\\tools\\node-v22.17.0-win-x64\\node.exe",
+"runtimeArgs": ["node_modules/vite/bin/vite.js"]
+```
+
+**El servidor de desarrollo usa el puerto 5173 con `strictPort`.** Si está ocupado, falla en vez
+de correrse a 5174 en silencio — porque esa URL está anotada en las *Additional redirect URLs* de
+Supabase Auth, y un cambio de puerto rompería el login con un síntoma que no apunta al puerto.
+
 **Códigos de salida.** `comando | tail` devuelve el estado de `tail`, no del comando. Siempre:
 
 ```sh

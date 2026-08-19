@@ -13,6 +13,14 @@ export default defineConfig({
   resolve: {
     alias: { "@": path.resolve(import.meta.dirname, "./src") },
   },
+  server: {
+    port: 5173,
+    // strictPort: si 5173 esta ocupado, FALLA en vez de correrse a 5174 en silencio.
+    // POR QUE: la URL de desarrollo esta anotada en las "Additional redirect URLs" de Supabase
+    // Auth. Si Vite se corre de puerto sin avisar, el login deja de funcionar y el sintoma no
+    // apunta al puerto: parece un problema de credenciales. Mejor que no arranque.
+    strictPort: true,
+  },
   build: {
     rollupOptions: {
       output: {
