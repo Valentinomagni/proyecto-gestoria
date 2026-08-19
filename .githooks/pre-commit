@@ -1,0 +1,27 @@
+#!/bin/sh
+# ============================================================================
+#  Gate de calidad. CORTO A PROPOSITO.
+#
+#  En el Tablero Contable este mismo hook corre tsc mas la suite entera y tarda de 90 a 180
+#  segundos: tanto, que su CLAUDE.md tiene que avisar de pasarle un timeout de 420000 ms a
+#  la herramienta que llama a git commit. Un gate que duele se termina salteando con
+#  --no-verify, y ahi no protege de nada.
+#
+#  Aca corre: secretos, tipos, lint, y SOLO los tests afectados por lo que se toco.
+#  La suite completa la corre GitHub Actions en cada push.
+# ============================================================================
+export PATH="$HOME/tools/node-v22.17.0-win-x64:$PATH"
+
+node scripts/sin-secretos.mjs || exit 1
+
+# Si todavia no hay dependencias instaladas, el hook no puede correr el resto. No se falla
+# por eso: en un repo recien clonado el primer commit no deberia exigir un npm install.
+[ -d node_modules ] || { echo "pre-commit: sin node_modules, se saltean tipos, lint y tests"; exit 0; }
+
+npx tsc --noEmit || exit 1
+npx oxlint || exit 1
+
+CAMBIOS=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.tsx?$' || true)
+if [ -n "$CAMBIOS" ]; then
+  npx vitest related --run $CAMBIOS || exit 1
+fi

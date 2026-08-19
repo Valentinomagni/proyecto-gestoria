@@ -1,0 +1,45 @@
+# Dependencias y build
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+
+# ============================================================
+# SECRETOS. Va primero en importancia, no en orden alfabetico.
+#
+# POR QUE ESTA ASI DE EXPLICITO: en el Tablero Contable una contrasena quedo en el historial
+# de git, su propio analisis de seguridad la marca con severidad ALTA, y sigue ahi. Sacar un
+# secreto del historial es reescribir la historia del repositorio; no dejarlo entrar cuesta
+# escribir estas lineas.
+#
+# El token de Supabase (sbp_...) y el de GitHub van SIEMPRE en .env.local, nunca en el codigo.
+# La clave publicable de Supabase (sb_publishable_...) SI puede ir en el codigo: es publica por
+# diseno, y lo que protege los datos es la RLS, no esa clave.
+# ============================================================
+.env
+.env.*
+!.env.example
+
+# Supabase CLI
+supabase/.temp/
+supabase/.branches/
+
+# Editores
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Tests y reportes
+coverage/
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+# Fuente original del pedido: se conserva, pero el .docx es binario y no aporta al diff.
+# El texto extraido si esta versionado, en docs/fuente/.
+*.docx

@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    // `node` esta porque los tests guardianes leen el arbol de src con node:fs.
+    "types": ["vitest/globals", "@testing-library/jest-dom", "node"],
+
+    // Sin `baseUrl`: TypeScript 6 lo removio. Las rutas de `paths` se resuelven relativas a
+    // este archivo, que es donde ya estaban apuntando.
+    "paths": { "@/*": ["./src/*"] }
+  },
+  "include": ["src"]
+}

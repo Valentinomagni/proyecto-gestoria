@@ -1,0 +1,9 @@
+# Enrutado del lado del cliente (TanStack Router).
+#
+# Sin esta linea, entrar directo a /tramite/abc en Cloudflare Pages devuelve 404: el servidor
+# no conoce esa ruta. Hay que servirle index.html con estado 200 y dejar que el router
+# resuelva. Es lo unico que decide si un enlace a un tramite mandado por WhatsApp abre o no.
+#
+# Cloudflare evalua de arriba hacia abajo y para en la primera que coincide, asi que cualquier
+# regla especifica va ANTES de este comodin.
+/*    /index.html   200
