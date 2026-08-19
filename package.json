@@ -20,7 +20,8 @@
     "db:push": "supabase db push --project-ref drsooohkwwpnijonxwwt --yes",
     "db:tipos": "node scripts/tipos.mjs",
     "tipos:al-dia": "node scripts/tipos.mjs --verificar",
-    "migraciones": "node scripts/migraciones-sanas.mjs"
+    "migraciones": "node scripts/migraciones-sanas.mjs",
+    "permisos": "node scripts/permisos-sanos.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

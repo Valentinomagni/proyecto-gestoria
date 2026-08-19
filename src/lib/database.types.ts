@@ -906,6 +906,62 @@ export type Database = {
         }
         Relationships: []
       }
+      v_tramite_notas: {
+        Row: {
+          autor: string | null
+          autor_nombre: string | null
+          creado_at: string | null
+          id: number | null
+          texto: string | null
+          tramite_id: string | null
+        }
+        Insert: {
+          autor?: string | null
+          autor_nombre?: never
+          creado_at?: string | null
+          id?: number | null
+          texto?: string | null
+          tramite_id?: string | null
+        }
+        Update: {
+          autor?: string | null
+          autor_nombre?: never
+          creado_at?: string | null
+          id?: number | null
+          texto?: string | null
+          tramite_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tramite_notas_autor_fkey"
+            columns: ["autor"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramite_notas_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "tramites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramite_notas_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_tramite_totales"
+            referencedColumns: ["tramite_id"]
+          },
+          {
+            foreignKeyName: "tramite_notas_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_tramites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_tramite_totales: {
         Row: {
           total_presupuesto: number | null
@@ -1024,6 +1080,7 @@ export type Database = {
       es_gestora: { Args: never; Returns: boolean }
       mi_gestora_id: { Args: never; Returns: string }
       mi_rol: { Args: never; Returns: string }
+      nombre_de: { Args: { persona: string }; Returns: string }
       opero_esta_tarjeta: { Args: { p_tarjeta: string }; Returns: boolean }
       orden_estado: { Args: { p: string }; Returns: number }
       puede_ver_cobros: { Args: never; Returns: boolean }

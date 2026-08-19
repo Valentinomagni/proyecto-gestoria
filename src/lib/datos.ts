@@ -294,6 +294,48 @@ export function useRequisitosDelTramite(tramiteId: string | null) {
   });
 }
 
+/**
+ * Las notas del trámite, con el nombre de quien las escribió.
+ *
+ * Sale de `v_tramite_notas` y no de la tabla: una gestora sólo puede leer SU perfil, así que
+ * leyendo la tabla directo las notas de las demás salían sin nombre. La vista pone el nombre
+ * con un helper que devuelve únicamente eso, y mantiene la RLS de las notas intacta.
+ */
+export interface Nota {
+  id: number;
+  texto: string;
+  creado_at: string | null;
+  autor_nombre: string | null;
+}
+
+export function useNotasDelTramite(tramiteId: string | null) {
+  return useQuery({
+    queryKey: ["tramite_notas", tramiteId],
+    enabled: tramiteId !== null,
+    queryFn: async (): Promise<Nota[]> => {
+      const { data, error } = await supabase
+        .from("v_tramite_notas")
+        .select("id, texto, creado_at, autor_nombre")
+        .eq("tramite_id", tramiteId ?? "")
+        .order("creado_at", { ascending: false });
+      if (error) throw error;
+
+      // Los tipos de una VISTA salen todos anulables: Postgres no puede garantizar que una
+      // columna de una vista no sea nula, aunque en la tabla de abajo sea `not null`. Se
+      // normaliza acá, en el borde, y la pantalla recibe la forma que espera.
+      return (data ?? [])
+        .filter((n): n is typeof n & { id: number; texto: string } =>
+          n.id !== null && n.texto !== null)
+        .map((n) => ({
+          id: n.id,
+          texto: n.texto,
+          creado_at: n.creado_at,
+          autor_nombre: n.autor_nombre,
+        }));
+    },
+  });
+}
+
 export function useEventosDelTramite(tramiteId: string | null) {
   return useQuery({
     queryKey: ["tramite_eventos", tramiteId],

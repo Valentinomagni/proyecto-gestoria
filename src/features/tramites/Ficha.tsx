@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, MessageSquare, Plus } from "lucide-react";
 import { Panel } from "../../components/Panel";
 import { SkeletonLineas } from "../../components/Skeleton";
 import { aCentavos, aPesos, formatear, parsear, pesosDesdeTexto } from "../../lib/plata";
 import { formatearFechaHora } from "../../lib/fechas";
 import { supabase } from "../../lib/supabase";
-import { BOTON, CAMPO, CAMPO_SUELTO } from "../../lib/campos";
+import { BOTON_SUAVE, BOTON, CAMPO, CAMPO_SUELTO } from "../../lib/campos";
 import type { Database } from "../../lib/database.types";
 import {
   useConceptos, useConceptosDelTramite, useEventosDelTramite, useGestoras,
-  useGuardar, useRequisitos, useRequisitosDelTramite, useTramite,
+  useGuardar, useNotasDelTramite, useRequisitos, useRequisitosDelTramite, useTramite,
 } from "../../lib/datos";
 import { Chip, nombreDeEstado } from "./Listado";
 
@@ -43,6 +43,7 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
   const gestoras = useGestoras();
   const requisitos = useRequisitos(tramite.data?.tipo ?? null);
   const respuestas = useRequisitosDelTramite(id);
+  const notas = useNotasDelTramite(id);
 
   const [campos, setCampos] = useState<Record<string, string>>({});
   const valor = (k: string, d: string | null): string => campos[k] ?? d ?? "";
@@ -100,6 +101,24 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
       if (error) throw error;
     },
     { exito: "Respuesta guardada", invalidar: ["tramite_requisitos"] },
+  );
+
+  /*
+    El `autor` va explicito y es `auth.uid()`: la policy exige que coincidan, asi que la base
+    NO deja escribir una nota firmada por otra persona. Es lo que hace que una nota valga como
+    respaldo — si se pudiera firmar por cualquiera, seria un papelito.
+  */
+  const agregarNota = useGuardar(
+    async (texto: string) => {
+      const { data: sesion } = await supabase.auth.getUser();
+      const autor = sesion.user?.id;
+      if (autor === undefined) throw new Error("regla_tramite: Se cerró la sesión. Entrá de nuevo.");
+      const { error } = await supabase
+        .from("tramite_notas")
+        .insert({ tramite_id: id, texto: texto.trim(), autor });
+      if (error) throw error;
+    },
+    { exito: "Nota guardada", invalidar: ["tramite_notas"] },
   );
 
   const responderTodo = useGuardar(
@@ -266,6 +285,13 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
         suma={sumaReal}
         conceptos={conceptos.data ?? []}
         alAgregar={(conceptoId, importe) => agregarLinea.mutate({ conceptoId, momento: "real", importe })}
+      />
+
+      <Notas
+        notas={notas.data ?? []}
+        cargando={notas.isLoading}
+        alAgregar={(texto) => agregarNota.mutate(texto)}
+        guardando={agregarNota.isPending}
       />
 
       <Panel>
@@ -498,5 +524,89 @@ function Checklist({
         </button>
       )}
     </div>
+  );
+}
+
+/**
+ * ============================================================================
+ *  LAS NOTAS DEL TRAMITE. Es la "intercomunicacion" del objetivo, y NO es un chat.
+ * ============================================================================
+ *
+ *  POR QUE NO ES UN CHAT, escrito en la migracion y repetido aca porque es lo que mas facil se
+ *  desvia: un canal de mensajes nuevo compite con WhatsApp, que ya esta abierto en el telefono
+ *  de todos, y pierde. Nadie va a venir a esta pantalla a conversar.
+ *
+ *  A lo que si sirve: hoy alguien explica algo por WhatsApp —"este no lo presentes hasta que
+ *  llegue el 08", "la titular viaja hasta el jueves"— y esa explicacion NO QUEDA EN NINGUN
+ *  LADO. Cuando dos semanas despues alguien pregunta por que este tramite esta parado, la
+ *  respuesta esta en un chat que hay que buscar, si es que sigue.
+ *
+ *  Entonces: una anotacion pegada al tramite, con quien y cuando. La ultima arriba, porque lo
+ *  que importa es lo ultimo que se supo.
+ *
+ *  NO SE EDITA NI SE BORRA, y no por olvido: la base le revoco UPDATE y DELETE. Una aclaracion
+ *  que se puede reescribir despues no sirve como respaldo, que es justamente para lo que se
+ *  escribe. Si algo quedo mal dicho, se escribe otra abajo.
+ */
+function Notas({
+  notas, cargando, alAgregar, guardando,
+}: {
+  notas: { id: number; texto: string; creado_at: string | null; autor_nombre: string | null }[];
+  cargando: boolean;
+  alAgregar: (texto: string) => void;
+  guardando: boolean;
+}) {
+  const [texto, setTexto] = useState("");
+  const listo = texto.trim() !== "";
+
+  return (
+    <Panel className="flex flex-col gap-3">
+      <h2 className="text-lg">Notas</h2>
+      <p className="text-xs text-ink2">
+        Lo que hoy se explica por WhatsApp y después nadie encuentra. Queda con tu nombre y no
+        se puede editar ni borrar: por eso sirve de respaldo.
+      </p>
+
+      <label className="flex flex-col gap-2">
+        <span className="sr-only">Escribí una nota</span>
+        <textarea
+          value={texto}
+          onChange={(e) => setTexto(e.target.value)}
+          rows={2}
+          placeholder="Ej: la titular viaja hasta el jueves, no presentar antes"
+          className={CAMPO}
+        />
+        <button
+          type="button"
+          disabled={!listo || guardando}
+          onClick={() => {
+            alAgregar(texto);
+            setTexto("");
+          }}
+          className={BOTON_SUAVE}
+        >
+          <MessageSquare aria-hidden="true" size={14} />
+          {guardando ? "Guardando" : "Agregar nota"}
+        </button>
+      </label>
+
+      {cargando ? (
+        <SkeletonLineas cantidad={2} />
+      ) : notas.length === 0 ? (
+        <p className="text-sm text-ink2">Todavía no hay notas en este trámite.</p>
+      ) : (
+        <div className="flex flex-col">
+          {notas.map((n) => (
+            <div key={n.id} className="border-b border-line py-2 last:border-0">
+              <p className="whitespace-pre-wrap text-sm">{n.texto}</p>
+              <p className="mt-1 text-2xs text-ink2 tnum">
+                {n.autor_nombre ?? "Alguien"}
+                {n.creado_at === null ? "" : ` · ${formatearFechaHora(n.creado_at)}`}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </Panel>
   );
 }
