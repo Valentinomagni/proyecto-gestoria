@@ -18,8 +18,8 @@
     "db:nueva": "supabase migration new",
     "db:seco": "supabase db push --dry-run --project-ref drsooohkwwpnijonxwwt",
     "db:push": "supabase db push --project-ref drsooohkwwpnijonxwwt",
-    "db:tipos": "supabase gen types typescript --project-ref drsooohkwwpnijonxwwt > src/lib/database.types.ts",
-    "tipos:al-dia": "node scripts/tipos-al-dia.mjs"
+    "db:tipos": "node scripts/tipos.mjs",
+    "tipos:al-dia": "node scripts/tipos.mjs --verificar"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
