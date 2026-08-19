@@ -1,11 +1,15 @@
 # Estado del proyecto
 
-Contado de nuevo el **19/08/2026**. Los números salen de correr los comandos, no de recordar.
+Contado de nuevo el **19/08/2026, a la noche**. Los números salen de correr los comandos, no de
+recordar.
 
-**Dónde estamos:** etapa 0 (fundación), **nueve de diez tareas terminadas**. Falta sólo el
-despliegue en Cloudflare, que depende de vos. **Ninguna
-funcionalidad del negocio existe todavía**: no hay trámites, ni saldos. La base existe con
-`perfiles` y los helpers de permisos, y nada más.
+**Dónde estamos:** etapa 0 terminada y **etapa 1 con el circuito entero funcionando de punta a
+punta**, caminado en el navegador con plata de verdad en la base: cargar el saldo, dar de alta un
+trámite, controlarlo con el checklist, entregarlo a una gestora, presupuestarlo, presentarlo y
+pagarlo. Los cinco saldos cierran en cada paso.
+
+**Lo que falta para que la vea la dueña:** el despliegue en Cloudflare, que **depende de vos** y
+son tres campos en un panel (abajo, con los valores exactos).
 
 ---
 
@@ -13,60 +17,101 @@ funcionalidad del negocio existe todavía**: no hay trámites, ni saldos. La bas
 
 | Qué | Cuánto | Comando |
 |---|---|---|
-| Tests, todos verdes | **77** | `npx vitest run` |
+| Tests, todos verdes | **105** en 14 archivos | `npx vitest run` |
 | Pruebas de permisos contra la API real | **9** | `npm run test:rls` |
-| Archivos de prueba | 11 | idem |
-| Guardianes | 6 | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `migraciones` |
-| Módulos de lógica en `src/lib` | 9 | `plata`, `fechas`, `fallas`, `roles`, `auth`, `respaldo`, `sesion`, `monitoreo`, `ui` |
-| Con prueba propia | 6 de 9 | sin prueba: `ui` (4 líneas), `sesion` y `monitoreo` (los ejercita el navegador) |
-| Peso de arranque | **79,52 kB** + 53,77 kB de Supabase | `npx vite build` |
-| Sentry, en pedazo aparte | 148,53 kB, **no bloquea el primer dibujo** | idem |
-| Duración del pre-commit | ~2,3 s | contra 90 a 180 s en el Tablero |
-| Commits sin publicar | **0** | `git rev-list --count origin/dev..dev` |
-| Migraciones corridas | **2** de 2 escritas | `npm run db:seco` dice "up to date" |
-| Tablas en la base | 1 (`perfiles`) | `npm run db:tipos` |
-| Cuentas creadas | 4, con roles asignados | verificado por la API |
+| Guardianes | **9** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `migraciones`, `secretos`, `permisos` |
+| Migraciones aplicadas | **9** de 9 escritas | `npm run db:seco` dice "up to date" |
+| Tablas en la base | **17**, más **4 vistas** | consulta a `pg_class` |
+| Módulos de lógica en `src/lib` | 15 | `ls src/lib` |
+| Archivos de código | 49 | `find src -name "*.ts*"` |
+| Peso de arranque | **86,82 kB** + 53,77 de Supabase + 11,72 de Query | `npx vite build` |
+| Sentry, en pedazo aparte | 148,56 kB, **no bloquea el primer dibujo** | idem |
+| Excel, en pedazo aparte | 19,69 kB, **se carga recién al apretar el botón** | idem |
+| Commits sin publicar a producción | **6** en `dev` | `git rev-list --count origin/main..dev` |
+| Cuentas creadas | 4, con roles asignados | verificado entrando con cada una |
 
 ---
 
 ## Lo que depende de mí
 
-En orden, y cada uno bloquea al siguiente:
+### Terminado
 
-- [x] **Tarea 2 — Supabase enlazado**, con el flujo `db:seco` → `db:push` → `db:tipos`.
-- [x] **Tarea 3 — migración 01 aplicada**: perfiles, alta automática, anti-autopromoción y los
-      seis helpers. Corrida dos veces sin duplicar. **Falta designar la primera gerencia**, que
-      necesita una cuenta real (abajo).
-- [x] **Tarea 4 — arnés de permisos contra la API real.** Nueve pruebas, y **visto en rojo**
-      sacando el trigger anti-autopromoción a propósito.
-- [x] **Tarea 7 — login, roles y cáscara.** Probado en el navegador con las tres situaciones:
-      gerencia entra, un usuario sin asignar ve la pantalla que lo explica, y una contraseña
-      equivocada no revela cuál de los dos campos falló.
-- [x] **Tarea 8 — `ErrorBoundary` y monitoreo.** Falta el botón de avisar un problema, que
-      necesita una tabla y va con la etapa 1.
-- [x] **Tarea 10 — respaldo derivado del esquema.** Falta **restaurarlo una vez de verdad**, que
-      necesita la segunda base.
-- [ ] **Tarea 9 — despliegue en Cloudflare.** Depende de vos.
+- [x] **Etapa 0 completa** salvo el despliegue: Supabase enlazado, permisos probados contra la
+      API real, login, roles, cáscara, `ErrorBoundary`, monitoreo y respaldo.
+- [x] **El circuito del trámite entero**, con los diez estados y sus reglas en la base.
+- [x] **La cuenta corriente**: libro mayor de sólo inserción, las cinco cifras, y las reservas
+      que se crean y se liberan solas. Comprobado con números reales en pantalla.
+- [x] **El checklist del legajo** con las tres respuestas: Está, Falta, No corresponde.
+- [x] **Las notas del trámite**, con autor y sin poder editarse ni borrarse.
+- [x] **Bajar a Excel**, con la plata como número y la fecha como fecha. El archivo se abrió y
+      se leyó celda por celda.
+- [x] **El teléfono**: navegación abajo, fichas en vez de tabla, controles de 44 px.
+- [x] **`npm run permisos`**: nadie puede borrar ni vaciar, ninguna vista es escribible, toda
+      vista lleva `security_invoker`. Visto en rojo antes de darlo por bueno.
+
+### Lo que sigue
+
+- [ ] **Los plazos y el calendario hábil.** Es el corazón del "reloj con plata adentro" y hoy no
+      existe: `proximoDiaHabil` todavía no contempla feriados, y está escrito adentro de la
+      función. Necesita las tablas `plazos`, `feriados` y la confirmación tuya de los cinco
+      plazos de `docs/DOMINIO.md` §4.
+- [ ] **El botón de avisar un problema** (Andon), que necesita su tabla.
+- [ ] **Ampliar las pruebas de permisos a `cobros` y `movimientos`**: que una gestora no llegue
+      al margen por ninguno de los cuatro caminos.
+- [ ] **Restaurar un respaldo una vez de verdad.** Necesita la segunda base.
+
+---
 
 ## Lo que depende de vos
 
+### Lo que desbloquea que la puedas probar
+
+- [ ] **Cloudflare: tres campos, una vez.** Hoy la URL sirve el `index.html` del código fuente
+      —el que apunta a `/src/main.tsx`, que en producción no existe— así que la página sale en
+      blanco. No está roto: falta decirle cómo compilar. En el panel del proyecto, en
+      **Settings → Builds & deployments → Build configurations**:
+
+      | Campo | Valor |
+      |---|---|
+      | Build command | `npm run build` |
+      | Build output directory | `dist` |
+      | Root directory | *(vacío)* |
+
+      Y en **Settings → Environment variables**, para Production y Preview:
+
+      | Variable | Valor |
+      |---|---|
+      | `NODE_VERSION` | `22.17.0` |
+      | `VITE_SUPABASE_URL` | el mismo que está en `.env.local` |
+      | `VITE_SUPABASE_ANON_KEY` | la clave publicable (`sb_publishable_...`) |
+      | `VITE_SENTRY_DSN` | el DSN de Sentry |
+
+      Después, **Deployments → Retry deployment**. Si la página carga y pide usuario y
+      contraseña, salió bien.
+
+### Seguridad, y esto no puede esperar al final
+
 - [ ] **Rotar el token de Supabase (`sbp_`) y el de GitHub.** Los dos quedaron escritos en el
-      historial de la conversación. El de Supabase es de cuenta: llega también al Tablero.
+      historial de la conversación. El de Supabase es **de cuenta**: llega también al Tablero.
+- [ ] **Cambiar la contraseña genérica** (`Paris2026!`) antes de que el sistema tenga saldos
+      reales. `gerencia1` tiene acceso total.
+
+### Lo que no es código y es lo que decide si el sistema sirve
+
 - [ ] **La regla de gerencia, por escrito:** *no se deposita contra una foto de cuaderno*.
       Sin eso, el camino viejo sigue abierto y es más corto. Es el primer entregable del
-      proyecto y no es código.
+      proyecto.
 - [ ] **La encuesta del día 0 a las gestoras y a gerencia de San Juan.** Las tuyas ya están.
       Caduca: después del encendido no se puede reconstruir. Ver `docs/ENCUESTA-DIA-0.md`.
-- [x] ~~Crear las cuentas en el panel de Supabase.~~ Hechas: cuatro, con `gerencia1` y
-      `contable1` ya designados.
-- [ ] **Cambiar la contraseña genérica** antes de que el sistema tenga saldos reales.
-      `gerencia1` tiene acceso total.
+- [ ] **Confirmar los plazos con las gestoras.** Los cinco de `docs/DOMINIO.md` §4 están sin
+      verificar, y hasta que no lo estén el sistema no los muestra como vencimientos. Un sistema
+      que avisa un vencimiento equivocado es peor que uno que no avisa nada.
 - [ ] **Contar las filas de la planilla, por hoja.** Hoy sólo sabemos que PARIS AUTOS pasa de
       6.868 y que hay cinco hojas más.
-- [ ] **Confirmar los plazos con las gestoras.** Los cinco de `docs/DOMINIO.md` §4 están sin
-      verificar, y hasta que no lo estén el sistema no los muestra como vencimientos.
-- [ ] **Cloudflare Pages**, cuando haya algo que mostrar. La entrada `proyecto-gestoria` que
-      quedó a medio crear es un Worker, no un Pages, y hay que borrarla.
+- [ ] **La segunda base de Supabase**, el día que se cargue el `saldo_inicial` real. Mientras
+      tanto la app lo dice en pantalla: "Base compartida con desarrollo".
+
+---
 
 ## Lo que está decidido y esperando su momento
 
