@@ -36,6 +36,22 @@ const PROHIBIDO: { patron: RegExp; motivo: string }[] = [
     motivo: "parseFloat sobre un importe pierde precisión; va parsear() o aCentavos()",
   },
   {
+    // ESTA REGLA NACIO DE UN DEFECTO REAL, encontrado mirando la pantalla el 19/08/2026.
+    //
+    // La ficha guardaba el deposito asi:  deposito_solicitado = Number(limpio)
+    // Se escribio 600.000 en el campo y el sistema reservo SEISCIENTOS PESOS. En castellano
+    // "600.000" son seiscientos mil; para Number() el punto es el separador DECIMAL, asi que
+    // Number("600.000") vale 600. Mil veces menos, sin ningun error, sin ninguna advertencia.
+    //
+    // El guardian viejo no lo vio porque vigilaba la ARITMETICA (`* 100`, `.toFixed`) y esto
+    // no es aritmetica: es leer mal lo que escribio una persona. La conversion mas peligrosa
+    // no era la que hacia cuentas, era la que entraba el numero.
+    patron: /\b(importe|monto|saldo|costo|total|precio|arancel|deposito)\w*\s*[:=]\s*[^;]*\bNumber\s*\(/i,
+    motivo:
+      "leer un importe escrito por una persona con Number(): Number(\"600.000\") vale 600. " +
+      "Va parsear() o pesosDesdeTexto()",
+  },
+  {
     patron: /style\s*:\s*["']currency["']/,
     motivo: "el formato de moneda vive en un solo lugar",
   },

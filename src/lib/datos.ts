@@ -159,7 +159,12 @@ export function useSaldos() {
   return useQuery({
     queryKey: ["saldos"],
     queryFn: async (): Promise<Saldo[]> => {
-      const { data, error } = await supabase.from("v_saldos").select("*");
+      // ORDENADO A PROPOSITO. Sin `order`, Postgres devuelve las filas en el orden que se le
+      // da la gana, y la pantalla de la Tarjeta muestra la primera: la tarjeta que se ve al
+      // entrar cambiaria sola entre una carga y la siguiente. En una pantalla de plata, que el
+      // numero grande de arriba sea de otra empresa que ayer es la peor forma de equivocarse,
+      // porque se ve igual de bien.
+      const { data, error } = await supabase.from("v_saldos").select("*").order("nombre");
       if (error) throw error;
       return (data ?? []).map((s) => ({
         tarjeta_id: String(s.tarjeta_id),
@@ -268,6 +273,23 @@ export function useConceptosDelTramite(tramiteId: string | null) {
         .eq("tramite_id", tramiteId ?? "");
       if (error) throw error;
       return (data ?? []).map((c) => Object.assign(c, { importe: aNumero(c.importe) }));
+    },
+  });
+}
+
+export function useRequisitosDelTramite(tramiteId: string | null) {
+  return useQuery({
+    queryKey: ["tramite_requisitos", tramiteId],
+    enabled: tramiteId !== null,
+    queryFn: async (): Promise<Record<string, { respuesta: string; nota: string | null }>> => {
+      const { data, error } = await supabase
+        .from("tramite_requisitos")
+        .select("requisito_id, respuesta, nota")
+        .eq("tramite_id", tramiteId ?? "");
+      if (error) throw error;
+      const porId: Record<string, { respuesta: string; nota: string | null }> = {};
+      for (const r of data ?? []) porId[r.requisito_id] = { respuesta: r.respuesta, nota: r.nota };
+      return porId;
     },
   });
 }

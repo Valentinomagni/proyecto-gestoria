@@ -105,9 +105,21 @@ function Bloque({
       <div className="flex flex-col">
         {tramites.map((t) => {
           const s = saldos.find((x) => x.tarjeta_id === t.tarjeta_id);
+          // ============================================================================
+          //  EL DISPONIBLE YA TIENE ESTE PEDIDO DESCONTADO. No se le resta de nuevo.
+          // ============================================================================
+          //
+          //  Este numero estuvo MAL y se vio mirando la pantalla, no testeando: decia
+          //  "Disponible despues" y calculaba `disponible - pedido`. Pero la reserva se crea
+          //  sola cuando se carga el presupuesto —antes de que el pedido llegue a esta
+          //  bandeja—, asi que ya esta adentro de `comprometido` y por lo tanto ya salio del
+          //  disponible. Restarla otra vez contaba la misma plata dos veces.
+          //
+          //  Con un pedido chico se ve como un redondeo raro. Con veinte pedidos de un millon,
+          //  la pantalla que decide si se manda plata muestra veinte millones de menos, y la
+          //  respuesta es frenar tramites que si tenian con que pagarse.
           const disponible = s ? s.contable - s.comprometido : null;
           const pedido = t.deposito_solicitado ?? 0;
-          const despues = disponible === null ? null : disponible - pedido;
           return (
             <button
               key={t.id}
@@ -123,9 +135,9 @@ function Bloque({
               </div>
               <div className="text-right">
                 <p className="text-base tnum">{formatear(aCentavos(pedido))}</p>
-                {despues !== null && (
-                  <p className={`text-2xs tnum ${despues < 0 ? "text-danger" : "text-ink2"}`}>
-                    Disponible después: {formatear(aCentavos(despues))}
+                {disponible !== null && (
+                  <p className={`text-2xs tnum ${disponible < 0 ? "text-danger" : "text-ink2"}`}>
+                    Queda disponible: {formatear(aCentavos(disponible))}
                   </p>
                 )}
               </div>

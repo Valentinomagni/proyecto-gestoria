@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aCentavos, formatear, parsear, sumar, aDecimal } from "./plata";
+import { aCentavos, aDecimal, formatear, parsear, pesosDesdeTexto, sumar } from "./plata";
 
 /**
  * Los numeros de estos tests NO son inventados: salen de las imagenes del pedido.
@@ -127,5 +127,26 @@ describe("aDecimal", () => {
     for (const n of [0, 1, 400000, 66600000, 250562792, -129451100]) {
       expect(aCentavos(aDecimal(n))).toBe(n);
     }
+  });
+});
+
+describe("pesosDesdeTexto", () => {
+  // EL CASO QUE COSTO UN FACTOR DE MIL. Number("600.000") vale 600; esto tiene que valer 600000.
+  it("600.000 son seiscientos mil y no seiscientos", () => {
+    expect(pesosDesdeTexto("600.000")).toBe(600000);
+  });
+
+  it("acepta las dos formas que conviven en el cuaderno", () => {
+    expect(pesosDesdeTexto("1.100.000")).toBe(1100000);
+    expect(pesosDesdeTexto("1100000")).toBe(1100000);
+  });
+
+  it("respeta los centavos", () => {
+    expect(pesosDesdeTexto("2.505.627,92")).toBe(2505627.92);
+  });
+
+  it("devuelve null cuando no se entiende, en vez de adivinar", () => {
+    expect(pesosDesdeTexto("seiscientos mil")).toBeNull();
+    expect(pesosDesdeTexto("")).toBeNull();
   });
 });

@@ -2,13 +2,13 @@ import { useState } from "react";
 import { ArrowLeft, Plus } from "lucide-react";
 import { Panel } from "../../components/Panel";
 import { SkeletonLineas } from "../../components/Skeleton";
-import { aCentavos, aPesos, formatear, parsear } from "../../lib/plata";
+import { aCentavos, aPesos, formatear, parsear, pesosDesdeTexto } from "../../lib/plata";
 import { formatearFechaHora } from "../../lib/fechas";
 import { supabase } from "../../lib/supabase";
 import type { Database } from "../../lib/database.types";
 import {
   useConceptos, useConceptosDelTramite, useEventosDelTramite, useGestoras,
-  useGuardar, useRequisitos, useTramite,
+  useGuardar, useRequisitos, useRequisitosDelTramite, useTramite,
 } from "../../lib/datos";
 import { Chip, nombreDeEstado } from "./Listado";
 
@@ -41,6 +41,7 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
   const eventos = useEventosDelTramite(id);
   const gestoras = useGestoras();
   const requisitos = useRequisitos(tramite.data?.tipo ?? null);
+  const respuestas = useRequisitosDelTramite(id);
 
   const [campos, setCampos] = useState<Record<string, string>>({});
   const valor = (k: string, d: string | null): string => campos[k] ?? d ?? "";
@@ -54,7 +55,14 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
       for (const [k, v] of Object.entries(campos)) {
         const limpio = v.trim();
         if (k === "deposito_solicitado") {
-          parche.deposito_solicitado = limpio === "" ? null : Number(limpio);
+          // Nunca Number(): "600.000" son seiscientos mil, no seiscientos. Ver pesosDesdeTexto.
+          if (limpio === "") {
+            parche.deposito_solicitado = null;
+          } else {
+            const pesos = pesosDesdeTexto(limpio);
+            if (pesos === null) throw new Error("regla_tramite: El depósito no se entiende. Escribilo así: 600.000");
+            parche.deposito_solicitado = pesos;
+          }
         } else if (k === "gestora_id") {
           parche.gestora_id = limpio === "" ? null : limpio;
         } else if (k === "seccional") {
@@ -82,6 +90,17 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
     { exito: "Concepto agregado", invalidar: ["tramite_conceptos"] },
   );
 
+  const responder = useGuardar(
+    async (v: { requisitoId: string; respuesta: string }) => {
+      const { error } = await supabase.from("tramite_requisitos").upsert(
+        { tramite_id: id, requisito_id: v.requisitoId, respuesta: v.respuesta },
+        { onConflict: "tramite_id,requisito_id" },
+      );
+      if (error) throw error;
+    },
+    { exito: "Respuesta guardada", invalidar: ["tramite_requisitos"] },
+  );
+
   const responderTodo = useGuardar(
     async () => {
       const filas = (requisitos.data ?? []).map((r) => ({
@@ -92,7 +111,7 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
       });
       if (error) throw error;
     },
-    { exito: "Checklist contestado", invalidar: ["tramite"] },
+    { exito: "Checklist contestado", invalidar: ["tramite_requisitos"] },
   );
 
   if (tramite.isLoading || !tramite.data) return <SkeletonLineas cantidad={6} className="m-6 max-w-2xl" />;
@@ -138,20 +157,12 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
           <h2 className="text-lg">Paso siguiente</h2>
 
           {t.estado === "recibido" && (
-            <div className="flex flex-col gap-2">
-              <p className="text-sm text-ink2">
-                Antes de pasar a gestoría hay que contestar el checklist del legajo. Se exige
-                contestado, no que todo esté: una falta registrada sirve, una casilla tildada en
-                falso no.
-              </p>
-              <button
-                type="button"
-                onClick={() => responderTodo.mutate(undefined)}
-                className="w-fit rounded-md border border-line px-3 py-2 text-sm"
-              >
-                Marcar los {requisitos.data?.length ?? 0} requisitos como presentes
-              </button>
-            </div>
+            <Checklist
+              requisitos={requisitos.data ?? []}
+              respuestas={respuestas.data ?? {}}
+              alResponder={(requisitoId, respuesta) => responder.mutate({ requisitoId, respuesta })}
+              alResponderTodo={() => responderTodo.mutate(undefined)}
+            />
           )}
 
           {t.estado === "controlado" && (
@@ -322,10 +333,27 @@ function Costos({
                 La diferencia entre lo que suman las lineas y el deposito que se pide existe en
                 TODAS las filas del cuaderno: GARAY suma 666.000 y pide 670.000. Si el sistema
                 no la muestra, alguien va a creer que el sistema esta mal.
+
+                LAS DOS DIRECCIONES NO SON LO MISMO, y la primera version las mostraba igual.
+                De mas es lo normal y esta bien: se pide un poco de colchon porque el arancel
+                real recien se sabe en la ventanilla. DE MENOS es una gestora parada en el
+                registro con menos plata que la cuenta, que es exactamente el momento en el que
+                este sistema tiene que haber avisado antes.
+
+                Se vio mirando la pantalla: con el deposito mal cargado la diferencia decia
+                -$ 569.400 en gris, del mismo color que todo lo demas.
               */}
               <span className="text-ink2">Diferencia con el depósito pedido</span>
-              <span className="tnum">{formatear(aCentavos(diferencia))}</span>
+              <span className={`tnum ${diferencia < 0 ? "text-warn" : ""}`}>
+                {formatear(aCentavos(diferencia))}
+              </span>
             </div>
+          )}
+          {diferencia !== null && diferencia < 0 && (
+            <p className="text-2xs text-warn">
+              El depósito pedido es menor que lo que suman los conceptos. Revisalo antes de
+              presentar: con esta plata no alcanza para pagar.
+            </p>
           )}
         </div>
       ) : (
@@ -360,5 +388,115 @@ function Costos({
         </button>
       </div>
     </Panel>
+  );
+}
+
+/**
+ * ============================================================================
+ *  EL CHECKLIST DEL LEGAJO, con las TRES respuestas que tiene la base.
+ * ============================================================================
+ *
+ *  ESTE COMPONENTE NACIO DE UN DEFECTO QUE SE VIO MIRANDO LA PANTALLA, no testeando.
+ *
+ *  La primera version tenia un solo boton, "marcar los 4 requisitos como presentes", justo
+ *  debajo de un texto que decia "una falta registrada sirve". O sea: la pantalla prometia un
+ *  control y entregaba un sello de goma. No habia ninguna forma de anotar que algo faltaba,
+ *  que es EXACTAMENTE el dato que hace falta despues, cuando el tramite vuelve del registro
+ *  rechazado y nadie se acuerda si el formulario 08 estaba o no.
+ *
+ *  Una pantalla que dice una cosa y hace otra es peor que una que no dice nada: la primera
+ *  ademas enseña a no leerla.
+ *
+ *  POR QUE TRES RESPUESTAS Y NO UN TILDE. Lo dice el comentario de la columna en la base: un
+ *  checklist que bloquea por un requisito que no corresponde se termina tildando en falso, y
+ *  ahi deja de ser un control y pasa a ser una mentira prolija.
+ *
+ *  EL ATAJO SE QUEDA, y abajo. El caso comun es que venga todo, y el alta entera tiene que
+ *  entrar en veinte segundos o vuelve el cuaderno. Pero deja de ser la UNICA opcion, que es lo
+ *  que lo volvia un sello.
+ */
+const RESPUESTAS = [
+  { valor: "si", nombre: "Está" },
+  { valor: "no", nombre: "Falta" },
+  { valor: "no_aplica", nombre: "No corresponde" },
+];
+
+function Checklist({
+  requisitos, respuestas, alResponder, alResponderTodo,
+}: {
+  requisitos: { id: string; nombre: string }[];
+  respuestas: Record<string, { respuesta: string; nota: string | null }>;
+  alResponder: (requisitoId: string, respuesta: string) => void;
+  alResponderTodo: () => void;
+}) {
+  const contestados = requisitos.filter((r) => respuestas[r.id] !== undefined).length;
+  const faltan = requisitos.filter((r) => respuestas[r.id]?.respuesta === "no");
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm text-ink2">
+        Antes de pasar a gestoría hay que contestar el checklist del legajo. Se exige
+        contestado, no que todo esté: una falta registrada sirve, una casilla tildada en falso
+        no.
+      </p>
+
+      <div className="flex flex-col">
+        {requisitos.map((r) => {
+          const actual = respuestas[r.id]?.respuesta;
+          return (
+            <div
+              key={r.id}
+              className="flex flex-wrap items-center justify-between gap-2 border-b border-line py-2"
+            >
+              <span className={`text-sm ${actual === undefined ? "" : "text-ink2"}`}>{r.nombre}</span>
+              <div className="flex gap-1">
+                {RESPUESTAS.map((op) => (
+                  <button
+                    key={op.valor}
+                    type="button"
+                    onClick={() => alResponder(r.id, op.valor)}
+                    aria-pressed={actual === op.valor}
+                    className={`rounded-md border px-2 py-1 text-xs ${
+                      actual === op.valor
+                        ? op.valor === "no" ? "border-warn text-warn" : "border-ink"
+                        : "border-line text-ink2"
+                    }`}
+                  >
+                    {op.nombre}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/*
+        El contador dice lo que FALTA, no lo que ya se hizo. "Contestaste 3" invita a seguir de
+        largo; "falta contestar 1" dice exactamente que hacer y cuanto queda.
+      */}
+      <p className="text-xs text-ink2 tnum">
+        {contestados === requisitos.length
+          ? `Contestados los ${requisitos.length}`
+          : `Falta contestar ${requisitos.length - contestados} de ${requisitos.length}`}
+      </p>
+
+      {faltan.length > 0 && (
+        <p className="text-xs text-warn">
+          Anotado que falta: {faltan.map((r) => r.nombre).join(", ")}. El trámite igual avanza —
+          queda escrito para cuando alguien pregunte por qué volvió.
+        </p>
+      )}
+
+      {contestados < requisitos.length && (
+        <button
+          type="button"
+          onClick={alResponderTodo}
+          className="w-fit rounded-md border border-line px-3 py-2 text-xs text-ink2"
+        >
+          Vino todo: marcar los {requisitos.length} como presentes
+        </button>
+      )}
+    </div>
   );
 }

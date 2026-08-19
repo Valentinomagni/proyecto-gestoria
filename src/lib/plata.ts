@@ -135,3 +135,26 @@ export function aPesos(centavos: number): number {
   exigirEnteroSeguro(centavos, centavos);
   return centavos / 100;
 }
+
+/**
+ * ============================================================================
+ *  Lo que escribio una persona -> el numero que va a la base. Null si no se entiende.
+ * ============================================================================
+ *
+ *  EXISTE POR UN DEFECTO QUE COSTO UN FACTOR DE MIL, encontrado el 19/08/2026 mirando la
+ *  pantalla y no testeando.
+ *
+ *  La ficha del tramite guardaba el deposito con `Number(texto)`. Se escribio `600.000` en el
+ *  campo —seiscientos mil, como se escribe en castellano— y el sistema reservo SEISCIENTOS
+ *  PESOS: para `Number()` el punto es el separador decimal, no el de miles. Sin error, sin
+ *  advertencia, y con el trámite avanzando como si la plata estuviera comprometida.
+ *
+ *  El modulo de plata ya tenia `parsear`, que lo hace bien. El problema fue que ese camino
+ *  existia y NO se uso: entre `parsear(t)` y `Number(t)` no habia nada que empujara al
+ *  correcto. Esta funcion es ese empujon —un solo paso del texto al numero de la base— y el
+ *  guardian ahora marca en rojo cualquier `Number()` que termine en un campo de plata.
+ */
+export function pesosDesdeTexto(texto: string): number | null {
+  const centavos = parsear(texto);
+  return centavos === null ? null : aPesos(centavos);
+}

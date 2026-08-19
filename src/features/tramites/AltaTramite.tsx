@@ -41,15 +41,34 @@ export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
   const [canal, setCanal] = useState("presencial");
   const [observaciones, setObservaciones] = useState("");
 
-  /** Lo que reconoce se carga en los campos de abajo, editable. Lo que no, queda vacio. */
+  /**
+   * Lo que reconoce se carga en los campos de abajo, editable. Lo que no, LOS VACIA.
+   *
+   * ============================================================================
+   *  POR QUE VACIA Y NO DEJA LO ANTERIOR. Esto se descubrio mirando, no testeando.
+   * ============================================================================
+   *
+   *  La primera version escribia cada campo solo si el parseo habia reconocido algo
+   *  (`if (r.cliente) setCliente(...)`), que parece lo prudente y es exactamente lo contrario.
+   *
+   *  Lo que pasaba en pantalla: se pegaba un asunto, se veia que era el equivocado, se pegaba
+   *  el correcto — y los campos que el segundo asunto NO traia se quedaban con los datos del
+   *  PRIMERO. En modalidad eso es cosmetico. En cliente o en referencia de oferta es un tramite
+   *  con el nombre de otra persona, cargado con toda confianza porque el formulario se
+   *  completo solo.
+   *
+   *  Estos cinco campos son un reflejo del asunto y de nada mas: si el asunto cambia, cambian
+   *  los cinco. Lo que se corrija a mano DESPUES sobrevive, porque solo se recalculan cuando se
+   *  toca el asunto. Un dato viejo que sobrevive callado es peor que un campo vacio, que se ve.
+   */
   function pegar(texto: string): void {
     setAsunto(texto);
     const r = parsearAsunto(texto);
-    if (r.cliente) setCliente(r.cliente);
-    if (r.cuenta) setCuenta(r.cuenta);
-    if (r.referencia) setReferencia(r.referencia);
-    if (r.tipo) setTipo(r.tipo);
-    if (r.subtipo) setSubtipo(r.subtipo);
+    setCliente(r.cliente ?? "");
+    setCuenta(r.cuenta ?? "");
+    setReferencia(r.referencia ?? "");
+    setTipo(r.tipo ?? "");
+    setSubtipo(r.subtipo ?? "");
   }
 
   const guardar = useGuardar(

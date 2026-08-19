@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { FilePlus, HandCoins, LayoutList, Settings, Wallet } from "lucide-react";
 import { Shell } from "./components/Shell";
 import { Tarjeta } from "./features/tarjeta/Tarjeta";
 import { Bandeja } from "./features/solicitudes/Bandeja";
@@ -9,7 +8,7 @@ import { AltaTramite } from "./features/tramites/AltaTramite";
 import { Ficha } from "./features/tramites/Ficha";
 import { Admin } from "./features/admin/Admin";
 import { useSaldosEnVivo } from "./lib/datos";
-import { puedeAdministrar, type Rol } from "./lib/roles";
+import type { Pantalla } from "./menu";
 
 /**
  * El armado de la app.
@@ -18,16 +17,6 @@ import { puedeAdministrar, type Rol } from "./lib/roles";
  * enlace directo a un tramite —para mandarlo por WhatsApp— entra TanStack Router, que ya esta
  * instalado. Agregarlo ahora seria andamiaje sin caso de uso.
  */
-
-export type Pantalla = "tarjeta" | "bandeja" | "tramites" | "alta" | "admin";
-
-export const MENU: { id: Pantalla; nombre: string; icono: typeof Wallet; soloGerencia?: boolean }[] = [
-  { id: "bandeja", nombre: "Pedidos de fondos", icono: HandCoins },
-  { id: "tarjeta", nombre: "Tarjeta", icono: Wallet },
-  { id: "tramites", nombre: "Trámites", icono: LayoutList },
-  { id: "alta", nombre: "Cargar trámite", icono: FilePlus },
-  { id: "admin", nombre: "Administración", icono: Settings, soloGerencia: true },
-];
 
 export function App() {
   const cliente = useQueryClient();
@@ -61,7 +50,3 @@ export function App() {
   );
 }
 
-/** Qué pantallas ve cada rol. NO decide permisos: evita mostrar botones que van a fallar. */
-export function menuPara(rol: Rol): typeof MENU {
-  return MENU.filter((m) => !m.soloGerencia || puedeAdministrar(rol));
-}

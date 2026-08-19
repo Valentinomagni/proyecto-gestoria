@@ -3,7 +3,7 @@ import { LogOut, ShieldAlert } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { nombreDeRol } from "../lib/roles";
 import { useSesion } from "../lib/sesion";
-import { menuPara, type Pantalla } from "../App";
+import { menuPara, type Pantalla } from "../menu";
 import { Isotipo } from "./Logo";
 import { SkeletonLineas } from "./Skeleton";
 import { EmptyState } from "./EmptyState";

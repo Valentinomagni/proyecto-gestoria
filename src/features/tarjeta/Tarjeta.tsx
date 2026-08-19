@@ -6,6 +6,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { aCentavos, formatear } from "../../lib/plata";
 import { formatearFechaHora, hoyArgentina, minutosHasta, antesDelCorte } from "../../lib/fechas";
 import { useMovimientos, useSaldos } from "../../lib/datos";
+import { recordado, recordar } from "../../lib/recordar";
 
 /**
  * La pantalla de la Tarjeta Habitualista.
@@ -21,8 +22,24 @@ const CORTE_POR_DEFECTO = "16:00";
 
 export function Tarjeta() {
   const saldos = useSaldos();
-  const [tarjetaId, setTarjetaId] = useState<string | null>(null);
-  const elegida = tarjetaId ?? saldos.data?.[0]?.tarjeta_id ?? null;
+
+  /*
+    LA TARJETA ELEGIDA SE RECUERDA. Sin esto, la pantalla volvia siempre a la primera de la
+    lista: quien trabaja todo el dia con una razon social tenia que elegirla de nuevo cada vez
+    que iba y volvia. Es la clase de friccion chica y repetida que hace que se vuelva al Excel.
+
+    Se comprueba contra la lista real antes de usarla: una tarjeta que se dio de baja, o la
+    preferencia de otra empresa que quedo en esa computadora, no puede dejar la pantalla vacia.
+  */
+  const [tarjetaId, setTarjetaId] = useState<string | null>(() => recordado("tarjeta"));
+  const existe = saldos.data?.some((s) => s.tarjeta_id === tarjetaId) ?? false;
+  const elegida = (existe ? tarjetaId : null) ?? saldos.data?.[0]?.tarjeta_id ?? null;
+
+  function elegir(id: string): void {
+    setTarjetaId(id);
+    recordar("tarjeta", id);
+  }
+
   const movimientos = useMovimientos(elegida);
   const saldo = saldos.data?.find((s) => s.tarjeta_id === elegida);
 
@@ -51,7 +68,7 @@ export function Tarjeta() {
         <h1 className="text-xl">Tarjeta Habitualista</h1>
         <select
           value={elegida ?? ""}
-          onChange={(e) => setTarjetaId(e.target.value)}
+          onChange={(e) => elegir(e.target.value)}
           className="rounded-md border border-line bg-surface2 px-3 py-2 text-sm"
         >
           {saldos.data?.map((s) => (
