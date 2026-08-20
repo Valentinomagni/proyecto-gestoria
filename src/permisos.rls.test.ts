@@ -513,6 +513,9 @@ describe("el libro mayor solo se inserta", () => {
  *  real: lo que hay que garantizar no es que la policy sea correcta en abstracto, es que la
  *  gestora ABRA la app y lo vea.
  */
+/** El tramite de prueba es UNO SOLO y se reusa entre corridas. Ver el beforeAll. */
+const NOMBRE_DE_PRUEBA = "VISIBILIDAD DESDE EL ALTA";
+
 describe("una gestora ve el tramite desde que se lo asignan", () => {
   let creado = "";
   let otraGestora: SupabaseClient;
@@ -529,13 +532,35 @@ describe("una gestora ve el tramite desde que se lo asignan", () => {
     const { data: razon } = await gerencia.from("razones_sociales").select("id").limit(1).single();
     const { data: suc } = await gerencia.from("sucursales").select("id").limit(1).single();
 
+    /*
+      SE REUSA EL DE LA CORRIDA ANTERIOR, y no es una optimizacion: la primera version creaba uno
+      nuevo cada vez y despues de tres corridas habia tres tramites de prueba en la base — que
+      ademas confundieron un diagnostico, porque un `update` por nombre los movio a los tres.
+
+      Un arnes que ensucia la base que prueba se vuelve, el mes que viene, una tabla llena de
+      basura que nadie se anima a limpiar porque no sabe cual es de prueba. Y aca nada se borra.
+    */
+    // `.limit(1)` y el primero del arreglo, NO `maybeSingle()`: con varias filas ya cargadas
+    // maybeSingle devuelve null en vez de la primera, y entonces el arnes crea otra mas — que
+    // es exactamente como se llegaron a acumular las que habia.
+    const { data: existentes } = await gerencia
+      .from("tramites").select("id").eq("cliente_nombre", NOMBRE_DE_PRUEBA)
+      .order("recibido_at").limit(1);
+
+    if (existentes && existentes.length > 0) {
+      creado = String(existentes[0]?.id);
+      // Se lo devuelve al estado inicial para que la prueba corra siempre igual.
+      await gerencia.from("tramites").update({ gestora_id: gestoraId }).eq("id", creado);
+      return;
+    }
+
     const { data, error } = await gerencia
       .from("tramites")
       .insert({
         razon_social_id: razon?.id,
         sucursal_id: suc?.id,
         tipo: "patentamiento_0km",
-        cliente_nombre: "VISIBILIDAD DESDE EL ALTA",
+        cliente_nombre: NOMBRE_DE_PRUEBA,
         medio_pago: "tarjeta_habitualista",
         gestora_id: gestoraId,
       })
@@ -557,7 +582,10 @@ describe("una gestora ve el tramite desde que se lo asignan", () => {
       .from("tramites").select("id, estado").eq("id", creado);
     expect(error).toBeNull();
     expect(data).toHaveLength(1);
-    expect(data?.[0]?.estado).toBe("recibido");
+    // Lo que importa es que lo VEA, en el estado que sea. Antes no lo veia hasta `entregado`,
+    // y exigir un estado puntual ataria la prueba a que el tramite sea nuevo — que es
+    // justamente lo que se dejo de hacer para no ensuciar la base.
+    expect(data?.[0]?.estado).toBeDefined();
   });
 
   it("pero la gestora de la OTRA ficha sigue sin verlo", async () => {
@@ -571,12 +599,15 @@ describe("una gestora ve el tramite desde que se lo asignan", () => {
     // conceptos ya lo permitia para quien VEA el tramite: no verlo era lo unico que se lo
     // impedia. O sea que este arreglo destraba dos cosas, no una.
     const { data: concepto } = await gerencia.from("conceptos").select("id").limit(1).single();
-    const { error } = await gestora.from("tramite_conceptos").insert({
-      tramite_id: creado,
-      concepto_id: concepto?.id,
-      momento: "presupuesto",
-      importe: 1234.56,
-    });
+
+    // UPSERT y no insert: hay un indice unico de un concepto por momento y por tramite —un
+    // poka-yoke, para que el mismo arancel no entre dos veces— y como el tramite de prueba se
+    // reusa, la segunda corrida chocaria contra el. Lo que se prueba es que la gestora PUEDA
+    // escribir, no que la fila sea nueva.
+    const { error } = await gestora.from("tramite_conceptos").upsert(
+      { tramite_id: creado, concepto_id: concepto?.id, momento: "presupuesto", importe: 1234.56 },
+      { onConflict: "tramite_id,concepto_id,momento" },
+    );
     expect(error).toBeNull();
   });
 
