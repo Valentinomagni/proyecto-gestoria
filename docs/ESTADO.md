@@ -1,6 +1,6 @@
 # Estado del proyecto
 
-Contado de nuevo el **19/08/2026, a la noche**. Los números salen de correr los comandos, no de
+Contado de nuevo el **20/08/2026**, después de la primera prueba real con los tres usuarios. Los números salen de correr los comandos, no de
 recordar.
 
 **Dónde estamos:** etapa 0 terminada y **etapa 1 con el circuito entero funcionando de punta a
@@ -17,11 +17,11 @@ son tres campos en un panel (abajo, con los valores exactos).
 
 | Qué | Cuánto | Comando |
 |---|---|---|
-| Tests, todos verdes | **138** en 18 archivos | `npx vitest run` |
-| Pruebas de permisos contra la API real | **23** | `npm run test:rls` |
+| Tests, todos verdes | **163** en 19 archivos | `npx vitest run` |
+| Pruebas de permisos contra la API real | **29** | `npm run test:rls` |
 | Guardianes | **10** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `pruebas`, `migraciones`, `secretos`, `permisos` |
-| Migraciones aplicadas | **13** de 13 escritas | `npm run db:seco` dice "up to date" |
-| Tablas en la base | **20**, más **5 vistas** | consulta a `pg_class` |
+| Migraciones aplicadas | **22** de 22 escritas | `npm run db:seco` dice "up to date" |
+| Tablas en la base | **21**, más **5 vistas** | consulta a `pg_class` |
 | Módulos de lógica en `src/lib` | 15 | `ls src/lib` |
 | Archivos de código | 49 | `find src -name "*.ts*"` |
 | Peso de arranque | **86,82 kB** + 53,77 de Supabase + 11,72 de Query | `npx vite build` |
@@ -29,6 +29,43 @@ son tres campos en un panel (abajo, con los valores exactos).
 | Excel, en pedazo aparte | 19,69 kB, **se carga recién al apretar el botón** | idem |
 | Commits sin publicar a producción | **6** en `dev` | `git rev-list --count origin/main..dev` |
 | Cuentas creadas | 4, con roles asignados | verificado entrando con cada una |
+
+---
+
+## Las correcciones del primer test real — 20/08/2026
+
+Las catorce que salieron de probar el sistema con los tres usuarios. **Todas hechas.**
+
+| Qué se pidió | Cómo quedó |
+|---|---|
+| La cuenta personal viene entre paréntesis | Se reconoce sola. Gana lo explícito: `REF` es referencia, `C.` es cuenta, y un número suelto entre paréntesis es la cuenta |
+| Modalidad: debería decir DIRECTA | Sólo para patentamientos, y con dos valores: plan de ahorro o venta directa. En una transferencia el campo ya no aparece |
+| Que no se pierdan los datos al cambiar de pantalla | Un borrador que además sobrevive a recargar y a cerrar el navegador |
+| Paris Autos primero, Paris Cars segundo | El orden lo decide la columna `orden` de la base, no el alfabeto |
+| Contable y gerencia, permisos idénticos | Un helper `es_oficina()`. Y de paso: nadie se cambia el rol a sí mismo, ni gerencia |
+| Poder editar los depósitos por errores de tipeo | Se corrige hasta que se paga, y la diferencia se ajusta sola en la cuenta |
+| Ocultar vencimientos en gestoría | Son control de oficina. Se le sacan de la vista, no de sus permisos |
+| Designar un gestor y que le aparezca | Se elige al dar de alta, y lo ve desde ese momento |
+| Modificar los ítems del check | Los cinco que se controlan de verdad. Los diez viejos quedan desactivados, no borrados |
+| Que las gestoras carguen el presupuesto | Ya podían: lo único que se lo impedía era no ver el trámite |
+| Corregir la visibilidad en gestoras | Misma corrección que la anterior |
+| Notificaciones de las modificaciones | Una campana en vivo, en las dos barras |
+| Historial de modificaciones en presupuesto | Quién lo cambió, cuándo y de cuánto a cuánto. Lo escribe un trigger |
+| Administrativo a cargo | Campo con sugerencias de lo ya cargado. Sale en la ficha y en el Excel |
+
+### Lo que encontraron las comprobaciones, y no una relectura
+
+- **Realtime nunca había funcionado.** La publicación estaba vacía: la app se suscribía, no daba
+  error, y no llegaba nada. El saldo "se actualizaba solo" por el refresco al volver el foco, no
+  por Realtime. Era lo que el código llama la función central del producto.
+- **Seis policies** seguían nombrando a los dos roles con un `or` escrito a mano, dejando al
+  helper sin ser el único lugar que decide — sobre `tramites` y `movimientos`.
+- **Una regresión de permisos:** sin sesión, leer `perfiles` devolvía error en vez de cero filas.
+  La RLS tiene que filtrar por ausencia, no por rechazo.
+- **Un test del propio arnés** dejaba una gestora desactivada al fallar, porque restauraba
+  después de afirmar.
+- **Dos errores de orden en migraciones**: convertir datos antes de borrar la restricción vieja,
+  y agregar una columna en el medio de una vista.
 
 ---
 
