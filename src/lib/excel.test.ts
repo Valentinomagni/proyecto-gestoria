@@ -30,6 +30,7 @@ const BASE: FilaExportable = {
   estado: "pagado",
   seccional: "San Luis 1",
   numero_pago_registro: null,
+  administrativo: "Sofía",
   deposito_solicitado: 600000,
 };
 
@@ -87,6 +88,12 @@ describe("exportación a Excel", () => {
     const c = celda(BASE, "Dominio");
     expect(c.value).toBe("");
     expect(c.type).toBe(String);
+  });
+
+  it("el administrativo a cargo sale en su columna", () => {
+    // Es el dato que dice a quien preguntarle cuando el legajo no cierra: si no sale en el
+    // Excel, para eso hay que volver a abrir el sistema tramite por tramite.
+    expect(celda(BASE, "Administrativo a cargo").value).toBe("Sofía");
   });
 
   it("hay una celda por cada título, siempre", () => {

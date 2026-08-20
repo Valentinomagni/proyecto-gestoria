@@ -52,6 +52,7 @@ export interface FilaExportable {
   estado: string;
   seccional: string | null;
   numero_pago_registro: string | null;
+  administrativo: string | null;
   deposito_solicitado: number | null;
 }
 
@@ -96,6 +97,7 @@ const COLUMNAS: Columna[] = [
   { titulo: "Estado", ancho: 20, celda: (f, n) => texto(n.estado(f.estado)) },
   { titulo: "Seccional", ancho: 18, celda: (f) => texto(f.seccional) },
   { titulo: "N° de pago", ancho: 16, celda: (f) => texto(f.numero_pago_registro) },
+  { titulo: "Administrativo a cargo", ancho: 22, celda: (f) => texto(f.administrativo) },
   { titulo: "Depósito solicitado", ancho: 20, celda: (f) => plata(f.deposito_solicitado) },
 ];
 

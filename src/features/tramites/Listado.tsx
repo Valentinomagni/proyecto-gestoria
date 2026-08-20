@@ -9,6 +9,7 @@ import { aCentavos, formatear } from "../../lib/plata";
 import { useTramites } from "../../lib/datos";
 import { BOTON_SUAVE, CAMPO_ADENTRO, CAMPO_CON_ICONO, CAMPO_SUELTO } from "../../lib/campos";
 import { clasificarFalla } from "../../lib/fallas";
+import { useBorrador } from "../../lib/borrador";
 
 /**
  * El listado de tramites. Reemplaza la planilla.
@@ -54,8 +55,10 @@ const MODALIDADES: Record<string, string> = {
 };
 
 export function Listado({ alAbrir }: { alAbrir: (id: string) => void }) {
-  const [buscar, setBuscar] = useState("");
-  const [estado, setEstado] = useState("");
+  // El filtro tambien se recuerda: volver al listado y encontrarlo como lo dejaste es parte de
+  // no tener que rehacer todo cada vez que se va a chequear un dato en otra pantalla.
+  const [buscar, setBuscar] = useBorrador("listado.buscar", "");
+  const [estado, setEstado] = useBorrador("listado.estado", "");
   const [bajando, setBajando] = useState(false);
   const tramites = useTramites({ ...(estado !== "" && { estado }), ...(buscar !== "" && { buscar }) });
 

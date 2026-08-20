@@ -16,6 +16,7 @@ import {
   calcular, inicioDe, plazosDeTipo,
   type Calendario, type Plazo, type Vencimiento,
 } from "../../lib/plazos";
+import { useSesion } from "../../lib/sesion";
 import { Chip, nombreDeEstado } from "./Listado";
 
 /**
@@ -51,6 +52,7 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
   const notas = useNotasDelTramite(id);
   const plazos = usePlazos();
   const calendario = useCalendario();
+  const { perfil } = useSesion();
 
   const [campos, setCampos] = useState<Record<string, string>>({});
   const valor = (k: string, d: string | null): string => campos[k] ?? d ?? "";
@@ -215,6 +217,7 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
           <Dato rotulo="Dominio" valor={t.dominio} />
           <Dato rotulo="Seccional" valor={t.seccional} />
           <Dato rotulo="N° de pago" valor={t.numero_pago_registro} />
+          <Dato rotulo="Administrativo a cargo" valor={t.administrativo} />
         </div>
         {t.asunto_mail ? (
           <details className="mt-3">
@@ -254,10 +257,31 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
             </label>
           )}
 
-          {t.estado === "entregado" && (
+          {/*
+            ============================================================================
+             EL DEPOSITO SE PUEDE CORREGIR HASTA QUE SE PAGA
+            ============================================================================
+
+            Antes el campo solo aparecia en `entregado`, asi que un error de tipeo no se podia
+            arreglar NUNCA — y un deposito mal cargado es plata comprometida de mas o de menos
+            en la pantalla con la que se decide si se manda a presentar.
+
+            La base ya sabia corregirlo desde el principio: al cambiar el importe escribe un
+            movimiento de ajuste POR LA DIFERENCIA y nunca toca la reserva original, porque
+            editarla haria que el saldo de ayer deje de ser reconstruible. Faltaba solamente
+            mostrar el campo.
+
+            DESPUES DE PAGADO NO, y tampoco es capricho: ahi ya se libero la reserva y se
+            descconto el costo real. Corregir el presupuesto en ese punto no cambiaria ninguna
+            plata y dejaria el tramite diciendo algo que no paso. Un error posterior al pago se
+            arregla con un ajuste, que es otra operacion y queda escrita.
+          */}
+          {["entregado", "presupuestado", "frenado_por_saldo", "presentado"].includes(t.estado) && (
             <label className="flex flex-col gap-1">
               <span className="text-xs text-ink2">
-                Depósito que se solicita * — puede ser mayor que la suma de los conceptos
+                {t.deposito_solicitado === null
+                  ? "Depósito que se solicita * — puede ser mayor que la suma de los conceptos"
+                  : "Depósito que se solicita — si lo corregís, la diferencia se ajusta sola en la cuenta"}
               </span>
               <input
                 inputMode="decimal"
@@ -265,6 +289,21 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
                 onChange={(e) => set("deposito_solicitado", e.target.value)}
                 className={CAMPO}
               />
+              {/*
+                El boton aparece solo si hay algo sin guardar, y guarda SIN mover el tramite de
+                paso: le pasa el estado en el que ya esta. Corregir un tipeo no puede obligar a
+                avanzar la cadena.
+              */}
+              {campos["deposito_solicitado"] !== undefined && t.deposito_solicitado !== null && (
+                <button
+                  type="button"
+                  disabled={avanzar.isPending}
+                  onClick={() => avanzar.mutate(t.estado)}
+                  className={BOTON_SUAVE}
+                >
+                  {avanzar.isPending ? "Guardando" : "Guardar el depósito corregido"}
+                </button>
+              )}
             </label>
           )}
 
@@ -348,6 +387,14 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
         alAnular={(motivo) => salir.mutate({ estado: "anulado", motivo })}
       />
 
+      {/*
+        LOS VENCIMIENTOS SON CONTROL DE OFICINA, no de gestoria. La gestora trabaja con el paso
+        siguiente y con el presupuesto; en la pantalla del telefono, que es donde ella la usa,
+        un panel de plazos normativos compite con lo unico que necesita ver parada en el
+        registro. Se le saca de la VISTA, no de sus permisos: los plazos los sigue pudiendo
+        leer, simplemente no se le dibujan aca.
+      */}
+      {perfil?.rol !== "gestora" && (
       <Vencimientos
         plazos={plazosDeTipo(plazos.data ?? [], t.tipo)}
         calendario={calendario.data ?? { feriados: new Set(), cubreHasta: null }}
@@ -364,6 +411,7 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
         alGuardarFecha={(campo, fecha) => guardarFecha.mutate({ campo, valor: fecha })}
         tipo={t.tipo}
       />
+      )}
 
       <Notas
         notas={notas.data ?? []}
