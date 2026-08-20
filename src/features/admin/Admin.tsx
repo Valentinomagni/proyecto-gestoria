@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { HardDriveDownload } from "lucide-react";
 import { Panel } from "../../components/Panel";
+import { Calendario } from "./Calendario";
 import { SkeletonLineas } from "../../components/Skeleton";
 import { aPesos, formatear, parsear } from "../../lib/plata";
 import { hoyArgentina, proximoDiaHabil } from "../../lib/fechas";
@@ -9,7 +10,9 @@ import { supabase } from "../../lib/supabase";
 import { clasificarFalla } from "../../lib/fallas";
 import { BOTON, BOTON_SUAVE, CAMPO, CAMPO_SUELTO } from "../../lib/campos";
 import { nombreDeRol, type Rol } from "../../lib/roles";
-import { useGestoras, useGuardar, useRazonesSociales, useSaldos, useTarjetas } from "../../lib/datos";
+import {
+  useCalendario, useGestoras, useGuardar, useRazonesSociales, useSaldos, useTarjetas,
+} from "../../lib/datos";
 import { useQuery } from "@tanstack/react-query";
 
 /**
@@ -28,6 +31,7 @@ export function Admin() {
       <CargarDinero />
       <Usuarios />
       <RazonesYTarjetas />
+      <Calendario />
       <Respaldo />
     </div>
   );
@@ -123,6 +127,9 @@ function Respaldo() {
 
 function CargarDinero() {
   const saldos = useSaldos();
+  // Los feriados salen de la tabla: un deposito ordenado el jueves antes de un feriado NO
+  // acredita el viernes. Sin esto la pantalla mostraria plata un dia antes de que exista.
+  const calendario = useCalendario();
   const [tarjetaId, setTarjetaId] = useState("");
   const [importe, setImporte] = useState("");
   const [tipo, setTipo] = useState<"ingreso" | "saldo_inicial">("ingreso");
@@ -144,7 +151,9 @@ function CargarDinero() {
         tipo,
         importe: aPesos(centavos),
         fecha_acreditacion:
-          tipo === "saldo_inicial" || !acreditaManiana ? hoy : proximoDiaHabil(),
+          tipo === "saldo_inicial" || !acreditaManiana
+            ? hoy
+            : proximoDiaHabil(calendario.data?.feriados ?? new Set()),
         concepto: tipo === "saldo_inicial" ? "Saldo inicial del corte" : "Depósito",
         ...(observacion.trim() !== "" && { observacion: observacion.trim() }),
       });

@@ -17,11 +17,11 @@ son tres campos en un panel (abajo, con los valores exactos).
 
 | Qué | Cuánto | Comando |
 |---|---|---|
-| Tests, todos verdes | **111** en 15 archivos | `npx vitest run` |
+| Tests, todos verdes | **138** en 18 archivos | `npx vitest run` |
 | Pruebas de permisos contra la API real | **23** | `npm run test:rls` |
 | Guardianes | **10** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `pruebas`, `migraciones`, `secretos`, `permisos` |
-| Migraciones aplicadas | **9** de 9 escritas | `npm run db:seco` dice "up to date" |
-| Tablas en la base | **17**, más **4 vistas** | consulta a `pg_class` |
+| Migraciones aplicadas | **11** de 11 escritas | `npm run db:seco` dice "up to date" |
+| Tablas en la base | **19**, más **5 vistas** | consulta a `pg_class` |
 | Módulos de lógica en `src/lib` | 15 | `ls src/lib` |
 | Archivos de código | 49 | `find src -name "*.ts*"` |
 | Peso de arranque | **86,82 kB** + 53,77 de Supabase + 11,72 de Query | `npx vite build` |
@@ -51,10 +51,12 @@ son tres campos en un panel (abajo, con los valores exactos).
 
 ### Lo que sigue
 
-- [ ] **Los plazos y el calendario hábil.** Es el corazón del "reloj con plata adentro" y hoy no
-      existe: `proximoDiaHabil` todavía no contempla feriados, y está escrito adentro de la
-      función. Necesita las tablas `plazos`, `feriados` y la confirmación tuya de los cinco
-      plazos de `docs/DOMINIO.md` §4.
+- [x] ~~Los plazos y el calendario hábil.~~ **Hecho, y funcionando de punta a punta.** El
+      mecanismo está: `plazos`, `feriados`, la vista que sólo deja pasar lo confirmado, el
+      módulo que calcula, y la pantalla que lo carga. Lo que falta ahora son DATOS, y son tuyos
+      (abajo). Probado mirando: con la fecha de certificación cargada y el calendario declarado,
+      la ficha muestra "Faltan 83 días hábiles · 15/12/2026", y el número se comprobó contra un
+      cálculo independiente.
 - [ ] **El botón de avisar un problema** (Andon), que necesita su tabla.
 - [x] ~~Ampliar las pruebas de permisos a `cobros` y `movimientos`.~~ Hecho: los cuatro caminos
       al margen, incluido el que se olvida siempre —colgar `cobros` de una consulta a

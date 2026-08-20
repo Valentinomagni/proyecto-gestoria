@@ -115,6 +115,30 @@ export type Database = {
         }
         Relationships: []
       }
+      feriados: {
+        Row: {
+          fecha: string
+          motivo: string
+          norma: string | null
+          verificado_el: string | null
+          verificado_por: string | null
+        }
+        Insert: {
+          fecha: string
+          motivo: string
+          norma?: string | null
+          verificado_el?: string | null
+          verificado_por?: string | null
+        }
+        Update: {
+          fecha?: string
+          motivo?: string
+          norma?: string | null
+          verificado_el?: string | null
+          verificado_por?: string | null
+        }
+        Relationships: []
+      }
       gestoras: {
         Row: {
           activa: boolean
@@ -303,6 +327,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      plazos: {
+        Row: {
+          activo: boolean
+          aplica_a: string
+          clave: string
+          consecuencia: string
+          desde: string
+          dias: number
+          fuente: string | null
+          habiles: boolean
+          id: string
+          nombre: string
+          norma: string | null
+          verificado_el: string | null
+          verificado_por: string | null
+        }
+        Insert: {
+          activo?: boolean
+          aplica_a?: string
+          clave: string
+          consecuencia: string
+          desde: string
+          dias: number
+          fuente?: string | null
+          habiles?: boolean
+          id?: string
+          nombre: string
+          norma?: string | null
+          verificado_el?: string | null
+          verificado_por?: string | null
+        }
+        Update: {
+          activo?: boolean
+          aplica_a?: string
+          clave?: string
+          consecuencia?: string
+          desde?: string
+          dias?: number
+          fuente?: string | null
+          habiles?: boolean
+          id?: string
+          nombre?: string
+          norma?: string | null
+          verificado_el?: string | null
+          verificado_por?: string | null
+        }
+        Relationships: []
       }
       razones_sociales: {
         Row: {
@@ -716,6 +788,7 @@ export type Database = {
           autorizado_en: string
           autorizado_por: string | null
           canal: string
+          certificacion_primera_firma: string | null
           cliente_cuenta: string | null
           cliente_nombre: string
           controlado_at: string | null
@@ -728,6 +801,7 @@ export type Database = {
           dominio: string | null
           entregado_at: string | null
           estado: string
+          factura_fecha: string | null
           gestora_id: string | null
           id: string
           medio_pago: string
@@ -750,6 +824,7 @@ export type Database = {
           tarjeta_id: string | null
           tipo: string
           vehiculo: string | null
+          verificacion_policial: string | null
         }
         Insert: {
           actualizado_at?: string
@@ -758,6 +833,7 @@ export type Database = {
           autorizado_en?: string
           autorizado_por?: string | null
           canal?: string
+          certificacion_primera_firma?: string | null
           cliente_cuenta?: string | null
           cliente_nombre: string
           controlado_at?: string | null
@@ -770,6 +846,7 @@ export type Database = {
           dominio?: string | null
           entregado_at?: string | null
           estado?: string
+          factura_fecha?: string | null
           gestora_id?: string | null
           id?: string
           medio_pago?: string
@@ -792,6 +869,7 @@ export type Database = {
           tarjeta_id?: string | null
           tipo: string
           vehiculo?: string | null
+          verificacion_policial?: string | null
         }
         Update: {
           actualizado_at?: string
@@ -800,6 +878,7 @@ export type Database = {
           autorizado_en?: string
           autorizado_por?: string | null
           canal?: string
+          certificacion_primera_firma?: string | null
           cliente_cuenta?: string | null
           cliente_nombre?: string
           controlado_at?: string | null
@@ -812,6 +891,7 @@ export type Database = {
           dominio?: string | null
           entregado_at?: string | null
           estado?: string
+          factura_fecha?: string | null
           gestora_id?: string | null
           id?: string
           medio_pago?: string
@@ -834,6 +914,7 @@ export type Database = {
           tarjeta_id?: string | null
           tipo?: string
           vehiculo?: string | null
+          verificacion_policial?: string | null
         }
         Relationships: [
           {
@@ -896,6 +977,48 @@ export type Database = {
       }
     }
     Views: {
+      v_plazos_usables: {
+        Row: {
+          aplica_a: string | null
+          clave: string | null
+          consecuencia: string | null
+          desde: string | null
+          dias: number | null
+          habiles: boolean | null
+          id: string | null
+          nombre: string | null
+          norma: string | null
+          verificado_el: string | null
+          verificado_por: string | null
+        }
+        Insert: {
+          aplica_a?: string | null
+          clave?: string | null
+          consecuencia?: string | null
+          desde?: string | null
+          dias?: number | null
+          habiles?: boolean | null
+          id?: string | null
+          nombre?: string | null
+          norma?: string | null
+          verificado_el?: string | null
+          verificado_por?: string | null
+        }
+        Update: {
+          aplica_a?: string | null
+          clave?: string | null
+          consecuencia?: string | null
+          desde?: string | null
+          dias?: number | null
+          habiles?: boolean | null
+          id?: string | null
+          nombre?: string | null
+          norma?: string | null
+          verificado_el?: string | null
+          verificado_por?: string | null
+        }
+        Relationships: []
+      }
       v_saldos: {
         Row: {
           comprometido: number | null

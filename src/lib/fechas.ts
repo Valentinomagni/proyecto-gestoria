@@ -141,10 +141,108 @@ export function aFechaDeExcel(instante: string | Date): Date {
   return new Date(`${aFechaArgentina(instante)}T00:00:00Z`);
 }
 
-export function proximoDiaHabil(desde: Date = new Date()): string {
-  const d = new Date(desde);
-  do {
-    d.setDate(d.getDate() + 1);
-  } while (d.getDay() === 0 || d.getDay() === 6);
-  return aFechaArgentina(d);
+export function proximoDiaHabil(feriados: ReadonlySet<string>, desde: Date = new Date()): string {
+  return sumarDiasHabiles(aFechaArgentina(desde), 1, feriados);
+}
+
+/**
+ * ============================================================================
+ *  SUMA DIAS HABILES A UNA FECHA. Es la aritmética del reloj del sistema.
+ * ============================================================================
+ *
+ *  `desde` y lo que devuelve son días de calendario argentinos, `YYYY-MM-DD`. Se trabaja sobre
+ *  la medianoche UTC de cada día para que no haya ninguna hora en el medio: acá no existen las
+ *  horas, existen los días, y meter horas es como se corren los cálculos.
+ *
+ *  ============================================================================
+ *   LOS FERIADOS ENTRAN POR PARAMETRO Y NO SE CALCULAN
+ *  ============================================================================
+ *
+ *  Los feriados argentinos NO son calculables. Los trasladables se mueven por decreto, los
+ *  puentes turísticos se fijan cada año en el Boletín Oficial, y Carnaval y Viernes Santo
+ *  dependen de la Pascua. Una función que los "calcule" va a estar bien tres años y mal el
+ *  cuarto, y el año que esté mal nadie lo va a notar hasta que un trámite venza tarde.
+ *
+ *  Entonces salen de la tabla `feriados` y llegan acá como un conjunto de `YYYY-MM-DD`.
+ *
+ *  QUE PASA SI EL CONJUNTO ESTA VACIO: cuenta sólo sábados y domingos, y da un resultado
+ *  OPTIMISTA — una fecha anterior a la real. Por eso quien llama tiene que comprobar que el
+ *  calendario cubra el rango ANTES de mostrar el resultado como un vencimiento; de eso se
+ *  ocupa `plazos.ts`, que es el único que decide si un vencimiento se puede mostrar.
+ *
+ *  El día 0 es `desde`: sumar un día hábil a un viernes da el lunes siguiente.
+ */
+export function sumarDiasHabiles(
+  desde: string,
+  dias: number,
+  feriados: ReadonlySet<string>,
+): string {
+  if (!Number.isInteger(dias) || dias < 0) {
+    throw new RangeError(`Días hábiles inválidos: ${String(dias)}`);
+  }
+
+  const d = new Date(`${desde}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) throw new TypeError(`Fecha mal escrita: ${JSON.stringify(desde)}`);
+
+  let faltan = dias;
+  while (faltan > 0) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    if (esHabil(d, feriados)) faltan -= 1;
+  }
+  return aISO(d);
+}
+
+/** Sábado, domingo o feriado, no. Se mira en UTC porque el `Date` es la medianoche UTC del día. */
+function esHabil(d: Date, feriados: ReadonlySet<string>): boolean {
+  const dia = d.getUTCDay();
+  if (dia === 0 || dia === 6) return false;
+  return !feriados.has(aISO(d));
+}
+
+/** `YYYY-MM-DD` de un `Date` que representa la medianoche UTC de ese día. */
+function aISO(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Suma días CORRIDOS a un día de calendario. No mira si son hábiles.
+ *
+ * Existe porque no todo plazo se cuenta en días hábiles, y suponer que sí sería inventar.
+ * Vive acá y no en `plazos.ts` por la misma razón que todo lo demás de este archivo: el día
+ * que alguien lo escriba en otro lado va a usar la zona del navegador sin darse cuenta.
+ */
+export function sumarDiasCorridos(desde: string, dias: number): string {
+  const d = new Date(`${desde}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) throw new TypeError(`Fecha mal escrita: ${JSON.stringify(desde)}`);
+  d.setUTCDate(d.getUTCDate() + dias);
+  return aISO(d);
+}
+
+/**
+ * Cuántos días hábiles hay entre dos días. NEGATIVO si el segundo ya pasó.
+ *
+ * El signo importa y por eso no se recorta a cero como en `minutosHasta`: acá quien dibuja
+ * necesita distinguir "faltan 3" de "se pasó hace 3", que son dos mensajes distintos y una de
+ * las dos es una alarma.
+ */
+export function diasHabilesEntre(
+  desde: string,
+  hasta: string,
+  feriados: ReadonlySet<string>,
+): number {
+  const ida = desde <= hasta;
+  const cursor = new Date(`${ida ? desde : hasta}T00:00:00Z`);
+  const fin = new Date(`${ida ? hasta : desde}T00:00:00Z`).getTime();
+  if (Number.isNaN(cursor.getTime()) || Number.isNaN(fin)) {
+    throw new TypeError(`Fecha mal escrita: ${JSON.stringify([desde, hasta])}`);
+  }
+
+  let cuenta = 0;
+  // Se compara el instante y no el objeto: `cursor` se muta adentro del bucle, y comparar dos
+  // `Date` deja al linter creyendo que la condicion nunca cambia.
+  while (cursor.getTime() < fin) {
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+    if (esHabil(cursor, feriados)) cuenta += 1;
+  }
+  return ida ? cuenta : -cuenta;
 }

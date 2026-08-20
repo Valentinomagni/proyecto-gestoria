@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "./supabase";
 import { clasificarFalla } from "./fallas";
+import type { Plazo } from "./plazos";
 
 /**
  * Las consultas a la base, en un solo lugar.
@@ -55,6 +56,10 @@ export interface Tramite {
   recibido_at: string;
   presentado_at: string | null;
   pagado_at: string | null;
+  // Las tres ocurren FUERA del sistema y las carga una persona. Ver la migracion del reloj.
+  certificacion_primera_firma: string | null;
+  verificacion_policial: string | null;
+  factura_fecha: string | null;
 }
 
 /** Los importes llegan de PostgREST como texto o numero segun la version. Se normaliza acá. */
@@ -147,6 +152,77 @@ export function useRequisitos(tipo: string | null) {
         .eq("activo", true).in("aplica_a", [tipo ?? "", "todos"]).order("orden");
       if (error) throw error;
       return data;
+    },
+  });
+}
+
+// ------------------------------------------------------------
+// El calendario y los plazos
+// ------------------------------------------------------------
+
+/**
+ * ============================================================================
+ *  EL CALENDARIO: los feriados, y HASTA DONDE alguien dijo que llegan.
+ * ============================================================================
+ *
+ *  `cubreHasta` NO se deduce mirando qué feriados hay cargados: SE DECLARA. Sale del parámetro
+ *  `calendario_cubre_hasta`, que completa quien terminó de cargar un año.
+ *
+ *  POR QUE, y esto se corrigió después de escribirlo mal la primera vez: la versión anterior
+ *  tomaba el año del último feriado cargado y asumía que ese año estaba completo. Si faltaban
+ *  feriados —y siempre faltan, porque los puentes turísticos se fijan por decreto cada año— el
+ *  vencimiento salía ANTES de lo real. O sea que el error iba justo para el lado que hace daño:
+ *  dar por vencido algo que todavía no venció.
+ *
+ *  Un dato que declara una persona vale más que uno que deduce un programa, cuando lo que está
+ *  en juego es si una fecha se muestra o no. Mientras el parámetro esté vacío, ningún plazo en
+ *  días hábiles produce vencimiento y la pantalla dice que faltan los feriados.
+ */
+export function useCalendario() {
+  return useQuery({
+    queryKey: ["calendario"],
+    ...CATALOGO,
+    queryFn: async (): Promise<{ feriados: ReadonlySet<string>; cubreHasta: string | null }> => {
+      const [dias, parametro] = await Promise.all([
+        supabase.from("feriados").select("fecha").order("fecha"),
+        supabase.from("parametros").select("valor").eq("clave", "calendario_cubre_hasta").maybeSingle(),
+      ]);
+      if (dias.error) throw dias.error;
+      if (parametro.error) throw parametro.error;
+
+      const declarado = (parametro.data?.valor ?? "").trim();
+      return {
+        feriados: new Set((dias.data ?? []).map((f) => String(f.fecha))),
+        cubreHasta: declarado === "" ? null : declarado,
+      };
+    },
+  });
+}
+
+/** SOLO los plazos verificados: la vista no tiene los otros. Ver la migración de plazos. */
+export function usePlazos() {
+  return useQuery({
+    queryKey: ["plazos_usables"],
+    ...CATALOGO,
+    queryFn: async (): Promise<Plazo[]> => {
+      const { data, error } = await supabase
+        .from("v_plazos_usables")
+        .select("clave, nombre, aplica_a, desde, dias, habiles, consecuencia, norma, verificado_el, verificado_por");
+      if (error) throw error;
+      return (data ?? [])
+        .filter((p) => p.clave !== null && p.verificado_el !== null && p.verificado_por !== null)
+        .map((p) => ({
+          clave: String(p.clave),
+          nombre: String(p.nombre),
+          aplica_a: String(p.aplica_a),
+          desde: String(p.desde),
+          dias: Number(p.dias),
+          habiles: Boolean(p.habiles),
+          consecuencia: String(p.consecuencia),
+          norma: p.norma,
+          verificado_el: String(p.verificado_el),
+          verificado_por: String(p.verificado_por),
+        }));
     },
   });
 }

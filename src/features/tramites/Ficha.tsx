@@ -3,14 +3,19 @@ import { ArrowLeft, MessageSquare, Plus } from "lucide-react";
 import { Panel } from "../../components/Panel";
 import { SkeletonLineas } from "../../components/Skeleton";
 import { aCentavos, aPesos, formatear, parsear, pesosDesdeTexto } from "../../lib/plata";
-import { formatearFechaHora } from "../../lib/fechas";
+import { formatearFecha, formatearFechaHora } from "../../lib/fechas";
 import { supabase } from "../../lib/supabase";
 import { BOTON_SUAVE, BOTON, CAMPO, CAMPO_SUELTO } from "../../lib/campos";
 import type { Database } from "../../lib/database.types";
 import {
   useConceptos, useConceptosDelTramite, useEventosDelTramite, useGestoras,
-  useGuardar, useNotasDelTramite, useRequisitos, useRequisitosDelTramite, useTramite,
+  useCalendario, useGuardar, useNotasDelTramite, usePlazos, useRequisitos,
+  useRequisitosDelTramite, useTramite,
 } from "../../lib/datos";
+import {
+  calcular, inicioDe, plazosDeTipo,
+  type Calendario, type Plazo, type Vencimiento,
+} from "../../lib/plazos";
 import { Chip, nombreDeEstado } from "./Listado";
 
 /**
@@ -44,6 +49,8 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
   const requisitos = useRequisitos(tramite.data?.tipo ?? null);
   const respuestas = useRequisitosDelTramite(id);
   const notas = useNotasDelTramite(id);
+  const plazos = usePlazos();
+  const calendario = useCalendario();
 
   const [campos, setCampos] = useState<Record<string, string>>({});
   const valor = (k: string, d: string | null): string => campos[k] ?? d ?? "";
@@ -90,6 +97,29 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
       if (error) throw error;
     },
     { exito: "Concepto agregado", invalidar: ["tramite_conceptos"] },
+  );
+
+  /**
+   * Las tres fechas que arrancan un reloj. Se guardan solas, sin avanzar el trámite.
+   *
+   * VAN APARTE DEL BOTON DE "PASO SIGUIENTE" a propósito: llegan cuando llegan —la
+   * certificación la trae el legajo, la verificación policial vuelve días después— y atarlas al
+   * avance obligaría a esperar el dato o a avanzar sin él. Las dos cosas son peores que
+   * cargarlas cuando aparecen.
+   */
+  const guardarFecha = useGuardar(
+    async (v: { campo: string; valor: string }) => {
+      const parche: Database["public"]["Tables"]["tramites"]["Update"] = {};
+      const limpio = v.valor.trim() === "" ? null : v.valor;
+      if (v.campo === "certificacion_primera_firma") parche.certificacion_primera_firma = limpio;
+      else if (v.campo === "verificacion_policial") parche.verificacion_policial = limpio;
+      else if (v.campo === "factura_fecha") parche.factura_fecha = limpio;
+      else throw new Error("regla_tramite: Ese dato no se puede editar desde acá");
+
+      const { error } = await supabase.from("tramites").update(parche).eq("id", id);
+      if (error) throw error;
+    },
+    { exito: "Fecha guardada", invalidar: ["tramite", "tramites"] },
   );
 
   const responder = useGuardar(
@@ -285,6 +315,23 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
         suma={sumaReal}
         conceptos={conceptos.data ?? []}
         alAgregar={(conceptoId, importe) => agregarLinea.mutate({ conceptoId, momento: "real", importe })}
+      />
+
+      <Vencimientos
+        plazos={plazosDeTipo(plazos.data ?? [], t.tipo)}
+        calendario={calendario.data ?? { feriados: new Set(), cubreHasta: null }}
+        fechas={{
+          // Los eventos que el sistema SI conoce. Los que no estan —la certificacion de la
+          // primera firma, la verificacion policial, la factura— salen null a proposito y la
+          // pantalla los pide, en vez de inventar una fecha de arranque.
+          recibido: t.recibido_at.slice(0, 10),
+          presentado: t.presentado_at === null ? null : t.presentado_at.slice(0, 10),
+          certificacion_primera_firma: t.certificacion_primera_firma,
+          verificacion_policial: t.verificacion_policial,
+          factura: t.factura_fecha,
+        }}
+        alGuardarFecha={(campo, fecha) => guardarFecha.mutate({ campo, valor: fecha })}
+        tipo={t.tipo}
       />
 
       <Notas
@@ -608,5 +655,217 @@ function Notas({
         </div>
       )}
     </Panel>
+  );
+}
+
+/**
+ * ============================================================================
+ *  LOS VENCIMIENTOS DEL TRAMITE. "Cada trámite es un reloj con plata adentro."
+ * ============================================================================
+ *
+ *  Un trámite frenado no es una demora: es un recargo. Este panel es donde eso se ve.
+ *
+ *  ============================================================================
+ *   LO QUE ESTE PANEL MUESTRA CUANDO NO SABE, QUE ES LO QUE LO HACE CONFIABLE
+ *  ============================================================================
+ *
+ *  Un sistema que avisa un vencimiento equivocado es PEOR que uno que no avisa nada, porque el
+ *  primero se deja de mirar — y una sola fecha mal calculada tira abajo la confianza en todas
+ *  las demás, incluidas las que estaban bien.
+ *
+ *  Por eso hay tres formas de decir "no sé", y cada una dice QUE FALTA y a quién pedírselo. Un
+ *  mensaje que no dice qué hacer es igual de inútil que no mostrar nada:
+ *
+ *    - el plazo no está confirmado  -> lo confirma gerencia, y quien mejor lo sabe es la gestora
+ *    - falta la fecha de arranque   -> la carga quien la tenga (la certificación, la factura)
+ *    - falta calendario de feriados -> se cargan en Administración
+ *
+ *  ============================================================================
+ *   Y CUANDO SI SABE, MUESTRA DE DONDE SALE
+ *  ============================================================================
+ *
+ *  Al lado de la fecha van la norma, quién la verificó y cuándo. Un número sin procedencia se
+ *  cree; uno con procedencia se puede discutir — y el día que un arancel cambie, quien mire la
+ *  pantalla va a ver que la verificación es vieja sin que nadie se lo tenga que avisar.
+ */
+/**
+ * Las fechas que arrancan un reloj.
+ *
+ * `evento` es como lo llama el plazo —la columna `desde` de la tabla— y `campo` es la columna
+ * del trámite donde se guarda. Estan JUNTOS en una sola tabla a proposito: la primera version
+ * pasaba dos diccionarios con los mismos datos y claves distintas, y dos listas que hay que
+ * mantener sincronizadas a mano se desincronizan.
+ */
+const FECHAS_DE_ARRANQUE: {
+  evento: string; campo: string; nombre: string; ayuda: string; soloPara?: string;
+}[] = [
+  {
+    evento: "certificacion_primera_firma",
+    campo: "certificacion_primera_firma",
+    nombre: "Certificación de la primera firma del 08",
+    ayuda: "La hace un escribano. Arranca la mora de la transferencia y la vigencia del 08.",
+  },
+  {
+    evento: "factura",
+    campo: "factura_fecha",
+    nombre: "Fecha de la factura",
+    ayuda: "La emite el concesionario. Arranca el plazo de la inscripción inicial.",
+    soloPara: "patentamiento_0km",
+  },
+  {
+    evento: "verificacion_policial",
+    campo: "verificacion_policial",
+    nombre: "Verificación policial (formulario 12)",
+    ayuda: "Arranca la vigencia del 12.",
+  },
+];
+
+function Vencimientos({
+  plazos, calendario, fechas, tipo, alGuardarFecha,
+}: {
+  plazos: Plazo[];
+  calendario: Calendario;
+  /** Las fechas ya cargadas, con la clave del EVENTO que usa el plazo. */
+  fechas: Readonly<Record<string, string | null>>;
+  tipo: string;
+  alGuardarFecha: (campo: string, fecha: string) => void;
+}) {
+  if (plazos.length === 0) {
+    return (
+      <Panel className="flex flex-col gap-2">
+        <h2 className="text-lg">Vencimientos</h2>
+        <p className="text-sm text-ink2">
+          Todavía no hay ningún plazo confirmado para este tipo de trámite, así que el sistema no
+          muestra ninguna cuenta regresiva. Es a propósito: avisar un vencimiento equivocado es
+          peor que no avisar nada.
+        </p>
+        <p className="text-xs text-ink2">
+          Los confirma gerencia desde Administración. Quien mejor los sabe son las gestoras: los
+          viven todos los días.
+        </p>
+      </Panel>
+    );
+  }
+
+  const aplicables = FECHAS_DE_ARRANQUE.filter((f) => f.soloPara === undefined || f.soloPara === tipo);
+
+  return (
+    <Panel className="flex flex-col gap-3">
+      <h2 className="text-lg">Vencimientos</h2>
+
+      {plazos.map((p) => (
+        <UnVencimiento
+          key={p.clave}
+          plazo={p}
+          resultado={calcular(p, inicioDe(p, fechas), calendario)}
+        />
+      ))}
+
+      {/*
+        LAS FECHAS QUE ARRANCAN EL RELOJ SE CARGAN ACA MISMO, al lado del vencimiento que
+        habilitan. Mandarlas a otra pantalla haria que quien lee "falta la fecha de la
+        certificacion" tenga que buscar donde cargarla, y ese viaje es donde se pierde el dato.
+      */}
+      <div className="flex flex-col gap-2 border-t border-line pt-3">
+        <p className="text-2xs text-ink2">
+          Estas fechas ocurren fuera del sistema. Cargalas cuando las tengas: cada una habilita
+          un vencimiento.
+        </p>
+        {aplicables.map((f) => (
+          <FechaDeArranque
+            key={f.campo}
+            nombre={f.nombre}
+            ayuda={f.ayuda}
+            guardada={fechas[f.evento] ?? ""}
+            alGuardar={(v) => alGuardarFecha(f.campo, v)}
+          />
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
+function FechaDeArranque({
+  nombre, ayuda, guardada, alGuardar,
+}: {
+  nombre: string;
+  ayuda: string;
+  guardada: string;
+  alGuardar: (v: string) => void;
+}) {
+  const [texto, setTexto] = useState(guardada);
+  const cambio = texto !== guardada;
+
+  return (
+    <label className="flex flex-wrap items-end gap-2">
+      <span className="min-w-48 flex-1">
+        <span className="block text-xs">{nombre}</span>
+        <span className="block text-2xs text-ink2">{ayuda}</span>
+      </span>
+      <input
+        type="date"
+        value={texto}
+        onChange={(e) => setTexto(e.target.value)}
+        className={`${CAMPO_SUELTO} tnum`}
+      />
+      <button
+        type="button"
+        disabled={!cambio}
+        onClick={() => alGuardar(texto)}
+        className={BOTON_SUAVE}
+      >
+        Guardar
+      </button>
+    </label>
+  );
+}
+
+function UnVencimiento({ plazo, resultado }: { plazo: Plazo; resultado: Vencimiento }) {
+  if (resultado.estado !== "vence") {
+    return (
+      <div className="border-b border-line pb-3 last:border-0 last:pb-0">
+        <p className="text-sm">{plazo.nombre}</p>
+        <p className="text-xs text-ink2 mt-1">{resultado.queFalta}</p>
+      </div>
+    );
+  }
+
+  const { fecha, diasHabilesRestantes: faltan, vencido } = resultado;
+
+  /*
+    TRES ESTADOS Y NO DOS. "Vence en 5 días" y "vencido" dejan afuera el único momento en que
+    todavía se puede hacer algo: cuando faltan pocos días. El color aparece SOLO acá —la marca
+    es monocroma justamente para esto— así que cuando algo se pone naranja, se mira.
+  */
+  const clase = vencido ? "text-danger" : faltan <= 3 ? "text-warn" : "";
+
+  return (
+    <div className="border-b border-line pb-3 last:border-0 last:pb-0">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <span className="text-sm">{plazo.nombre}</span>
+        <span className={`text-sm tnum ${clase}`}>
+          {vencido
+            ? `Vencido hace ${Math.abs(faltan)} ${Math.abs(faltan) === 1 ? "día hábil" : "días hábiles"}`
+            : faltan === 0
+              ? "Vence hoy"
+              : `Faltan ${faltan} ${faltan === 1 ? "día hábil" : "días hábiles"}`}
+        </span>
+      </div>
+
+      <p className="text-2xs text-ink2 tnum mt-1">
+        {formatearFecha(`${fecha}T12:00:00Z`)}
+        {plazo.norma === null ? "" : ` · ${plazo.norma}`}
+      </p>
+
+      {/* La consecuencia, con el número. Un plazo sin consecuencia escrita se lee como una sugerencia. */}
+      <p className={`text-2xs mt-1 ${vencido ? "text-danger" : "text-ink2"}`}>
+        {plazo.consecuencia}
+      </p>
+
+      {/* De dónde sale el plazo. Es lo que lo vuelve discutible en vez de creíble por decreto. */}
+      <p className="text-2xs text-ink2 mt-1">
+        Verificado el {formatearFecha(`${plazo.verificado_el}T12:00:00Z`)} · {plazo.verificado_por}
+      </p>
+    </div>
   );
 }
