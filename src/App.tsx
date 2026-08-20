@@ -7,7 +7,8 @@ import { Listado } from "./features/tramites/Listado";
 import { AltaTramite } from "./features/tramites/AltaTramite";
 import { Ficha } from "./features/tramites/Ficha";
 import { Admin } from "./features/admin/Admin";
-import { useSaldosEnVivo } from "./lib/datos";
+import { useNovedades, useSaldosEnVivo } from "./lib/datos";
+import { useSesion } from "./lib/sesion";
 import type { Pantalla } from "./menu";
 
 /**
@@ -27,12 +28,22 @@ export function App() {
   // dos personas miran el mismo numero viejo y comprometen la misma plata.
   useSaldosEnVivo(cliente);
 
+  // La campana escucha los pasos de la cadena. Necesita saber QUIEN soy para no avisarme mis
+  // propios cambios: quien acaba de mover un tramite ya sabe que lo movio.
+  const { perfil } = useSesion();
+  const novedades = useNovedades(perfil?.id ?? null);
+
   function abrir(id: string): void {
     setTramiteAbierto(id);
   }
 
   return (
-    <Shell pantalla={pantalla} alNavegar={(p: Pantalla) => { setPantalla(p); setTramiteAbierto(null); }}>
+    <Shell
+      pantalla={pantalla}
+      alNavegar={(p: Pantalla) => { setPantalla(p); setTramiteAbierto(null); }}
+      novedades={novedades}
+      alAbrirTramite={abrir}
+    >
       {tramiteAbierto !== null ? (
         <Ficha id={tramiteAbierto} alVolver={() => setTramiteAbierto(null)} />
       ) : pantalla === "bandeja" ? (

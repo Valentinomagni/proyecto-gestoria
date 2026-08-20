@@ -9,6 +9,8 @@ import { SkeletonLineas } from "./Skeleton";
 import { EmptyState } from "./EmptyState";
 import { Login } from "./Login";
 import { Avisar } from "./Avisar";
+import { Novedades } from "./Novedades";
+import type { Novedad } from "../lib/novedades";
 import { Panel } from "./Panel";
 
 /**
@@ -24,11 +26,13 @@ import { Panel } from "./Panel";
  * que el sistema está roto.
  */
 export function Shell({
-  children, pantalla, alNavegar,
+  children, pantalla, alNavegar, novedades, alAbrirTramite,
 }: {
   children: ReactNode;
   pantalla: Pantalla;
   alNavegar: (p: Pantalla) => void;
+  novedades: { lista: Novedad[]; sinVer: number; marcarVistas: () => void };
+  alAbrirTramite: (id: string) => void;
 }) {
   const { cargando, session, perfil } = useSesion();
 
@@ -90,6 +94,12 @@ export function Shell({
         <Isotipo tono="blanco" alto={22} />
         <div className="flex items-center gap-3">
           <span className="text-2xs text-warn">{avisoBase}</span>
+          <Novedades
+            lista={novedades.lista}
+            sinVer={novedades.sinVer}
+            alAbrirPanel={novedades.marcarVistas}
+            alAbrirTramite={alAbrirTramite}
+          />
           <Avisar pantalla={pantalla} rol={perfil.rol} tramiteId={null} />
           <BotonSalir oscuro />
         </div>
@@ -127,6 +137,17 @@ export function Shell({
             <p className="text-2xs text-side-ink2">{nombreDeRol(perfil.rol)}</p>
           </div>
           <p className="text-2xs text-warn">{avisoBase}</p>
+          {/*
+            LA CAMPANA VA EN LAS DOS BARRAS. Quien mas la necesita es la gestora, que esta en el
+            telefono y no tiene otra forma de enterarse de que la oficina movio su tramite.
+            Dejarla solo en el escritorio seria ponerla donde menos hace falta.
+          */}
+          <Novedades
+            lista={novedades.lista}
+            sinVer={novedades.sinVer}
+            alAbrirPanel={novedades.marcarVistas}
+            alAbrirTramite={alAbrirTramite}
+          />
           {/* El andon vive en la cáscara, así que está en TODAS las pantallas y para todos los
               roles. Un botón de avisar que está en una sola pantalla sirve para los problemas
               de esa pantalla. */}

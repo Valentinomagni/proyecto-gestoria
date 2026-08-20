@@ -1,8 +1,12 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "./supabase";
 import { clasificarFalla } from "./fallas";
+import { recordado, recordar } from "./recordar";
+import {
+  CLAVE_VISTO, contarSinVer, hastaDondeMarcar, sumarNovedad, type Novedad,
+} from "./novedades";
 import type { Plazo } from "./plazos";
 
 /**
@@ -319,6 +323,61 @@ export function useSaldosEnVivo(cliente: QueryClient): void {
       .subscribe();
     return () => void supabase.removeChannel(canal);
   }, [cliente]);
+}
+
+/**
+ * La campana: los pasos de la cadena que movieron OTROS, en vivo.
+ *
+ * Vive acá y no en `novedades.ts` porque toca la base, igual que `useSaldosEnVivo`. Las dos
+ * decisiones que se pueden equivocar —qué es nuevo y hasta dónde marcar— viven allá, sin
+ * dependencias, para poder probarlas sin credenciales.
+ */
+export function useNovedades(miId: string | null): {
+  lista: Novedad[];
+  sinVer: number;
+  marcarVistas: () => void;
+} {
+  const [lista, setLista] = useState<Novedad[]>([]);
+  const [visto, setVisto] = useState<string | null>(() => recordado(CLAVE_VISTO));
+
+  useEffect(() => {
+    if (miId === null) return;
+
+    const canal = supabase
+      .channel("novedades")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "tramite_eventos" },
+        (msg) => {
+          const e = msg.new as {
+            id: number; tramite_id: string; estado_hasta: string; at: string; por?: string | null;
+          };
+          // Los cambios propios no se avisan: quien lo movió ya sabe que lo movió.
+          if (e.por === miId) return;
+
+          setLista((antes) =>
+            sumarNovedad(antes, {
+              id: Number(e.id),
+              tramiteId: String(e.tramite_id),
+              estado: String(e.estado_hasta),
+              cuando: String(e.at),
+            }),
+          );
+        },
+      )
+      .subscribe();
+
+    return () => void supabase.removeChannel(canal);
+  }, [miId]);
+
+  const marcarVistas = useCallback(() => {
+    const hasta = hastaDondeMarcar(lista, visto);
+    if (hasta === null) return;
+    setVisto(hasta);
+    recordar(CLAVE_VISTO, hasta);
+  }, [lista, visto]);
+
+  return { lista, sinVer: contarSinVer(lista, visto), marcarVistas };
 }
 
 export function useMovimientos(tarjetaId: string | null) {
