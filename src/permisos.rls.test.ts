@@ -498,3 +498,128 @@ describe("el libro mayor solo se inserta", () => {
     expect(error).not.toBeNull();
   });
 });
+
+/**
+ * ============================================================================
+ *  LA GESTORA VE SU TRAMITE DESDE QUE SE LO ASIGNAN
+ * ============================================================================
+ *
+ *  EL DEFECTO, encontrado en la primera prueba real con los tres usuarios: `gestora_id` recien
+ *  se completaba al pasar a `entregado`, y la policy de lectura exige `gestora_id =
+ *  mi_gestora_id()`. Entonces un tramite que cargaba contable era INVISIBLE para gestoria hasta
+ *  dos pasos despues — y en esos dos pasos no habia forma de que la gestora supiera que existia.
+ *
+ *  Es el defecto que impedia simular la cadena completa, y por eso su prueba va contra la API
+ *  real: lo que hay que garantizar no es que la policy sea correcta en abstracto, es que la
+ *  gestora ABRA la app y lo vea.
+ */
+describe("una gestora ve el tramite desde que se lo asignan", () => {
+  let creado = "";
+  let otraGestora: SupabaseClient;
+
+  beforeAll(async () => {
+    otraGestora = await comoUsuario(env["PRUEBA_GESTORA_2"] ?? "");
+
+    const { data: sesion } = await gestora.auth.getUser();
+    const { data: perfil } = await gestora
+      .from("perfiles").select("gestora_id").eq("id", sesion.user?.id ?? "").single();
+    const gestoraId = perfil?.gestora_id;
+    if (!gestoraId) throw new Error("La cuenta de prueba no esta vinculada a ninguna gestora");
+
+    const { data: razon } = await gerencia.from("razones_sociales").select("id").limit(1).single();
+    const { data: suc } = await gerencia.from("sucursales").select("id").limit(1).single();
+
+    const { data, error } = await gerencia
+      .from("tramites")
+      .insert({
+        razon_social_id: razon?.id,
+        sucursal_id: suc?.id,
+        tipo: "patentamiento_0km",
+        cliente_nombre: "VISIBILIDAD DESDE EL ALTA",
+        medio_pago: "tarjeta_habitualista",
+        gestora_id: gestoraId,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(`No se pudo crear el tramite de prueba: ${error.message}`);
+    creado = String(data?.id);
+  });
+
+  it("gerencia lo creo y lo ve", async () => {
+    // Sin esto, todo lo de abajo podria estar pasando por vacio.
+    const { data } = await gerencia.from("tramites").select("id").eq("id", creado);
+    expect(data).toHaveLength(1);
+  });
+
+  it("y la gestora asignada lo ve ENSEGUIDA, todavia en recibido", async () => {
+    // Es el defecto que impedia simular la cadena: antes lo veia recien dos pasos despues.
+    const { data, error } = await gestora
+      .from("tramites").select("id, estado").eq("id", creado);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+    expect(data?.[0]?.estado).toBe("recibido");
+  });
+
+  it("pero la gestora de la OTRA ficha sigue sin verlo", async () => {
+    // Lo que este cambio no tenia que romper.
+    const { data } = await otraGestora.from("tramites").select("id").eq("id", creado);
+    expect(data).toEqual([]);
+  });
+
+  it("y puede cargarle conceptos al presupuesto", async () => {
+    // El pedido dice que el presupuesto y sus conceptos los completa la gestora. La policy de
+    // conceptos ya lo permitia para quien VEA el tramite: no verlo era lo unico que se lo
+    // impedia. O sea que este arreglo destraba dos cosas, no una.
+    const { data: concepto } = await gerencia.from("conceptos").select("id").limit(1).single();
+    const { error } = await gestora.from("tramite_conceptos").insert({
+      tramite_id: creado,
+      concepto_id: concepto?.id,
+      momento: "presupuesto",
+      importe: 1234.56,
+    });
+    expect(error).toBeNull();
+  });
+
+  it("una gestora dada de baja no puede recibir trabajo nuevo", async () => {
+    /*
+      Sin esto, un tramite podria quedar asignado a alguien que ya no entra al sistema:
+      invisible para gestoria, invisible para quien lo asigno, y sin que nadie se entere hasta
+      que alguien pregunte por que ese tramite no avanza.
+    */
+    const { data: baja } = await gerencia
+      .from("gestoras").select("id, activa").eq("activa", false).limit(1).maybeSingle();
+
+    // Si no hay ninguna dada de baja, se da de baja una a proposito y se restaura al final.
+    let id = baja?.id as string | undefined;
+    let habiaQueDarDeBaja = false;
+    if (id === undefined) {
+      const { data: alguna } = await gerencia
+        .from("gestoras").select("id").eq("activa", true).limit(1).single();
+      id = String(alguna?.id);
+      await gerencia.from("gestoras").update({ activa: false }).eq("id", id);
+      habiaQueDarDeBaja = true;
+    }
+
+    const { error } = await gerencia.from("tramites").update({ gestora_id: id }).eq("id", creado);
+
+    /*
+      ============================================================================
+       SE RESTAURA ANTES DE AFIRMAR, Y NO DESPUES
+      ============================================================================
+
+      La primera version tenia el `expect` arriba y la restauracion abajo. Cuando el aserto
+      fallo —que es exactamente lo que pasa mientras el arreglo todavia no esta— la excepcion
+      se llevo puesta la restauracion y **la gestora quedo dada de baja en la base**. La corrida
+      siguiente no pudo ni crear el tramite de prueba: cinco tests salteados por un test.
+
+      Es la misma forma de defecto que ya dejo una vez desactivada a una gestora que trabajaba.
+      Un test que rompe el sistema que prueba es peor que no tenerlo, porque el daño aparece
+      despues y en otro lado.
+    */
+    if (habiaQueDarDeBaja) {
+      await gerencia.from("gestoras").update({ activa: true }).eq("id", id);
+    }
+
+    expect(error, "se pudo asignar un tramite a una gestora dada de baja").not.toBeNull();
+  });
+});
