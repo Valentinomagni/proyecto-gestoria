@@ -80,6 +80,52 @@ La gestora trabaja parada en el registro y con una mano, así que en el teléfon
 **abajo**, donde llega el pulgar. El listado son fichas apiladas en vez de una tabla, y los
 botones son grandes.
 
+### Los vencimientos
+
+Cada trámite muestra qué plazos le corren, cuándo vencen y **qué pasa si se pasan**, con la norma
+citada y el nombre de quien confirmó ese plazo al lado.
+
+**Y lo más importante de esta función es cuándo no muestra nada.** Si el plazo no está
+confirmado, si falta la fecha desde la que corre, o si faltan feriados por cargar, el sistema
+**no muestra ninguna cuenta regresiva** y dice qué falta. Avisar un vencimiento equivocado es
+peor que no avisar nada: alcanza una fecha mal para que nadie vuelva a mirar el resto.
+
+Los plazos los confirma gerencia desde Administración. Quien mejor los sabe son las gestoras: los
+viven todos los días.
+
+### Si el trámite no sigue
+
+Dos salidas, y las dos piden un motivo escrito:
+
+- **Frenar por falta de saldo** — aparece en los pedidos de fondos hasta que entre plata.
+- **Anular** — el trámite queda en el listado, con su historial. Acá nada se borra: si dentro de
+  seis meses alguien busca ese cliente, tiene que encontrar el trámite y por qué no salió.
+
+### Avisar un problema
+
+Un botón en todas las pantallas, para todos. **No hace falta explicar nada**: con apretar
+mandar alcanza. La app adjunta sola en qué pantalla estabas, con qué rol y el detalle técnico —
+nunca el nombre de un cliente ni un importe.
+
+Los avisos llegan a Administración, arriba de todo. Quien los atiende escribe qué hizo, para que
+quien avisó sepa que sirvió.
+
+**No se cuentan avisos por persona.** Queda quién avisó sólo para poder repreguntar.
+
+### Bajar un respaldo
+
+Un archivo con todo lo que hay en la base. La lista de tablas sale del esquema real, así que una
+tabla nueva entra sola. Si algo no se pudo leer, el aviso lo dice: un respaldo incompleto que se
+presenta como completo es peor que ninguno.
+
+No incluye las cuentas de acceso, que viven en otro lado. Sirve para recuperar datos, no para
+rehacer el sistema entero.
+
+### Si la aplicación no carga
+
+En vez de una pantalla en negro, ahora dice que no cargó, ofrece reintentar, y pide las dos cosas
+con las que después se puede encontrar el problema: la hora exacta y desde dónde entraste.
+
 ### Lo que el sistema no deja hacer
 
 - **No se borra nada.** Un trámite se anula con motivo; un movimiento se compensa con un ajuste.
@@ -91,9 +137,10 @@ botones son grandes.
 
 ### Lo que todavía no hace, y hay que saberlo
 
-- **No calcula vencimientos.** Los plazos del registro están sin confirmar, y hasta que no lo
-  estén el sistema prefiere no avisar nada antes que avisar mal.
-- **La fecha de acreditación no contempla feriados.** Un depósito ordenado el jueves anterior a
-  un feriado va a figurar como acreditado un día antes de lo real.
+- **Los vencimientos todavía no se muestran**, y no por un defecto: faltan confirmar tres de los
+  cinco plazos y falta cargar los feriados. En cuanto eso esté, aparecen solos. Mientras tanto la
+  pantalla dice exactamente qué falta.
+- **La fecha de acreditación de un depósito ya contempla feriados**, pero sólo los que estén
+  cargados. Mientras el calendario esté vacío cuenta únicamente sábados y domingos.
 - **La base es la misma que la de desarrollo.** La app lo dice en pantalla, arriba a la
   izquierda. Eso cambia antes de que haya saldos reales.
