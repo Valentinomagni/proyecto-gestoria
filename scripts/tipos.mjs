@@ -18,7 +18,39 @@ import { execPath } from "node:process";
 
 const REF = "drsooohkwwpnijonxwwt";
 const DESTINO = "src/lib/database.types.ts";
+const DESTINO_TABLAS = "src/lib/tablas.generado.ts";
 const soloVerificar = process.argv.includes("--verificar");
+
+/**
+ * Los nombres de las tablas, sacados de los tipos, PARA USAR EN TIEMPO DE EJECUCION.
+ *
+ * POR QUE HACE FALTA UN SEGUNDO ARCHIVO. Los tipos de TypeScript se borran al compilar: el
+ * respaldo no puede recorrer `Database["public"]["Tables"]` cuando corre en el navegador,
+ * porque ahi ya no existe. Y una lista escrita a mano es exactamente el defecto del Tablero
+ * Contable, donde el respaldo recorre siete nombres a mano y ya se le escapa una tabla.
+ *
+ * Entonces la lista se GENERA junto con los tipos, del mismo lugar y en el mismo comando. Una
+ * tabla nueva entra sola; no hay forma de agregar una y olvidarse de esta lista, porque nadie
+ * la escribe.
+ */
+function tablasDe(tipos) {
+  const bloque = tipos.match(/Tables: \{([\s\S]*?)\n {4}\}\n {4}Views:/);
+  if (!bloque) return null;
+  const nombres = [...bloque[1].matchAll(/^ {6}(\w+): \{$/gm)].map((m) => m[1]);
+  return nombres.length > 0 ? nombres.toSorted() : null;
+}
+
+function archivoDeTablas(nombres) {
+  return `// GENERADO por scripts/tipos.mjs desde el esquema real. No editar a mano.
+//
+// Existe porque los tipos de TypeScript se borran al compilar y el respaldo necesita la lista
+// CUANDO CORRE. Se regenera con \`npm run db:tipos\`, junto con los tipos.
+
+export const TABLAS: readonly string[] = [
+${nombres.map((n) => `  "${n}",`).join("\n")}
+];
+`;
+}
 
 let salida;
 try {
@@ -43,15 +75,30 @@ if (!salida.includes("export type Database")) {
   process.exit(1);
 }
 
+const tablas = tablasDe(salida);
+if (!tablas) {
+  console.error("No se pudo sacar la lista de tablas de los tipos. NO se toco ningun archivo.");
+  console.error("Cambio el formato que genera el CLI: hay que ajustar tablasDe() en este script.");
+  process.exit(1);
+}
+const listado = archivoDeTablas(tablas);
+
 if (soloVerificar) {
   const enDisco = existsSync(DESTINO) ? readFileSync(DESTINO, "utf8") : "";
   if (enDisco.trim() !== salida.trim()) {
     console.error("Los tipos estan desactualizados contra la base. Corre: npm run db:tipos");
     process.exit(1);
   }
-  console.log("Los tipos estan al dia.");
+  const listaEnDisco = existsSync(DESTINO_TABLAS) ? readFileSync(DESTINO_TABLAS, "utf8") : "";
+  if (listaEnDisco.trim() !== listado.trim()) {
+    console.error("La lista de tablas del respaldo esta desactualizada. Corre: npm run db:tipos");
+    process.exit(1);
+  }
+  console.log("Los tipos y la lista de tablas estan al dia.");
   process.exit(0);
 }
 
 writeFileSync(DESTINO, salida);
+writeFileSync(DESTINO_TABLAS, listado);
 console.log(`Tipos generados en ${DESTINO} (${salida.split("\n").length} lineas).`);
+console.log(`Lista de tablas en ${DESTINO_TABLAS} (${tablas.length} tablas).`);

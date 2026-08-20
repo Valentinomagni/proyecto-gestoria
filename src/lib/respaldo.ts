@@ -1,9 +1,23 @@
-import { supabase } from "./supabase";
-
 /**
  * ============================================================================
  *  RESPALDO. La lista de tablas NO se mantiene: SE DERIVA.
  * ============================================================================
+ *
+ *  ============================================================================
+ *   ESTE MODULO NO IMPORTA EL CLIENTE DE SUPABASE, Y ES A PROPOSITO
+ *  ============================================================================
+ *
+ *  Lo importaba, y eso mantuvo el CI EN ROJO DESDE LA PRIMERA CORRIDA sin que nadie lo notara.
+ *  `supabase.ts` lanza al importarse si faltan las variables de entorno —lo cual esta bien, es
+ *  fallar fuerte y temprano—, pero en CI no hay `.env.local`, asi que el archivo de pruebas de
+ *  este modulo explotaba antes de correr un solo test. En la maquina de quien programa pasaba,
+ *  porque ahi el archivo existe.
+ *
+ *  Ese es el defecto de fondo y no el import: **un portón que solo funciona en una maquina no
+ *  es un porton**. La leccion vale mas que el arreglo.
+ *
+ *  Entonces `armarRespaldo` RECIBE con que leer. Este modulo decide QUE tablas, en que orden y
+ *  como se anota una que fallo; leerlas es trabajo de otro. De paso queda probable sin red.
  *
  *  POR QUE, y es un defecto documentado del Tablero Contable: alla el respaldo recorre un
  *  arreglo de siete nombres escrito a mano en el codigo de la pantalla. Su propia documentacion
@@ -51,17 +65,22 @@ export function tablasDelEsquema(tipos: { public: { Tables: Record<string, unkno
  * un arreglo vacio en su lugar. Un arreglo vacio se lee como "esa tabla no tenia filas", que es
  * mentira, y es exactamente como un respaldo incompleto pasa por completo.
  */
-export async function armarRespaldo(tablas: string[], por: string): Promise<Respaldo> {
-  const salida: Respaldo = {
-    generado: new Date().toISOString(),
-    por,
-    tablas: {},
-    errores: {},
-  };
+export type LeerTabla = (tabla: string) => Promise<{ data: unknown[] | null; error: { message: string } | null }>;
 
+export async function armarRespaldo(
+  leer: LeerTabla,
+  tablas: readonly string[],
+  por: string,
+  ahora: string = new Date().toISOString(),
+): Promise<Respaldo> {
+  const salida: Respaldo = { generado: ahora, por, tablas: {}, errores: {} };
+
+  // De a una y no todas juntas: son diecisiete tablas y una de ellas puede tener miles de
+  // filas. Diecisiete consultas al mismo tiempo contra el plan gratuito es como se consigue
+  // que la base corte, y un respaldo que falla por apurado no sirve para nada.
   for (const tabla of tablas) {
-    // eslint-disable-next-line
-    const { data, error } = await supabase.from(tabla as never).select("*");
+    // eslint-disable-next-line no-await-in-loop
+    const { data, error } = await leer(tabla);
     if (error) salida.errores[tabla] = error.message;
     else salida.tablas[tabla] = data ?? [];
   }

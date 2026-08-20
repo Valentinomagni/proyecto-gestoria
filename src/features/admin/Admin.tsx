@@ -1,9 +1,12 @@
 import { useState } from "react";
+import { toast } from "sonner";
+import { HardDriveDownload } from "lucide-react";
 import { Panel } from "../../components/Panel";
 import { SkeletonLineas } from "../../components/Skeleton";
 import { aPesos, formatear, parsear } from "../../lib/plata";
 import { hoyArgentina, proximoDiaHabil } from "../../lib/fechas";
 import { supabase } from "../../lib/supabase";
+import { clasificarFalla } from "../../lib/fallas";
 import { BOTON, BOTON_SUAVE, CAMPO, CAMPO_SUELTO } from "../../lib/campos";
 import { nombreDeRol, type Rol } from "../../lib/roles";
 import { useGestoras, useGuardar, useRazonesSociales, useSaldos, useTarjetas } from "../../lib/datos";
@@ -25,7 +28,92 @@ export function Admin() {
       <CargarDinero />
       <Usuarios />
       <RazonesYTarjetas />
+      <Respaldo />
     </div>
+  );
+}
+
+// ------------------------------------------------------------
+// Respaldo
+// ------------------------------------------------------------
+
+/**
+ * ============================================================================
+ *  BAJAR UN RESPALDO. La lista de tablas se DERIVA, no se mantiene.
+ * ============================================================================
+ *
+ *  En el Tablero Contable el respaldo recorre siete nombres escritos a mano, y su propia
+ *  documentación advierte que si agregás una tabla y no la sumás ahí, el backup no la incluye.
+ *  Ya se le escapa una: la que guarda los arqueos. Acá la lista sale de `tablas.generado.ts`,
+ *  que lo escribe el mismo comando que genera los tipos desde la base real. Una tabla nueva
+ *  entra sola porque nadie escribe la lista.
+ *
+ *  SI UNA TABLA FALLA, EL BOTON LO DICE Y NO DISIMULA. Un respaldo incompleto que se presenta
+ *  como completo es peor que no tener ninguno: genera la confianza de tenerlo.
+ *
+ *  LO QUE ESTE RESPALDO NO TRAE, y está escrito para que nadie lo suponga: las cuentas de
+ *  acceso. Viven en el esquema `auth`, que la clave publicable no puede leer. Trae los datos,
+ *  no la identidad. Sirve para recuperar información, no para reconstruir el sistema entero.
+ */
+function Respaldo() {
+  const [bajando, setBajando] = useState(false);
+
+  async function bajar(): Promise<void> {
+    setBajando(true);
+    try {
+      const { armarRespaldo, contarFilas, estaCompleto } = await import("../../lib/respaldo");
+      const { TABLAS } = await import("../../lib/tablas.generado");
+
+      const { data: sesion } = await supabase.auth.getUser();
+      const r = await armarRespaldo(
+        async (tabla) => {
+          const { data, error } = await supabase.from(tabla as never).select("*");
+          return { data: data as unknown[] | null, error };
+        },
+        TABLAS,
+        sesion.user?.email ?? "sin identificar",
+      );
+
+      const nombre = `respaldo-gestoria-${hoyArgentina()}.json`;
+      const url = URL.createObjectURL(
+        new Blob([JSON.stringify(r, null, 1)], { type: "application/json" }),
+      );
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nombre;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      const cuantas = Object.keys(r.tablas).length;
+      if (estaCompleto(r)) {
+        toast.success(`Respaldo bajado: ${cuantas} tablas, ${contarFilas(r)} filas`);
+      } else {
+        // Se baja igual: sirve más un respaldo incompleto que se sabe incompleto que ninguno.
+        toast.warning("El respaldo salió incompleto", {
+          description: `No se pudieron leer: ${Object.keys(r.errores).join(", ")}. El archivo se bajó igual y dice adentro cuáles faltaron.`,
+        });
+      }
+    } catch (e) {
+      const falla = clasificarFalla(e, navigator.onLine);
+      toast.error(falla.titulo, { description: falla.explicacion });
+    } finally {
+      setBajando(false);
+    }
+  }
+
+  return (
+    <Panel className="flex flex-col gap-3">
+      <h2 className="text-lg">Respaldo</h2>
+      <p className="text-xs text-ink2">
+        Baja un archivo con todo lo que hay en la base. La lista de tablas no se mantiene a mano:
+        sale del esquema real, así que una tabla nueva entra sola. No incluye las cuentas de
+        acceso, que viven en otro lado: sirve para recuperar datos, no para rehacer el sistema.
+      </p>
+      <button type="button" disabled={bajando} onClick={() => void bajar()} className={BOTON_SUAVE}>
+        <HardDriveDownload aria-hidden="true" size={14} />
+        {bajando ? "Leyendo la base" : "Bajar un respaldo"}
+      </button>
+    </Panel>
   );
 }
 
