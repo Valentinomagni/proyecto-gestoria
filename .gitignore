@@ -33,6 +33,18 @@ supabase/.branches/
 .DS_Store
 Thumbs.db
 
+# ============================================================
+# RESPALDOS BAJADOS DE LA APP.
+#
+# El boton de Administracion baja un JSON con TODO lo que hay en la base: nombres de clientes,
+# dominios, importes y correos. El navegador lo deja en la carpeta de descargas, y si esa
+# carpeta es esta, queda a un `git add -A` de entrar al repositorio para siempre.
+#
+# Ya paso una vez, el 20/08/2026: quedo suelto en la raiz. No llego a commitearse porque se
+# miro el `git status` antes; esta linea es para no depender de eso.
+# ============================================================
+respaldo-gestoria-*.json
+
 # Tests y reportes
 coverage/
 test-results/

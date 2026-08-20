@@ -9,6 +9,88 @@
   </head>
   <body>
     <div id="root"></div>
+
+    <!--
+      ============================================================================
+       SI LA APP NO ARRANCA, LA PANTALLA TIENE QUE DECIR ALGO
+      ============================================================================
+
+      Pasó de verdad el 20/08/2026: el sitio publicado quedó en NEGRO, sin una sola palabra. Y
+      una pantalla en negro es la peor forma de fallar que hay, porque no distingue entre "está
+      cargando", "se cayó internet", "el despliegue salió mal" y "esto nunca funcionó". Quien la
+      mira no puede hacer nada, ni siquiera avisar bien qué le pasó.
+
+      El `ErrorBoundary` de React NO cubre esto: para que él atrape algo, React tiene que haber
+      arrancado. Acá se rompe ANTES — el archivo no se descargó, o el módulo explotó al
+      importarse porque faltan las variables de entorno.
+
+      Por eso este aviso vive en el HTML, sin depender de nada: ni del JavaScript de la app, ni
+      de la hoja de estilos, ni de la tipografía. Todo va escrito acá adentro.
+
+      Y APARECE RECIEN A LOS CUATRO SEGUNDOS, mirando si React ya dibujó algo. Sin esa espera
+      parpadearía en cada carga lenta, y un aviso que aparece cuando todo está bien es un aviso
+      que se aprende a ignorar.
+    -->
+    <div
+      id="no-arranco"
+      hidden
+      style="
+        position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+        padding: 24px; background: #101113; color: #e6e7e9; text-align: left;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      "
+    >
+      <div style="max-width: 30rem">
+        <p style="margin: 0 0 12px; font-size: 18px; line-height: 1.4">
+          La aplicación no llegó a cargar.
+        </p>
+        <p style="margin: 0 0 12px; font-size: 14px; line-height: 1.6; color: #a1a4a9">
+          No es algo que hayas hecho mal. Probá una vez más, y si sigue igual es del lado del
+          sistema y hay que avisarle a quien lo administra.
+        </p>
+        <p style="margin: 0 0 20px; font-size: 13px; line-height: 1.6; color: #a1a4a9">
+          Contale estas dos cosas, que son las que sirven para encontrarlo:
+          <strong style="color: #e6e7e9">la hora exacta</strong> en que pasó y
+          <strong style="color: #e6e7e9">desde dónde entraste</strong> (la computadora de la
+          oficina o el teléfono).
+        </p>
+        <button
+          type="button"
+          onclick="location.reload()"
+          style="
+            font: inherit; font-size: 14px; padding: 10px 16px; min-height: 44px;
+            border: 1px solid #3a3d42; border-radius: 6px; background: #1a1c1f; color: #e6e7e9;
+            cursor: pointer;
+          "
+        >
+          Probar de nuevo
+        </button>
+      </div>
+    </div>
+
+    <noscript>
+      <div
+        style="
+          position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+          padding: 24px; background: #101113; color: #e6e7e9;
+          font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 15px;
+        "
+      >
+        Este sistema necesita JavaScript activado para funcionar.
+      </div>
+    </noscript>
+
+    <script>
+      // Sin `type="module"`: tiene que correr aunque el navegador no soporte módulos, que es
+      // justamente uno de los motivos por los que la app podría no arrancar.
+      setTimeout(function () {
+        var raiz = document.getElementById("root");
+        if (raiz && raiz.childElementCount === 0) {
+          document.getElementById("no-arranco").hidden = false;
+        }
+      }, 4000);
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
