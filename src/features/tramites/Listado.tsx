@@ -41,10 +41,16 @@ const TIPOS: Record<string, string> = {
   transferencia_al_concesionario: "Transferencia al concesionario",
 };
 
+/**
+ * Las dos formas en que se compra un 0km, y no hay una tercera.
+ *
+ * Credito y Contado estaban aca y no eran modalidades: son formas de PAGO, y para eso ya existe
+ * `medio_pago`. Y una transferencia directamente no tiene modalidad — la base lo impide con un
+ * check, asi que este diccionario nunca recibe una.
+ */
 const MODALIDADES: Record<string, string> = {
   plan_ahorro: "Plan de ahorro",
-  credito: "Crédito",
-  contado: "Contado",
+  venta_directa: "Venta directa 0km",
 };
 
 export function Listado({ alAbrir }: { alAbrir: (id: string) => void }) {

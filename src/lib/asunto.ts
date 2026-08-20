@@ -24,7 +24,8 @@
 
 export interface AsuntoParseado {
   tipo: "patentamiento_0km" | "transferencia_a_cliente" | "transferencia_al_concesionario" | null;
-  subtipo: "plan_ahorro" | "credito" | "contado" | null;
+  /** Como se compro el 0km. Solo existe para un patentamiento: una transferencia no tiene. */
+  subtipo: "plan_ahorro" | "venta_directa" | null;
   cliente: string | null;
   cuenta: string | null;
   referencia: string | null;
@@ -35,9 +36,6 @@ const CUENTA = /\bC\.?\s?(\d{4,8})\b/i;
 
 /** `REF. 4097473`, `ref 4093504`, `REF4064625`. Las tres formas conviven en la misma planilla. */
 const REFERENCIA = /\bREF\.?\s?(\d{4,10})\b/i;
-
-/** Lo que va entre parentesis y es solo numeros: `(108198)`, `(34913)`. */
-const ENTRE_PARENTESIS = /\((\d{4,8})\)/;
 
 /**
  * Palabras del formulario que NUNCA son parte del nombre de un cliente.
@@ -100,18 +98,52 @@ export function parsearAsunto(asunto: string): AsuntoParseado {
       : "transferencia_a_cliente";
   }
 
+  /*
+    LA MODALIDAD ES SOLO DE UN PATENTAMIENTO, y son dos valores: plan de ahorro o venta directa.
+    Credito y contado no eran modalidades, eran formas de pago — y para eso ya hay otra columna.
+
+    Se devuelve null para una transferencia AUNQUE el asunto diga "plan de ahorro": la base
+    tiene un check que no lo deja guardar, y un parser que devuelve algo que despues no se puede
+    guardar es peor que uno que se abstiene.
+
+    Y NO SE ADIVINA. Que la mayoria de los 0km sean venta directa no lo vuelve cierto para este.
+  */
   let subtipo: AsuntoParseado["subtipo"] = null;
-  if (/PLAN\s+DE\s+AHORRO/.test(mayus)) subtipo = "plan_ahorro";
+  if (tipo === "patentamiento_0km") {
+    if (/PLAN\s+DE\s+AHORRO/.test(mayus)) subtipo = "plan_ahorro";
+    else if (/VENTA\s+DIRECTA|0\s?KM\s+DIRECTO/.test(mayus)) subtipo = "venta_directa";
+  }
 
-  const cuenta = CUENTA.exec(t)?.[1] ?? null;
-  const referencia = REFERENCIA.exec(t)?.[1] ?? ENTRE_PARENTESIS.exec(t)?.[1] ?? null;
+  /*
+    ============================================================================
+     LOS DOS NUMEROS DEL ASUNTO, Y COMO SE DISTINGUEN
+    ============================================================================
 
-  // El nombre se busca DESPUES de sacar la cuenta y la referencia, para que sus digitos no
-  // ensucien la busqueda.
+    En la planilla real conviven, a veces en el mismo asunto:
+        (34913)         -> la CUENTA personal del cliente
+        (REF. 4097473)  -> la REFERENCIA de la oferta
+
+    Gana lo explicito. `REF` y `C.` lo dicen sin ninguna duda; un numero suelto entre parentesis
+    no dice nada, y en la planilla ese lugar lo ocupa la cuenta.
+
+    POR QUE IMPORTA EL ORDEN: antes el parentesis se leia PRIMERO como referencia, asi que la
+    cuenta no se reconocia nunca y habia que escribirla a mano en cada tramite. Era el dato que
+    mas se cargaba dos veces.
+  */
+  const referencia = REFERENCIA.exec(t)?.[1] ?? null;
+
+  // El parentesis solo cuenta como cuenta si NO es el que trae el REF adentro.
+  const sueltoEntreParentesis =
+    [...t.matchAll(/\((\d{4,8})\)/g)].map((m) => m[1]).find((n) => n !== undefined && n !== referencia) ??
+    null;
+
+  const cuenta = CUENTA.exec(t)?.[1] ?? sueltoEntreParentesis;
+
+  // El nombre se busca DESPUES de sacar TODOS los numeros, para que ninguno lo ensucie.
   const sinNumeros = t
     .replace(CUENTA, " ")
     .replace(REFERENCIA, " ")
-    .replace(ENTRE_PARENTESIS, " ");
+    .replaceAll(/\(\s*\d{4,8}\s*\)/g, " ");
 
   return { tipo, subtipo, cliente: buscarNombre(sinNumeros), cuenta, referencia };
 }

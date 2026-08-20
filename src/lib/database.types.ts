@@ -1073,6 +1073,7 @@ export type Database = {
           contable: number | null
           en_transito: number | null
           nombre: string | null
+          orden: number | null
           tarjeta_id: string | null
         }
         Relationships: []

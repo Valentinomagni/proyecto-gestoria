@@ -23,6 +23,8 @@ export interface Requisito { id: string; nombre: string; aplica_a: string; orden
 export interface Saldo {
   tarjeta_id: string;
   nombre: string;
+  /** Por uso, no alfabetico. La pantalla abre en la primera. */
+  orden: number;
   contable: number;
   en_transito: number;
   comprometido: number;
@@ -235,16 +237,24 @@ export function useSaldos() {
   return useQuery({
     queryKey: ["saldos"],
     queryFn: async (): Promise<Saldo[]> => {
-      // ORDENADO A PROPOSITO. Sin `order`, Postgres devuelve las filas en el orden que se le
-      // da la gana, y la pantalla de la Tarjeta muestra la primera: la tarjeta que se ve al
-      // entrar cambiaria sola entre una carga y la siguiente. En una pantalla de plata, que el
-      // numero grande de arriba sea de otra empresa que ayer es la peor forma de equivocarse,
-      // porque se ve igual de bien.
-      const { data, error } = await supabase.from("v_saldos").select("*").order("nombre");
+      // ============================================================================
+      //  ORDENADO POR USO, NO POR NOMBRE
+      // ============================================================================
+      //
+      // La pantalla abre en la primera de la lista. Ordenando por nombre abria en Doral
+      // Chevrolet, y las que mas se usan son Paris Autos y Paris Cars: la pantalla que se mira
+      // treinta veces por dia arrancaba siempre en la tarjeta equivocada.
+      //
+      // El orden lo decide la base, en la columna `orden` de `tarjetas_habitualista`, para que
+      // se pueda cambiar sin tocar codigo. Antes de eso ordenaba por nombre por una razon que
+      // sigue siendo valida: SIN `order` Postgres devuelve las filas en cualquier orden, y la
+      // tarjeta que se ve al entrar cambiaria sola entre una carga y la siguiente.
+      const { data, error } = await supabase.from("v_saldos").select("*").order("orden");
       if (error) throw error;
       return (data ?? []).map((s) => ({
         tarjeta_id: String(s.tarjeta_id),
         nombre: String(s.nombre),
+        orden: Number(s.orden),
         contable: aNumero(s.contable),
         en_transito: aNumero(s.en_transito),
         comprometido: aNumero(s.comprometido),
