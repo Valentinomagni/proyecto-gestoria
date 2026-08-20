@@ -1,0 +1,104 @@
+# ============================================================================
+#  PUBLICAR EN CLOUDFLARE PAGES, DESDE EL REPOSITORIO Y NO DESDE UN PANEL
+# ============================================================================
+#
+#  POR QUE EXISTE ESTE ARCHIVO, y no es preferencia: el proyecto de Cloudflare se creó por
+#  subida directa —una carpeta arrastrada una vez— y no quedó enlazado a GitHub. Se comprobó el
+#  19/08/2026 empujando a `main` y midiendo: diez minutos después el sitio seguía sirviendo,
+#  byte por byte, el mismo contenido de antes. Ni siquiera intentó desplegar.
+#
+#  Un despliegue que depende de que alguien se acuerde de arrastrar una carpeta no es un
+#  despliegue: es un trámite. Y ya le costó al Tablero Contable treinta commits sin publicar,
+#  incluido el arreglo de un defecto de seguridad, con el dueño mirando una versión vieja y
+#  creyendo que nada funcionaba.
+#
+#  Con esto, publicar es consecuencia de que algo llegue a `main`, y de nada más.
+#
+#  ============================================================================
+#   LO QUE HACE FALTA UNA SOLA VEZ, en Settings -> Secrets and variables -> Actions
+#  ============================================================================
+#
+#    CLOUDFLARE_API_TOKEN    Cloudflare -> My Profile -> API Tokens -> Create Token,
+#                            plantilla "Edit Cloudflare Workers", o un token propio con el
+#                            permiso "Cloudflare Pages: Edit" sobre la cuenta.
+#    CLOUDFLARE_ACCOUNT_ID   Sale de la URL del panel: dash.cloudflare.com/<ESTE_ES>
+#    VITE_SUPABASE_URL       El mismo que está en .env.local
+#    VITE_SUPABASE_ANON_KEY  La clave publicable (sb_publishable_...). Es pública por diseño.
+#    VITE_SENTRY_DSN         El DSN de Sentry
+#
+#  MIENTRAS FALTE ALGUNO, ESTE FLUJO NO FALLA: se saltea y lo dice. Un paso rojo permanente
+#  entrena a ignorar el rojo, que es justo lo que dejó pasar el CI en rojo de este proyecto
+#  durante días.
+
+name: Publicar
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ver si están las llaves
+        id: llaves
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CUENTA: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "$TOKEN" ] && [ -n "$CUENTA" ]; then
+            echo "hay=si" >> "$GITHUB_OUTPUT"
+          else
+            echo "hay=no" >> "$GITHUB_OUTPUT"
+            echo "Faltan CLOUDFLARE_API_TOKEN o CLOUDFLARE_ACCOUNT_ID en los secretos del"
+            echo "repositorio. No se publica, y NO es un error: es que todavia no se cargaron."
+            echo "Las instrucciones estan arriba en .github/workflows/publicar.yml"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.llaves.outputs.hay == 'si'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+        if: steps.llaves.outputs.hay == 'si'
+
+      # Se compila ACA y no en Cloudflare: asi lo que se publica es exactamente lo que salio de
+      # este repositorio, con estas dependencias, y no de una maquina que no se ve.
+      - name: Compilar
+        if: steps.llaves.outputs.hay == 'si'
+        run: npx vite build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+
+      # COMPROBACION ANTES DE PUBLICAR, y no despues. El primer despliegue de este proyecto
+      # sirvio el index.html del codigo fuente durante dias sin que nadie lo notara, porque
+      # nadie miro que hubiera salido bien. Esto lo vuelve imposible: si `dist/index.html`
+      # todavia apunta a /src/, no se publica nada.
+      - name: Que lo compilado sea de verdad lo compilado
+        if: steps.llaves.outputs.hay == 'si'
+        run: |
+          if grep -q "/src/main.tsx" dist/index.html; then
+            echo "dist/index.html apunta al codigo fuente: la compilacion no sirvio. No se publica."
+            exit 1
+          fi
+          if ! grep -q "/assets/" dist/index.html; then
+            echo "dist/index.html no referencia ningun archivo compilado. No se publica."
+            exit 1
+          fi
+          echo "El paquete compilado tiene la forma correcta."
+
+      - name: Publicar en Cloudflare Pages
+        if: steps.llaves.outputs.hay == 'si'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # La carpeta de salida y el nombre del proyecto salen de wrangler.toml, que está en el
+          # repositorio: la configuración se versiona y se revisa en un diff.
+          command: pages deploy --branch=main

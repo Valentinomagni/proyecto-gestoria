@@ -66,28 +66,33 @@ son tres campos en un panel (abajo, con los valores exactos).
 
 ### Lo que desbloquea que la puedas probar
 
-- [ ] **Cloudflare: tres campos, una vez.** Hoy la URL sirve el `index.html` del código fuente
-      —el que apunta a `/src/main.tsx`, que en producción no existe— así que la página sale en
-      blanco. No está roto: falta decirle cómo compilar. En el panel del proyecto, en
-      **Settings → Builds & deployments → Build configurations**:
+**Cloudflare no está enlazado a GitHub.** Se comprobó el 19/08/2026: se empujó a `main` y diez
+minutos después el sitio seguía sirviendo, byte por byte, el mismo contenido de antes — ni
+siquiera intentó desplegar. El proyecto se creó por **subida directa** (una carpeta arrastrada
+una vez), y en un proyecto así las opciones de compilación del panel no hacen nada.
 
-      | Campo | Valor |
-      |---|---|
-      | Build command | `npm run build` |
-      | Build output directory | `dist` |
-      | Root directory | *(vacío)* |
+Por eso el sitio muestra el andamio del primer día y no la app.
 
-      Y en **Settings → Environment variables**, para Production y Preview:
+**La solución está lista en el repositorio** y publica desde GitHub Actions, que además compila
+con estas dependencias y comprueba el resultado antes de publicar. Falta cargar cinco secretos,
+una sola vez, en **GitHub → Settings → Secrets and variables → Actions → New repository secret**:
 
-      | Variable | Valor |
-      |---|---|
-      | `NODE_VERSION` | `22.17.0` |
-      | `VITE_SUPABASE_URL` | el mismo que está en `.env.local` |
-      | `VITE_SUPABASE_ANON_KEY` | la clave publicable (`sb_publishable_...`) |
-      | `VITE_SENTRY_DSN` | el DSN de Sentry |
+| Secreto | De dónde sale |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare → My Profile → API Tokens → Create Token, plantilla *Edit Cloudflare Workers* |
+| `CLOUDFLARE_ACCOUNT_ID` | De la URL del panel: `dash.cloudflare.com/<esto>` |
+| `VITE_SUPABASE_URL` | El mismo que está en tu `.env.local` |
+| `VITE_SUPABASE_ANON_KEY` | La clave publicable (`sb_publishable_...`). Es pública por diseño |
+| `VITE_SENTRY_DSN` | El DSN de Sentry |
 
-      Después, **Deployments → Retry deployment**. Si la página carga y pide usuario y
-      contraseña, salió bien.
+Con eso cargado, publicar deja de ser un trámite: pasa a ser consecuencia de que algo llegue a
+`main`. **Mientras falte alguno el flujo no falla: se saltea y lo dice**, porque un paso rojo
+permanente entrena a ignorar el rojo.
+
+*La alternativa*, si preferís el panel: borrar el proyecto de Cloudflare y crearlo de nuevo con
+**Workers & Pages → Create → Pages → Connect to Git**, apuntando al repositorio, con build
+command `npm run build`, output directory `dist` y `NODE_VERSION=22.17.0`. Es más clics y hay que
+repetirlos si algún día se rehace, por eso está primero la otra.
 
 ### Seguridad, y esto no puede esperar al final
 
