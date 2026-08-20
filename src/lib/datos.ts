@@ -58,6 +58,8 @@ export interface Tramite {
   recibido_at: string;
   presentado_at: string | null;
   pagado_at: string | null;
+  /** Quien de administracion quedo a cargo. Texto libre; ver la migracion. */
+  administrativo: string | null;
   // Las tres ocurren FUERA del sistema y las carga una persona. Ver la migracion del reloj.
   certificacion_primera_firma: string | null;
   verificacion_policial: string | null;
@@ -139,6 +141,37 @@ export function useTarjetas() {
         .from("tarjetas_habitualista").select("id, nombre, orden").eq("activa", true).order("orden");
       if (error) throw error;
       return data;
+    },
+  });
+}
+
+/**
+ * Los administrativos que ya se usaron alguna vez, para sugerirlos al cargar.
+ *
+ * ES LO UNICO QUE SE PUEDE HACER CONTRA UN TEXTO LIBRE. No impide escribir cualquier cosa —el
+ * campo sigue siendo libre a proposito, porque la lista de personas todavia no esta cerrada—
+ * pero empuja a repetir la forma en vez de inventarla. Sin esto, el mismo nombre entra escrito
+ * de tres maneras y despues no se puede filtrar por el.
+ *
+ * El tope de 500 no es arbitrario: alcanza de sobra para juntar los nombres distintos que hay,
+ * y evita traerse la tabla entera para armar una lista de sugerencias.
+ */
+export function useAdministrativos() {
+  return useQuery({
+    queryKey: ["administrativos"],
+    ...CATALOGO,
+    queryFn: async (): Promise<string[]> => {
+      const { data, error } = await supabase
+        .from("tramites")
+        .select("administrativo")
+        .not("administrativo", "is", null)
+        .limit(500);
+      if (error) throw error;
+
+      const nombres = new Set(
+        (data ?? []).map((t) => String(t.administrativo).trim()).filter((n) => n !== ""),
+      );
+      return [...nombres].toSorted();
     },
   });
 }

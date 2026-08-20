@@ -832,6 +832,7 @@ export type Database = {
         Row: {
           actualizado_at: string
           actualizado_por: string | null
+          administrativo: string | null
           asunto_mail: string | null
           autorizado_en: string
           autorizado_por: string | null
@@ -877,6 +878,7 @@ export type Database = {
         Insert: {
           actualizado_at?: string
           actualizado_por?: string | null
+          administrativo?: string | null
           asunto_mail?: string | null
           autorizado_en?: string
           autorizado_por?: string | null
@@ -922,6 +924,7 @@ export type Database = {
         Update: {
           actualizado_at?: string
           actualizado_por?: string | null
+          administrativo?: string | null
           asunto_mail?: string | null
           autorizado_en?: string
           autorizado_por?: string | null
