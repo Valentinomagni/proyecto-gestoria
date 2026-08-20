@@ -83,12 +83,36 @@
     <script>
       // Sin `type="module"`: tiene que correr aunque el navegador no soporte módulos, que es
       // justamente uno de los motivos por los que la app podría no arrancar.
-      setTimeout(function () {
+      (function () {
         var raiz = document.getElementById("root");
-        if (raiz && raiz.childElementCount === 0) {
-          document.getElementById("no-arranco").hidden = false;
+        var aviso = document.getElementById("no-arranco");
+        if (!raiz || !aviso) return;
+
+        // A los cuatro segundos, si React todavía no dibujó nada, se muestra el aviso.
+        setTimeout(function () {
+          if (raiz.childElementCount === 0) aviso.hidden = false;
+        }, 4000);
+
+        // ============================================================================
+        //  Y SE ESCONDE SOLO EN CUANTO LA APP ARRANCA, AUNQUE TARDE MAS DE LA CUENTA.
+        // ============================================================================
+        //
+        // Sin esto quedaba un borde feo: en una conexión lenta —la gestora con datos móviles,
+        // parada en el registro, que es justo quien menos margen tiene— el aviso aparecía a los
+        // cuatro segundos y NO SE IBA MAS, tapando una app que había cargado bien.
+        //
+        // Un aviso de error encima de algo que funciona es peor que no tener aviso: enseña que
+        // los avisos de este sistema mienten.
+        if (typeof MutationObserver === "function") {
+          var vigia = new MutationObserver(function () {
+            if (raiz.childElementCount > 0) {
+              aviso.hidden = true;
+              vigia.disconnect();
+            }
+          });
+          vigia.observe(raiz, { childList: true });
         }
-      }, 4000);
+      })();
     </script>
 
     <script type="module" src="/src/main.tsx"></script>
