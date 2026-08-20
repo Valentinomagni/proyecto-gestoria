@@ -97,8 +97,8 @@ describe("quien ve que en perfiles", () => {
     expect(data?.length).toBeGreaterThanOrEqual(4);
   });
 
-  it("un usuario sin asignar se ve SOLO a si mismo", async () => {
-    // Es el default seguro funcionando: alguien recien dado de alta no ve nada del resto.
+  it("una gestora se ve SOLO a si misma", async () => {
+    // Fuera de la oficina, nadie ve la lista de quien mas entra al sistema ni con que rol.
     const { data, error } = await gestora.from("perfiles").select("email");
     expect(error).toBeNull();
     expect(data).toHaveLength(1);
@@ -128,17 +128,62 @@ describe("quien ve que en perfiles", () => {
  * se LEE la fila. Si el rol quedo como estaba, esta protegido — no importa si lo freno el
  * trigger con una excepcion o la RLS devolviendo cero filas. Lo que hay que garantizar es que
  * el dato no cambie, no como se impide.
+ *
+ * Esta funcion es esa forma de afirmar, escrita una sola vez: intenta que alguien se cambie el
+ * rol a SI MISMO y comprueba, releyendo la fila, que no lo logro.
  */
+async function noSeCambiaElRol(
+  quien: string,
+  cliente: SupabaseClient,
+  esperado: string,
+): Promise<void> {
+  const { data: sesion } = await cliente.auth.getUser();
+  const miId = sesion.user?.id ?? "";
+  expect(miId, `sin sesion para ${quien}`).not.toBe("");
+
+  await cliente.from("perfiles").update({ rol: "gestora" }).eq("id", miId);
+
+  const { data } = await cliente.from("perfiles").select("rol").eq("id", miId).single();
+  expect(data?.rol, `${quien} se cambio el rol a si mismo`).toBe(esperado);
+}
+
 describe("nadie se auto-promueve", () => {
-  it("contable NO puede darse el rol de gerencia", async () => {
-    const { data: sesion } = await contable.auth.getUser();
-    const miId = sesion.user?.id ?? "";
-    expect(miId).not.toBe("");
+  it("contable YA NO se auto-promueve, pero ahora tampoco gerencia", async () => {
+    /*
+      LA REGLA CAMBIO Y ES MAS FUERTE. Antes decia "solo gerencia cambia roles", asi que
+      gerencia SI podia cambiarse el suyo. Ahora nadie puede cambiar el rol de su PROPIA fila,
+      ni gerencia — que es lo que hace que este invariante siga siendo verdad ahora que contable
+      administra igual que gerencia.
+    */
+    // Los dos en paralelo: son sesiones distintas contra filas distintas, no se pisan.
+    await Promise.all([
+      noSeCambiaElRol("contable", contable, "contable"),
+      noSeCambiaElRol("gerencia", gerencia, "gerencia"),
+    ]);
+  });
 
-    await contable.from("perfiles").update({ rol: "gerencia" }).eq("id", miId);
+  it("pero contable SI puede administrar a otro, igual que gerencia", async () => {
+    // Es la otra mitad del cambio: identicos quiere decir que contable tambien administra.
+    const correo = env["PRUEBA_GESTORA"] ?? "";
+    const { data: antes } = await contable
+      .from("perfiles").select("activo").eq("email", correo).single();
+    const original = antes?.activo;
+    expect(original).toBeDefined();
 
-    const { data } = await contable.from("perfiles").select("rol").eq("id", miId).single();
-    expect(data?.rol).toBe("contable");
+    const { error } = await contable
+      .from("perfiles").update({ activo: !original }).eq("email", correo);
+    expect(error).toBeNull();
+
+    const { data: medio } = await contable
+      .from("perfiles").select("activo").eq("email", correo).single();
+    expect(medio?.activo).toBe(!original);
+
+    // Se restaura el valor REAL, no uno escrito a mano: asi fue como este arnes dejo una vez
+    // desactivada a una gestora que trabajaba.
+    await contable.from("perfiles").update({ activo: original }).eq("email", correo);
+    const { data: final } = await contable
+      .from("perfiles").select("activo").eq("email", correo).single();
+    expect(final?.activo).toBe(original);
   });
 
   it("una gestora no puede desactivarse ni activarse sola", async () => {

@@ -42,9 +42,18 @@ export function puedeMoverSaldo(rol: Rol): boolean {
   return rol === "gerencia" || rol === "contable";
 }
 
-/** Quien administra catalogos, plazos, objetivos y usuarios. */
+/**
+ * Quien administra catalogos, plazos, feriados, usuarios, respaldo y avisos.
+ *
+ * GERENCIA Y CONTABLE SON LA MISMA OFICINA, y por eso tienen exactamente lo mismo. Antes esto
+ * decia solo gerencia, y la consecuencia era que la mitad del sistema —confirmar un plazo,
+ * cargar un feriado, atender un aviso— dependia de que una sola persona estuviera disponible.
+ *
+ * Espeja al helper `es_oficina()` de la base, que es quien decide de verdad: esto solo evita
+ * mostrar botones que van a fallar.
+ */
 export function puedeAdministrar(rol: Rol): boolean {
-  return rol === "gerencia";
+  return rol === "gerencia" || rol === "contable";
 }
 
 /** Un rol sin asignar no ve nada hasta que gerencia lo habilita. */

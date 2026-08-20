@@ -1249,6 +1249,7 @@ export type Database = {
       es_contable: { Args: never; Returns: boolean }
       es_gerencia: { Args: never; Returns: boolean }
       es_gestora: { Args: never; Returns: boolean }
+      es_oficina: { Args: never; Returns: boolean }
       mi_gestora_id: { Args: never; Returns: string }
       mi_rol: { Args: never; Returns: string }
       nombre_de: { Args: { persona: string }; Returns: string }
