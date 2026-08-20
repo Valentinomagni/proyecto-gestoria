@@ -17,9 +17,9 @@ son tres campos en un panel (abajo, con los valores exactos).
 
 | Qué | Cuánto | Comando |
 |---|---|---|
-| Tests, todos verdes | **105** en 14 archivos | `npx vitest run` |
-| Pruebas de permisos contra la API real | **9** | `npm run test:rls` |
-| Guardianes | **9** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `migraciones`, `secretos`, `permisos` |
+| Tests, todos verdes | **111** en 15 archivos | `npx vitest run` |
+| Pruebas de permisos contra la API real | **23** | `npm run test:rls` |
+| Guardianes | **10** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `pruebas`, `migraciones`, `secretos`, `permisos` |
 | Migraciones aplicadas | **9** de 9 escritas | `npm run db:seco` dice "up to date" |
 | Tablas en la base | **17**, más **4 vistas** | consulta a `pg_class` |
 | Módulos de lógica en `src/lib` | 15 | `ls src/lib` |
@@ -56,8 +56,9 @@ son tres campos en un panel (abajo, con los valores exactos).
       función. Necesita las tablas `plazos`, `feriados` y la confirmación tuya de los cinco
       plazos de `docs/DOMINIO.md` §4.
 - [ ] **El botón de avisar un problema** (Andon), que necesita su tabla.
-- [ ] **Ampliar las pruebas de permisos a `cobros` y `movimientos`**: que una gestora no llegue
-      al margen por ninguno de los cuatro caminos.
+- [x] ~~Ampliar las pruebas de permisos a `cobros` y `movimientos`.~~ Hecho: los cuatro caminos
+      al margen, incluido el que se olvida siempre —colgar `cobros` de una consulta a
+      `tramites`—, y el libro mayor que ni gerencia puede editar ni borrar.
 - [ ] **Restaurar un respaldo una vez de verdad.** Necesita la segunda base.
 
 ---
