@@ -9,7 +9,7 @@ import { BOTON_SUAVE, BOTON, CAMPO, CAMPO_SUELTO } from "../../lib/campos";
 import type { Database } from "../../lib/database.types";
 import {
   useConceptos, useConceptosDelTramite, useEventosDelTramite, useGestoras,
-  useCalendario, useGuardar, useNotasDelTramite, usePlazos, useRequisitos,
+  useCalendario, useGuardar, useHistorialPresupuesto, useNotasDelTramite, usePlazos, useRequisitos,
   useRequisitosDelTramite, useTramite,
 } from "../../lib/datos";
 import {
@@ -17,6 +17,7 @@ import {
   type Calendario, type Plazo, type Vencimiento,
 } from "../../lib/plazos";
 import { useSesion } from "../../lib/sesion";
+import { HistorialPresupuesto } from "./HistorialPresupuesto";
 import { Chip, nombreDeEstado } from "./Listado";
 
 /**
@@ -53,6 +54,7 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
   const plazos = usePlazos();
   const calendario = useCalendario();
   const { perfil } = useSesion();
+  const historial = useHistorialPresupuesto(id);
 
   const [campos, setCampos] = useState<Record<string, string>>({});
   const valor = (k: string, d: string | null): string => campos[k] ?? d ?? "";
@@ -88,7 +90,10 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
       if (error) throw error;
       setCampos({});
     },
-    { exito: "Trámite actualizado", invalidar: ["tramite", "tramites", "saldos", "tramite_eventos"] },
+    {
+      exito: "Trámite actualizado",
+      invalidar: ["tramite", "tramites", "saldos", "tramite_eventos", "presupuesto_historial"],
+    },
   );
 
   const agregarLinea = useGuardar(
@@ -98,7 +103,7 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
       });
       if (error) throw error;
     },
-    { exito: "Concepto agregado", invalidar: ["tramite_conceptos"] },
+    { exito: "Concepto agregado", invalidar: ["tramite_conceptos", "presupuesto_historial"] },
   );
 
   /**
@@ -378,6 +383,8 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
         conceptos={conceptos.data ?? []}
         alAgregar={(conceptoId, importe) => agregarLinea.mutate({ conceptoId, momento: "real", importe })}
       />
+
+      <HistorialPresupuesto cambios={historial.data ?? []} cargando={historial.isLoading} />
 
       <Salidas
         estado={t.estado}

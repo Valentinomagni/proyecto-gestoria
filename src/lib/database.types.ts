@@ -424,6 +424,65 @@ export type Database = {
         }
         Relationships: []
       }
+      presupuesto_historial: {
+        Row: {
+          antes: string | null
+          cuando: string
+          despues: string | null
+          id: number
+          que: string
+          quien: string | null
+          tramite_id: string
+        }
+        Insert: {
+          antes?: string | null
+          cuando?: string
+          despues?: string | null
+          id?: number
+          que: string
+          quien?: string | null
+          tramite_id: string
+        }
+        Update: {
+          antes?: string | null
+          cuando?: string
+          despues?: string | null
+          id?: number
+          que?: string
+          quien?: string | null
+          tramite_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presupuesto_historial_quien_fkey"
+            columns: ["quien"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "presupuesto_historial_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "tramites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "presupuesto_historial_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_tramite_totales"
+            referencedColumns: ["tramite_id"]
+          },
+          {
+            foreignKeyName: "presupuesto_historial_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_tramites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       razones_sociales: {
         Row: {
           activa: boolean
@@ -1257,6 +1316,13 @@ export type Database = {
       mi_gestora_id: { Args: never; Returns: string }
       mi_rol: { Args: never; Returns: string }
       nombre_de: { Args: { persona: string }; Returns: string }
+      nombres_de: {
+        Args: { personas: string[] }
+        Returns: {
+          id: string
+          nombre: string
+        }[]
+      }
       opero_esta_tarjeta: { Args: { p_tarjeta: string }; Returns: boolean }
       orden_estado: { Args: { p: string }; Returns: number }
       puede_ver_cobros: { Args: never; Returns: boolean }

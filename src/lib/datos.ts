@@ -455,6 +455,55 @@ export function useNotasDelTramite(tramiteId: string | null) {
   });
 }
 
+export interface CambioDePresupuesto {
+  id: number;
+  que: string;
+  antes: string | null;
+  despues: string | null;
+  cuando: string;
+  quien_nombre: string | null;
+}
+
+/**
+ * Los cambios del presupuesto de un tramite: quien, cuando, y de cuanto a cuanto.
+ *
+ * EL NOMBRE SE PIDE APARTE Y NO CON UN EMBED. La policy de `perfiles` deja que una gestora lea
+ * solo su propia fila, asi que un embed le devolveria null para los cambios de sus companieras
+ * — y un historial con nombres vacios no sirve para repreguntar, que es para lo unico que se
+ * mira. Es el mismo problema que ya tuvieron las notas, resuelto igual: una funcion que
+ * devuelve UNICAMENTE el nombre.
+ */
+export function useHistorialPresupuesto(tramiteId: string | null) {
+  return useQuery({
+    queryKey: ["presupuesto_historial", tramiteId],
+    enabled: tramiteId !== null,
+    queryFn: async (): Promise<CambioDePresupuesto[]> => {
+      const { data, error } = await supabase
+        .from("presupuesto_historial")
+        .select("id, que, antes, despues, cuando, quien")
+        .eq("tramite_id", tramiteId ?? "")
+        .order("cuando", { ascending: false });
+      if (error) throw error;
+
+      const ids = [...new Set((data ?? []).map((c) => c.quien).filter((q): q is string => q !== null))];
+      const nombres = new Map<string, string>();
+      if (ids.length > 0) {
+        const { data: gente } = await supabase.rpc("nombres_de", { personas: ids });
+        for (const p of (gente ?? []) as { id: string; nombre: string }[]) nombres.set(p.id, p.nombre);
+      }
+
+      return (data ?? []).map((c) => ({
+        id: Number(c.id),
+        que: String(c.que),
+        antes: c.antes,
+        despues: c.despues,
+        cuando: String(c.cuando),
+        quien_nombre: c.quien === null ? null : (nombres.get(c.quien) ?? null),
+      }));
+    },
+  });
+}
+
 export function useEventosDelTramite(tramiteId: string | null) {
   return useQuery({
     queryKey: ["tramite_eventos", tramiteId],

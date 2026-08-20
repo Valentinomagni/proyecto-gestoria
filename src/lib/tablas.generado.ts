@@ -14,6 +14,7 @@ export const TABLAS: readonly string[] = [
   "parametros",
   "perfiles",
   "plazos",
+  "presupuesto_historial",
   "razones_sociales",
   "requisitos",
   "sucursales",
