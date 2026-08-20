@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      avisos: {
+        Row: {
+          atendido_at: string | null
+          atendido_por: string | null
+          contexto: Json
+          creado_at: string
+          id: number
+          quien: string | null
+          resolucion: string | null
+          texto: string | null
+        }
+        Insert: {
+          atendido_at?: string | null
+          atendido_por?: string | null
+          contexto?: Json
+          creado_at?: string
+          id?: number
+          quien?: string | null
+          resolucion?: string | null
+          texto?: string | null
+        }
+        Update: {
+          atendido_at?: string | null
+          atendido_por?: string | null
+          contexto?: Json
+          creado_at?: string
+          id?: number
+          quien?: string | null
+          resolucion?: string | null
+          texto?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avisos_atendido_por_fkey"
+            columns: ["atendido_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avisos_quien_fkey"
+            columns: ["quien"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cobros: {
         Row: {
           actualizado_at: string

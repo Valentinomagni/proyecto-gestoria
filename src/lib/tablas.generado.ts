@@ -4,6 +4,7 @@
 // CUANDO CORRE. Se regenera con `npm run db:tipos`, junto con los tipos.
 
 export const TABLAS: readonly string[] = [
+  "avisos",
   "cobros",
   "conceptos",
   "encuestas_adopcion",

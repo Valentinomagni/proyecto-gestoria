@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { HardDriveDownload } from "lucide-react";
 import { Panel } from "../../components/Panel";
 import { Calendario } from "./Calendario";
+import { Avisos } from "./Avisos";
 import { SkeletonLineas } from "../../components/Skeleton";
 import { aPesos, formatear, parsear } from "../../lib/plata";
 import { hoyArgentina, proximoDiaHabil } from "../../lib/fechas";
@@ -28,6 +29,8 @@ export function Admin() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4 p-6">
       <h1 className="text-xl">Administración</h1>
+      {/* Arriba de todo, a propósito: con defectos abiertos no entran funciones nuevas. */}
+      <Avisos />
       <CargarDinero />
       <Usuarios />
       <RazonesYTarjetas />

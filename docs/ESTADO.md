@@ -20,8 +20,8 @@ son tres campos en un panel (abajo, con los valores exactos).
 | Tests, todos verdes | **138** en 18 archivos | `npx vitest run` |
 | Pruebas de permisos contra la API real | **23** | `npm run test:rls` |
 | Guardianes | **10** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `pruebas`, `migraciones`, `secretos`, `permisos` |
-| Migraciones aplicadas | **11** de 11 escritas | `npm run db:seco` dice "up to date" |
-| Tablas en la base | **19**, más **5 vistas** | consulta a `pg_class` |
+| Migraciones aplicadas | **13** de 13 escritas | `npm run db:seco` dice "up to date" |
+| Tablas en la base | **20**, más **5 vistas** | consulta a `pg_class` |
 | Módulos de lógica en `src/lib` | 15 | `ls src/lib` |
 | Archivos de código | 49 | `find src -name "*.ts*"` |
 | Peso de arranque | **86,82 kB** + 53,77 de Supabase + 11,72 de Query | `npx vite build` |
@@ -57,7 +57,10 @@ son tres campos en un panel (abajo, con los valores exactos).
       (abajo). Probado mirando: con la fecha de certificación cargada y el calendario declarado,
       la ficha muestra "Faltan 83 días hábiles · 15/12/2026", y el número se comprobó contra un
       cálculo independiente.
-- [ ] **El botón de avisar un problema** (Andon), que necesita su tabla.
+- [x] ~~El botón de avisar un problema (Andon).~~ Está en TODAS las pantallas y para todos los
+      roles, y **el botón de mandar nunca se deshabilita**: quien lo aprieta no tiene que saber
+      explicar nada. Probado con la gestora, que es quien menos permisos tiene: mandó un aviso
+      sin escribir una palabra y gerencia lo ve en Administración, arriba de todo.
 - [x] ~~Ampliar las pruebas de permisos a `cobros` y `movimientos`.~~ Hecho: los cuatro caminos
       al margen, incluido el que se olvida siempre —colgar `cobros` de una consulta a
       `tramites`—, y el libro mayor que ni gerencia puede editar ni borrar.

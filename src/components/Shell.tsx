@@ -8,6 +8,7 @@ import { Isotipo } from "./Logo";
 import { SkeletonLineas } from "./Skeleton";
 import { EmptyState } from "./EmptyState";
 import { Login } from "./Login";
+import { Avisar } from "./Avisar";
 import { Panel } from "./Panel";
 
 /**
@@ -89,6 +90,7 @@ export function Shell({
         <Isotipo tono="blanco" alto={22} />
         <div className="flex items-center gap-3">
           <span className="text-2xs text-warn">{avisoBase}</span>
+          <Avisar pantalla={pantalla} rol={perfil.rol} tramiteId={null} />
           <BotonSalir oscuro />
         </div>
       </header>
@@ -125,6 +127,10 @@ export function Shell({
             <p className="text-2xs text-side-ink2">{nombreDeRol(perfil.rol)}</p>
           </div>
           <p className="text-2xs text-warn">{avisoBase}</p>
+          {/* El andon vive en la cáscara, así que está en TODAS las pantallas y para todos los
+              roles. Un botón de avisar que está en una sola pantalla sirve para los problemas
+              de esa pantalla. */}
+          <Avisar pantalla={pantalla} rol={perfil.rol} tramiteId={null} />
           <BotonSalir oscuro />
         </div>
       </aside>
