@@ -5,9 +5,6 @@ import {
   formatearFecha,
   formatearFechaHora,
   mesDe,
-  horaArgentina,
-  antesDelCorte,
-  minutosHasta,
 } from "./fechas";
 
 /**
@@ -60,53 +57,18 @@ describe("formatear", () => {
   });
 });
 
-describe("horaArgentina", () => {
-  it("devuelve la hora local en minutos desde medianoche", () => {
-    expect(horaArgentina(new Date("2026-08-19T18:00:00Z"))).toBe(15 * 60);
-    expect(horaArgentina(new Date("2026-08-19T19:30:00Z"))).toBe(16 * 60 + 30);
-  });
-});
+/*
+  ACA VIVIAN LOS OCHO TESTS DEL CORTE DE LAS 16:00 —los de `antesDelCorte`, `minutosHasta` y
+  `horaArgentina`—, y se fueron el 21/08/2026 con la cuenta regresiva que se saco de la pantalla
+  de la Tarjeta a pedido del usuario.
 
-/**
- * EL CORTE DE LAS 16:00.
- *
- * Es el reloj real de la operación: el depósito se ordena hasta esa hora y acredita al día
- * siguiente. Quien no decide antes no pierde unas horas, pierde un día entero.
- *
- * La hora NO está escrita en el código: entra por parámetro desde la tabla `parametros`. Un
- * banco cambia un horario de corte sin avisarle a nadie, y un `16` constante convertiría ese
- * cambio en un error silencioso que hace perder un día por vez hasta que alguien lo note.
- */
-describe("el corte de depósitos", () => {
-  it("a las 15:59 todavía se llega", () => {
-    expect(antesDelCorte("16:00", new Date("2026-08-19T18:59:00Z"))).toBe(true);
-  });
+  Se anota lo que se perdio, porque no era poco: probaban el borde exacto —justo a las 16:00 ya
+  NO se llega, decidido hacia el lado seguro— y que la hora entrara por parametro en vez de estar
+  escrita en el codigo.
 
-  it("a las 16:01 ya no", () => {
-    expect(antesDelCorte("16:00", new Date("2026-08-19T19:01:00Z"))).toBe(false);
-  });
-
-  it("justo a las 16:00 ya no se llega", () => {
-    // El borde se decide hacia el lado seguro: decir que todavía se llega cuando no se llega
-    // hace perder un día, y el error se descubre al día siguiente.
-    expect(antesDelCorte("16:00", new Date("2026-08-19T19:00:00Z"))).toBe(false);
-  });
-
-  it("cuántos minutos faltan para el corte", () => {
-    expect(minutosHasta("16:00", new Date("2026-08-19T16:45:00Z"))).toBe(135);
-    expect(minutosHasta("16:00", new Date("2026-08-19T18:59:00Z"))).toBe(1);
-  });
-
-  it("pasado el corte, faltan cero minutos y no un número negativo", () => {
-    // Un negativo en la pantalla se leería como "faltan -20 minutos", que no quiere decir nada.
-    expect(minutosHasta("16:00", new Date("2026-08-19T19:20:00Z"))).toBe(0);
-  });
-
-  it("respeta una hora de corte distinta, porque es un dato y no una constante", () => {
-    expect(antesDelCorte("14:30", new Date("2026-08-19T17:29:00Z"))).toBe(true);
-    expect(antesDelCorte("14:30", new Date("2026-08-19T17:31:00Z"))).toBe(false);
-  });
-});
+  Estan en el historial de git. Si vuelve la cuenta regresiva, vuelven con ella. Y la zona horaria
+  sigue cubierta por los tests de `formatearFechaHora`, que es donde de verdad se ve.
+*/
 
 describe("aFechaDeExcel", () => {
   /*

@@ -380,6 +380,17 @@ export function useNovedades(miId: string | null): {
   return { lista, sinVer: contarSinVer(lista, visto), marcarVistas };
 }
 
+/**
+ * El extracto de una tarjeta.
+ *
+ * TRAE EL NOMBRE DEL CLIENTE, y esa es la diferencia entre un extracto y una lista de numeros.
+ * Antes la columna Concepto decia "reserva" — una palabra del sistema. Cuando la gestora carga
+ * un presupuesto y quiere ver que se descontó, lo que busca es el apellido del cliente, no el
+ * tipo de asiento.
+ *
+ * `anulado` se calcula aca y no en la base porque es una LECTURA, no una regla. La regla —que
+ * un movimiento se anule una sola vez— vive en el indice unico de `corrige_movimiento_id`.
+ */
 export function useMovimientos(tarjetaId: string | null) {
   return useQuery({
     queryKey: ["movimientos", tarjetaId],
@@ -387,15 +398,58 @@ export function useMovimientos(tarjetaId: string | null) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("movimientos")
-        .select("id, fecha, fecha_acreditacion, tipo, importe, concepto, observacion")
+        // El select va en UNA sola cadena literal, sin partirla con `+`: supabase-js infiere los
+        // tipos leyendo ese literal, y una concatenacion lo deja en `GenericStringError` — o sea
+        // que se pierde el chequeo de tipos justo en la consulta que trae plata.
+        .select("id, fecha, fecha_acreditacion, tipo, importe, concepto, observacion, corrige_movimiento_id, tramites(cliente_nombre)")
         .eq("tarjeta_id", tarjetaId ?? "")
         .order("fecha", { ascending: false })
         .order("id", { ascending: false })
         .limit(200);
       if (error) throw error;
-      return (data ?? []).map((m) => Object.assign(m, { importe: aNumero(m.importe) }));
+
+      const filas = data ?? [];
+      const anulados = new Set(
+        filas.map((m) => m.corrige_movimiento_id).filter((x): x is number => x !== null),
+      );
+
+      return filas.map((m) => ({
+        id: Number(m.id),
+        fecha: String(m.fecha),
+        fecha_acreditacion: String(m.fecha_acreditacion),
+        tipo: String(m.tipo),
+        importe: aNumero(m.importe),
+        concepto: m.concepto,
+        observacion: m.observacion,
+        corrige_movimiento_id: m.corrige_movimiento_id,
+        cliente: m.tramites?.cliente_nombre ?? null,
+        anulado: anulados.has(Number(m.id)),
+      }));
     },
   });
+}
+
+/**
+ * Anular un movimiento cargado mal.
+ *
+ * LLAMA A LA BASE Y NO ARMA EL AJUSTE ACA. Si esta pantalla armara la compensación, el signo, la
+ * fecha de acreditación y el tipo dependerían de que el front los calcule bien cada vez — y un
+ * signo al revés no da error: duplica el importe en vez de compensarlo.
+ *
+ * Tampoco borra: la base inserta un ajuste de signo contrario que apunta al original. Los dos se
+ * suman a cero, el saldo queda bien, y el error queda visible con su motivo.
+ */
+export function useAnularMovimiento() {
+  return useGuardar(
+    async (v: { id: number; motivo: string }) => {
+      const { error } = await supabase.rpc("anular_movimiento", {
+        p_id: v.id,
+        p_motivo: v.motivo,
+      });
+      if (error) throw error;
+    },
+    { exito: "Movimiento anulado", invalidar: ["saldos", "movimientos"] },
+  );
 }
 
 // ------------------------------------------------------------

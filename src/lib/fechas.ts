@@ -66,45 +66,26 @@ export function formatearFechaHora(instante: string | Date): string {
   return `${FECHA_LEGIBLE.format(d)} ${HORA.format(d)}`;
 }
 
-/** La hora argentina de un instante, en minutos desde la medianoche. */
-export function horaArgentina(ahora: Date = new Date()): number {
-  const [h, m] = HORA.format(ahora).split(":");
-  return Number(h) * 60 + Number(m);
-}
+/*
+  ============================================================================
+   ACA VIVIA LA ARITMETICA DEL CORTE DE LAS 16:00
+  ============================================================================
 
-/** `"16:00"` -> 960. Lanza si el formato no es el esperado, en vez de devolver NaN. */
-function aMinutos(hhmm: string): number {
-  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
-  if (!m) throw new TypeError(`Hora mal escrita: ${JSON.stringify(hhmm)}`);
-  const horas = Number(m[1]);
-  const minutos = Number(m[2]);
-  if (horas > 23 || minutos > 59) throw new RangeError(`Hora fuera de rango: ${hhmm}`);
-  return horas * 60 + minutos;
-}
+  `antesDelCorte`, `minutosHasta`, `horaArgentina` y `aMinutos` se fueron el 21/08/2026 junto con
+  la cuenta regresiva, que se saco de la pantalla de la Tarjeta a pedido del usuario.
 
-/**
- * Si todavia se llega al corte de depositos.
- *
- * JUSTO A LA HORA DEL CORTE YA NO SE LLEGA. El borde se decide hacia el lado seguro: decir que
- * se llega cuando no se llega hace perder un dia entero, y el error se descubre recien al dia
- * siguiente, con un tramite frenado en el registro.
- *
- * La hora entra por parametro, desde la tabla `parametros`. Nunca escrita en el codigo.
- */
-export function antesDelCorte(horaCorte: string, ahora: Date = new Date()): boolean {
-  return horaArgentina(ahora) < aMinutos(horaCorte);
-}
+  Se anota lo que se perdio, porque no era poco: probaban el borde exacto —justo a las 16:00 ya
+  NO se llega, decidido hacia el lado seguro, porque decir que se llega cuando no se llega hace
+  perder un dia entero— y que la hora entrara por parametro en vez de estar escrita en el codigo.
+  Todo esta en el historial de git. Si vuelve la cuenta regresiva, vuelve con sus pruebas.
 
-/**
- * Cuantos minutos faltan para el corte. Cero si ya paso.
- *
- * Nunca negativo: "faltan -20 minutos" no quiere decir nada en una pantalla. Pasado el corte,
- * lo que corresponde no es un numero sino otro mensaje —"lo que ordenes ahora acredita pasado
- * manana"—, y eso lo decide quien dibuja, con este cero como senal.
- */
-export function minutosHasta(horaCorte: string, ahora: Date = new Date()): number {
-  return Math.max(0, aMinutos(horaCorte) - horaArgentina(ahora));
-}
+  LO QUE EL CORTE SIGUE DECIDIENDO NO SE FUE, y es lo que de verdad mueve plata: la fecha en que
+  acredita un deposito la calcula `proximoDiaHabil`, aca abajo. Eso es lo que separa el saldo de
+  hoy del de maniana, y sigue probado.
+
+  Y la zona horaria tampoco quedo sin cubrir: el formateador `HORA` lo sigue usando
+  `formatearFechaHora`, con sus tests.
+*/
 
 /**
  * El dia habil siguiente a una fecha, en formato `YYYY-MM-DD`.
