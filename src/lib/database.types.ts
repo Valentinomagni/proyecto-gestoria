@@ -219,6 +219,7 @@ export type Database = {
       movimientos: {
         Row: {
           concepto: string | null
+          corrige_movimiento_id: number | null
           creado_at: string
           creado_por: string | null
           fecha: string
@@ -234,6 +235,7 @@ export type Database = {
         }
         Insert: {
           concepto?: string | null
+          corrige_movimiento_id?: number | null
           creado_at?: string
           creado_por?: string | null
           fecha?: string
@@ -249,6 +251,7 @@ export type Database = {
         }
         Update: {
           concepto?: string | null
+          corrige_movimiento_id?: number | null
           creado_at?: string
           creado_por?: string | null
           fecha?: string
@@ -263,6 +266,13 @@ export type Database = {
           tramite_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "movimientos_corrige_movimiento_id_fkey"
+            columns: ["corrige_movimiento_id"]
+            isOneToOne: false
+            referencedRelation: "movimientos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "movimientos_creado_por_fkey"
             columns: ["creado_por"]
@@ -424,65 +434,6 @@ export type Database = {
         }
         Relationships: []
       }
-      presupuesto_historial: {
-        Row: {
-          antes: string | null
-          cuando: string
-          despues: string | null
-          id: number
-          que: string
-          quien: string | null
-          tramite_id: string
-        }
-        Insert: {
-          antes?: string | null
-          cuando?: string
-          despues?: string | null
-          id?: number
-          que: string
-          quien?: string | null
-          tramite_id: string
-        }
-        Update: {
-          antes?: string | null
-          cuando?: string
-          despues?: string | null
-          id?: number
-          que?: string
-          quien?: string | null
-          tramite_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "presupuesto_historial_quien_fkey"
-            columns: ["quien"]
-            isOneToOne: false
-            referencedRelation: "perfiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "presupuesto_historial_tramite_id_fkey"
-            columns: ["tramite_id"]
-            isOneToOne: false
-            referencedRelation: "tramites"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "presupuesto_historial_tramite_id_fkey"
-            columns: ["tramite_id"]
-            isOneToOne: false
-            referencedRelation: "v_tramite_totales"
-            referencedColumns: ["tramite_id"]
-          },
-          {
-            foreignKeyName: "presupuesto_historial_tramite_id_fkey"
-            columns: ["tramite_id"]
-            isOneToOne: false
-            referencedRelation: "v_tramites"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       razones_sociales: {
         Row: {
           activa: boolean
@@ -532,6 +483,7 @@ export type Database = {
           id: string
           nombre: string
           orden: number
+          tipo: string
         }
         Insert: {
           activo?: boolean
@@ -539,6 +491,7 @@ export type Database = {
           id?: string
           nombre: string
           orden?: number
+          tipo?: string
         }
         Update: {
           activo?: boolean
@@ -546,6 +499,7 @@ export type Database = {
           id?: string
           nombre?: string
           orden?: number
+          tipo?: string
         }
         Relationships: []
       }
@@ -640,32 +594,100 @@ export type Database = {
         }
         Relationships: []
       }
+      tramite_cambios: {
+        Row: {
+          antes: string | null
+          campo: string | null
+          cuando: string
+          despues: string | null
+          id: number
+          que: string
+          quien: string | null
+          tramite_id: string
+        }
+        Insert: {
+          antes?: string | null
+          campo?: string | null
+          cuando?: string
+          despues?: string | null
+          id?: number
+          que: string
+          quien?: string | null
+          tramite_id: string
+        }
+        Update: {
+          antes?: string | null
+          campo?: string | null
+          cuando?: string
+          despues?: string | null
+          id?: number
+          que?: string
+          quien?: string | null
+          tramite_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presupuesto_historial_quien_fkey"
+            columns: ["quien"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "presupuesto_historial_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "tramites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "presupuesto_historial_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_tramite_totales"
+            referencedColumns: ["tramite_id"]
+          },
+          {
+            foreignKeyName: "presupuesto_historial_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_tramites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tramite_conceptos: {
         Row: {
+          anulada: boolean
           concepto_id: string
           creado_at: string
           creado_por: string | null
           id: number
           importe: number
           momento: string
+          motivo_anulacion: string | null
           tramite_id: string
         }
         Insert: {
+          anulada?: boolean
           concepto_id: string
           creado_at?: string
           creado_por?: string | null
           id?: number
           importe: number
           momento: string
+          motivo_anulacion?: string | null
           tramite_id: string
         }
         Update: {
+          anulada?: boolean
           concepto_id?: string
           creado_at?: string
           creado_por?: string | null
           id?: number
           importe?: number
           momento?: string
+          motivo_anulacion?: string | null
           tramite_id?: string
         }
         Relationships: [
@@ -1309,6 +1331,10 @@ export type Database = {
       }
     }
     Functions: {
+      anular_movimiento: {
+        Args: { p_id: number; p_motivo: string }
+        Returns: number
+      }
       es_contable: { Args: never; Returns: boolean }
       es_gerencia: { Args: never; Returns: boolean }
       es_gestora: { Args: never; Returns: boolean }

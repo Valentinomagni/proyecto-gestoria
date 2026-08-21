@@ -514,9 +514,12 @@ export function useNotasDelTramite(tramiteId: string | null) {
   });
 }
 
-export interface CambioDePresupuesto {
+export interface CambioDelTramite {
   id: number;
+  /** `deposito`, `concepto` o `dato`. Decide como se lee la linea en pantalla. */
   que: string;
+  /** Que columna cambio, cuando `que` es `dato`. Su nombre en castellano lo pone el front. */
+  campo: string | null;
   antes: string | null;
   despues: string | null;
   cuando: string;
@@ -524,7 +527,12 @@ export interface CambioDePresupuesto {
 }
 
 /**
- * Los cambios del presupuesto de un tramite: quien, cuando, y de cuanto a cuanto.
+ * Todos los cambios de un tramite: quien, cuando, y de que a que.
+ *
+ * NO ES SOLO DEL PRESUPUESTO desde el 21/08/2026. La tabla se llamaba `presupuesto_historial` y
+ * registraba el deposito y los conceptos; ahora se llama `tramite_cambios` y un trigger le suma
+ * CUALQUIER columna del tramite que cambie, comparando por diferencia de jsonb. Una columna que
+ * se agregue maniana queda registrada por defecto.
  *
  * EL NOMBRE SE PIDE APARTE Y NO CON UN EMBED. La policy de `perfiles` deja que una gestora lea
  * solo su propia fila, asi que un embed le devolveria null para los cambios de sus companieras
@@ -532,16 +540,19 @@ export interface CambioDePresupuesto {
  * mira. Es el mismo problema que ya tuvieron las notas, resuelto igual: una funcion que
  * devuelve UNICAMENTE el nombre.
  */
-export function useHistorialPresupuesto(tramiteId: string | null) {
+export function useCambios(tramiteId: string | null) {
   return useQuery({
-    queryKey: ["presupuesto_historial", tramiteId],
+    queryKey: ["tramite_cambios", tramiteId],
     enabled: tramiteId !== null,
-    queryFn: async (): Promise<CambioDePresupuesto[]> => {
+    queryFn: async (): Promise<CambioDelTramite[]> => {
       const { data, error } = await supabase
-        .from("presupuesto_historial")
-        .select("id, que, antes, despues, cuando, quien")
+        .from("tramite_cambios")
+        .select("id, que, campo, antes, despues, cuando, quien")
         .eq("tramite_id", tramiteId ?? "")
-        .order("cuando", { ascending: false });
+        .order("cuando", { ascending: false })
+        // `id desc` como desempate: dos cambios de la misma guardada tienen la misma hora al
+        // milisegundo, y sin esto el listado se reordena solo al recargar y parece que cambio algo.
+        .order("id", { ascending: false });
       if (error) throw error;
 
       const ids = [...new Set((data ?? []).map((c) => c.quien).filter((q): q is string => q !== null))];
@@ -554,6 +565,7 @@ export function useHistorialPresupuesto(tramiteId: string | null) {
       return (data ?? []).map((c) => ({
         id: Number(c.id),
         que: String(c.que),
+        campo: c.campo,
         antes: c.antes,
         despues: c.despues,
         cuando: String(c.cuando),

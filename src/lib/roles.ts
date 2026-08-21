@@ -42,19 +42,18 @@ export function puedeMoverSaldo(rol: Rol): boolean {
   return rol === "gerencia" || rol === "contable";
 }
 
-/**
- * Quien administra catalogos, plazos, feriados, usuarios, respaldo y avisos.
- *
- * GERENCIA Y CONTABLE SON LA MISMA OFICINA, y por eso tienen exactamente lo mismo. Antes esto
- * decia solo gerencia, y la consecuencia era que la mitad del sistema —confirmar un plazo,
- * cargar un feriado, atender un aviso— dependia de que una sola persona estuviera disponible.
- *
- * Espeja al helper `es_oficina()` de la base, que es quien decide de verdad: esto solo evita
- * mostrar botones que van a fallar.
- */
-export function puedeAdministrar(rol: Rol): boolean {
-  return rol === "gerencia" || rol === "contable";
-}
+/*
+  ACA VIVIA `puedeAdministrar`, y se fue el 21/08/2026.
+
+  Decidia quien ve Administracion, y era el unico lugar desde donde se lo llamaba: el menu. Con
+  el menu armado por rol —cada pantalla dice que roles la ven, en `src/menu.ts`— esta funcion
+  pasaba a ser una segunda fuente para la misma decision, y dos fuentes para una decision es como
+  se separan.
+
+  La regla no cambio: gerencia y contable son la misma oficina y ven exactamente lo mismo. Vive
+  en la constante OFICINA de `menu.ts`, con su porque, y sigue espejando a `es_oficina()` de la
+  base, que es quien decide de verdad.
+*/
 
 /** Un rol sin asignar no ve nada hasta que gerencia lo habilita. */
 export function estaHabilitado(rol: Rol, activo: boolean): boolean {

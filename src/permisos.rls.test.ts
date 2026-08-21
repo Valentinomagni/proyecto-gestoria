@@ -1,7 +1,7 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { type SupabaseClient } from "@supabase/supabase-js";
 import { beforeAll, describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
 import { aCentavos } from "./lib/plata";
+import { comoUsuario, env, ponerLinea, sinSesion, NOMBRE_DE_PRUEBA } from "./pruebas/arnes-de-permisos";
 
 /**
  * ============================================================================
@@ -45,33 +45,6 @@ import { aCentavos } from "./lib/plata";
  *  cambie el rol ni se active solo.
  */
 
-function leerEntorno(): Record<string, string> {
-  const texto = readFileSync(".env.local", "utf8");
-  const salida: Record<string, string> = {};
-  for (const linea of texto.split("\n")) {
-    const t = linea.trim();
-    if (t === "" || t.startsWith("#")) continue;
-    const i = t.indexOf("=");
-    if (i > 0) salida[t.slice(0, i).trim()] = t.slice(i + 1).trim();
-  }
-  return salida;
-}
-
-const env = leerEntorno();
-const URL = env["VITE_SUPABASE_URL"] ?? "";
-const CLAVE = env["VITE_SUPABASE_ANON_KEY"] ?? "";
-const PASS = env["PRUEBA_PASSWORD"] ?? "";
-
-/** Un cliente ya logueado con ese correo. Cada rol tiene el suyo, sin compartir sesion. */
-async function comoUsuario(email: string): Promise<SupabaseClient> {
-  const cliente = createClient(URL, CLAVE, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-  const { error } = await cliente.auth.signInWithPassword({ email, password: PASS });
-  if (error) throw new Error(`No se pudo entrar como ${email}: ${error.message}`);
-  return cliente;
-}
-
 let gerencia: SupabaseClient;
 let contable: SupabaseClient;
 let gestora: SupabaseClient;
@@ -81,7 +54,7 @@ beforeAll(async () => {
   gerencia = await comoUsuario(env["PRUEBA_GERENCIA"] ?? "");
   contable = await comoUsuario(env["PRUEBA_CONTABLE"] ?? "");
   gestora = await comoUsuario(env["PRUEBA_GESTORA"] ?? "");
-  anonimo = createClient(URL, CLAVE, { auth: { persistSession: false } });
+  anonimo = sinSesion();
 });
 
 describe("quien ve que en perfiles", () => {
@@ -513,9 +486,6 @@ describe("el libro mayor solo se inserta", () => {
  *  real: lo que hay que garantizar no es que la policy sea correcta en abstracto, es que la
  *  gestora ABRA la app y lo vea.
  */
-/** El tramite de prueba es UNO SOLO y se reusa entre corridas. Ver el beforeAll. */
-const NOMBRE_DE_PRUEBA = "VISIBILIDAD DESDE EL ALTA";
-
 describe("una gestora ve el tramite desde que se lo asignan", () => {
   let creado = "";
   let otraGestora: SupabaseClient;
@@ -600,15 +570,19 @@ describe("una gestora ve el tramite desde que se lo asignan", () => {
     // impedia. O sea que este arreglo destraba dos cosas, no una.
     const { data: concepto } = await gerencia.from("conceptos").select("id").limit(1).single();
 
-    // UPSERT y no insert: hay un indice unico de un concepto por momento y por tramite —un
-    // poka-yoke, para que el mismo arancel no entre dos veces— y como el tramite de prueba se
-    // reusa, la segunda corrida chocaria contra el. Lo que se prueba es que la gestora PUEDA
-    // escribir, no que la fila sea nueva.
-    const { error } = await gestora.from("tramite_conceptos").upsert(
-      { tramite_id: creado, concepto_id: concepto?.id, momento: "presupuesto", importe: 1234.56 },
-      { onConflict: "tramite_id,concepto_id,momento" },
-    );
-    expect(error).toBeNull();
+    /*
+      `ponerLinea` y no `upsert`. Hay un indice unico de un concepto por momento y por tramite
+      —un poka-yoke, para que el mismo arancel no entre dos veces— y como el tramite de prueba se
+      reusa, un insert pelado chocaria en la segunda corrida.
+
+      Y `upsert` TAMPOCO sirve desde el 21/08/2026: ese indice paso a ser PARCIAL, para que
+      quitar una linea no impida volver a cargar ese concepto, y PostgREST no puede inferir un
+      indice parcial (42P10). El helper hace select y despues update o insert.
+
+      Lo que se prueba es que la gestora PUEDA escribir, no que la fila sea nueva.
+    */
+    const falla = await ponerLinea(gestora, creado, String(concepto?.id), 1234.56);
+    expect(falla).toBeNull();
   });
 
   it("una gestora dada de baja no puede recibir trabajo nuevo", async () => {

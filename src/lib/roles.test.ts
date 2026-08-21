@@ -4,7 +4,7 @@ import {
   esRolValido,
   estaHabilitado,
   nombreDeRol,
-  puedeAdministrar,
+
   puedeMoverSaldo,
   puedeVerCobros,
 } from "./roles";
@@ -32,20 +32,14 @@ describe("roles", () => {
     expect(puedeMoverSaldo("contable")).toBe(true);
   });
 
-  it("gerencia y contable administran igual, y gestoría no", () => {
-    /*
-      ESTA REGLA CAMBIO A PROPOSITO el 20/08/2026, y por eso el test cambio con ella. Antes
-      decia que sólo gerencia administraba, y la consecuencia real era que confirmar un plazo,
-      cargar un feriado o atender un aviso dependía de que una sola persona estuviera
-      disponible. En la práctica gerencia y contable son la misma oficina.
+  /*
+    ACA VIVIA `puedeAdministrar`, y se fue el 21/08/2026 con el menú por rol.
 
-      Espeja al helper `es_oficina()` de la base, que es quien decide de verdad.
-    */
-    expect(puedeAdministrar("gerencia")).toBe(true);
-    expect(puedeAdministrar("contable")).toBe(true);
-    expect(puedeAdministrar("gestora")).toBe(false);
-    expect(puedeAdministrar("sin_asignar")).toBe(false);
-  });
+    La regla que probaba —gerencia y contable administran igual, gestoría no— no desapareció:
+    se mudó a `MENU` en `src/menu.ts`, donde ahora cada pantalla dice qué roles la ven, y la
+    prueba equivalente vive en `src/menu.test.ts` ("contable y gerencia tienen exactamente el
+    mismo menú"). Tener las dos habría sido tener dos fuentes para la misma decisión.
+  */
 
   it("un usuario sin asignar no está habilitado ni estando activo", () => {
     expect(estaHabilitado("sin_asignar", true)).toBe(false);

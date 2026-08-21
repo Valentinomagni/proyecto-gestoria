@@ -2,7 +2,7 @@ import { Panel } from "../../components/Panel";
 import { SkeletonLineas } from "../../components/Skeleton";
 import { formatearFechaHora } from "../../lib/fechas";
 import { aCentavos, formatear } from "../../lib/plata";
-import type { CambioDePresupuesto } from "../../lib/datos";
+import type { CambioDelTramite } from "../../lib/datos";
 
 /**
  * ============================================================================
@@ -22,7 +22,7 @@ import type { CambioDePresupuesto } from "../../lib/datos";
 export function HistorialPresupuesto({
   cambios, cargando,
 }: {
-  cambios: CambioDePresupuesto[];
+  cambios: CambioDelTramite[];
   cargando: boolean;
 }) {
   if (cargando) return <Panel><SkeletonLineas cantidad={2} /></Panel>;
@@ -58,7 +58,7 @@ export function HistorialPresupuesto({
  * texto decimal —`640000.00`— y así, sin puntos de miles, un número de siete cifras se lee mal
  * justo cuando importa distinguir 64.000 de 640.000.
  */
-function describir(c: CambioDePresupuesto): string {
+function describir(c: CambioDelTramite): string {
   if (c.que === "deposito") {
     const antes = c.antes === null ? null : formatear(aCentavos(c.antes));
     const despues = c.despues === null ? "sin depósito" : formatear(aCentavos(c.despues));

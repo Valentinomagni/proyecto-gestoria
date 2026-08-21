@@ -9,7 +9,7 @@ import { BOTON_SUAVE, BOTON, CAMPO, CAMPO_SUELTO } from "../../lib/campos";
 import type { Database } from "../../lib/database.types";
 import {
   useConceptos, useConceptosDelTramite, useEventosDelTramite, useGestoras,
-  useCalendario, useGuardar, useHistorialPresupuesto, useNotasDelTramite, usePlazos, useRequisitos,
+  useCalendario, useGuardar, useCambios, useNotasDelTramite, usePlazos, useRequisitos,
   useRequisitosDelTramite, useTramite,
 } from "../../lib/datos";
 import {
@@ -54,7 +54,7 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
   const plazos = usePlazos();
   const calendario = useCalendario();
   const { perfil } = useSesion();
-  const historial = useHistorialPresupuesto(id);
+  const historial = useCambios(id);
 
   const [campos, setCampos] = useState<Record<string, string>>({});
   const valor = (k: string, d: string | null): string => campos[k] ?? d ?? "";
