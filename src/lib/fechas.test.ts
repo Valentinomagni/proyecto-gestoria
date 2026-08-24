@@ -5,6 +5,8 @@ import {
   formatearFecha,
   formatearFechaHora,
   mesDe,
+  proximoDiaHabil,
+  sumarDiasHabiles,
 } from "./fechas";
 
 /**
@@ -90,5 +92,53 @@ describe("aFechaDeExcel", () => {
   it("el mediodia es el dia obvio", () => {
     expect(aFechaDeExcel("2026-08-18T12:00:00.000Z").toISOString())
       .toBe("2026-08-18T00:00:00.000Z");
+  });
+});
+
+/**
+ * ============================================================================
+ *  LA ARITMETICA DE DIAS HABILES, que es la que decide CUANDO HAY PLATA
+ * ============================================================================
+ *
+ *  Estos tests vivian en `plazos.test.ts`, con el calculo de vencimientos. Ese calculo se saco el
+ *  21/08/2026, pero `sumarDiasHabiles` se queda: de ella cuelga `proximoDiaHabil`, que dice
+ *  cuando acredita un deposito. Si eso se equivoca un dia, la pantalla muestra saldo disponible
+ *  que todavia no existe — y alguien manda a presentar un tramite contra plata que no esta.
+ */
+describe("sumar dias habiles", () => {
+  it("sumar cero deja la misma fecha", () => {
+    expect(sumarDiasHabiles("2026-08-19", 0, new Set())).toBe("2026-08-19");
+  });
+
+  it("un dia habil desde un viernes cae el lunes", () => {
+    expect(sumarDiasHabiles("2026-08-21", 1, new Set())).toBe("2026-08-24");
+  });
+
+  it("y si el lunes es feriado, cae el martes", () => {
+    // Es para lo que existe la tabla de feriados. Sin ella la cuenta da el lunes, un dia antes
+    // de que la plata este de verdad.
+    expect(sumarDiasHabiles("2026-08-14", 1, new Set(["2026-08-17"]))).toBe("2026-08-18");
+  });
+
+  it("rechaza un numero de dias que no es un entero positivo", () => {
+    expect(() => sumarDiasHabiles("2026-08-19", -1, new Set())).toThrow(RangeError);
+    expect(() => sumarDiasHabiles("2026-08-19", 1.5, new Set())).toThrow(RangeError);
+  });
+
+  it("rechaza una fecha mal escrita en vez de devolver basura", () => {
+    // Una fecha invalida que devuelve `Invalid Date` se propaga en silencio hasta la pantalla.
+    expect(() => sumarDiasHabiles("19/08/2026", 1, new Set())).toThrow(TypeError);
+  });
+});
+
+describe("cuando acredita un deposito", () => {
+  it("uno ordenado el viernes acredita el lunes, no el sabado", () => {
+    // Es el caso que hace perder un fin de semana entero de saldo disponible.
+    expect(proximoDiaHabil(new Set(), new Date("2026-08-21T15:00:00Z"))).toBe("2026-08-24");
+  });
+
+  it("y si el lunes es feriado, el martes", () => {
+    expect(proximoDiaHabil(new Set(["2026-08-24"]), new Date("2026-08-21T15:00:00Z")))
+      .toBe("2026-08-25");
   });
 });

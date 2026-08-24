@@ -7,7 +7,6 @@ import { recordado, recordar } from "./recordar";
 import {
   CLAVE_VISTO, contarSinVer, hastaDondeMarcar, sumarNovedad, type Novedad,
 } from "./novedades";
-import type { Plazo } from "./plazos";
 
 /**
  * Las consultas a la base, en un solo lugar.
@@ -22,7 +21,14 @@ export interface Sucursal { id: string; nombre: string; gestionada_por: string }
 export interface Gestora { id: string; nombre: string; perfil_id: string | null; activa: boolean }
 export interface Concepto { id: string; nombre: string; orden: number }
 export interface Tarjeta { id: string; nombre: string; orden: number }
-export interface Requisito { id: string; nombre: string; aplica_a: string; orden: number }
+export interface Requisito {
+  id: string;
+  nombre: string;
+  aplica_a: string;
+  orden: number;
+  /** `documento` (Está / Falta / No corresponde) o `si_no` (Sí / No). Ver el Checklist. */
+  tipo: string;
+}
 
 export interface Saldo {
   tarjeta_id: string;
@@ -187,7 +193,9 @@ export function useRequisitos(tipo: string | null) {
     ...CATALOGO,
     queryFn: async (): Promise<Requisito[]> => {
       const { data, error } = await supabase
-        .from("requisitos").select("id, nombre, aplica_a, orden")
+        // `tipo` decide COMO se contesta: un papel del legajo se contesta Esta / Falta / No
+        // corresponde, y un hecho de la operacion —hay accesorios, hay usado— se contesta Si o No.
+        .from("requisitos").select("id, nombre, aplica_a, orden, tipo")
         .eq("activo", true).in("aplica_a", [tipo ?? "", "todos"]).order("orden");
       if (error) throw error;
       return data;
@@ -238,33 +246,14 @@ export function useCalendario() {
   });
 }
 
-/** SOLO los plazos verificados: la vista no tiene los otros. Ver la migración de plazos. */
-export function usePlazos() {
-  return useQuery({
-    queryKey: ["plazos_usables"],
-    ...CATALOGO,
-    queryFn: async (): Promise<Plazo[]> => {
-      const { data, error } = await supabase
-        .from("v_plazos_usables")
-        .select("clave, nombre, aplica_a, desde, dias, habiles, consecuencia, norma, verificado_el, verificado_por");
-      if (error) throw error;
-      return (data ?? [])
-        .filter((p) => p.clave !== null && p.verificado_el !== null && p.verificado_por !== null)
-        .map((p) => ({
-          clave: String(p.clave),
-          nombre: String(p.nombre),
-          aplica_a: String(p.aplica_a),
-          desde: String(p.desde),
-          dias: Number(p.dias),
-          habiles: Boolean(p.habiles),
-          consecuencia: String(p.consecuencia),
-          norma: p.norma,
-          verificado_el: String(p.verificado_el),
-          verificado_por: String(p.verificado_por),
-        }));
-    },
-  });
-}
+/*
+  ACA VIVIA `usePlazos`, que traia los plazos confirmados para calcular los vencimientos de un
+  tramite. Ese panel se saco de la ficha el 21/08/2026.
+
+  Administracion sigue confirmando plazos, con su propia consulta (`usePlazosTodos`, en
+  Calendario.tsx): ahi hacen falta TODOS, tambien los sin confirmar, porque justamente lo que
+  esa pantalla hace es confirmarlos. La vista `v_plazos_usables` sigue existiendo en la base.
+*/
 
 // ------------------------------------------------------------
 // Saldos
@@ -494,6 +483,13 @@ export function useTramite(id: string | null) {
   });
 }
 
+/**
+ * Las lineas del presupuesto y del costo real.
+ *
+ * TRAE TAMBIEN LAS ANULADAS, a proposito: en pantalla se muestran tachadas con su motivo. Aca
+ * nada se borra, y en este caso importa mas que en otros — cuando el tramite vuelve del registro
+ * y el numero no cierra, lo que se pregunta es que se saco y por que.
+ */
 export function useConceptosDelTramite(tramiteId: string | null) {
   return useQuery({
     queryKey: ["tramite_conceptos", tramiteId],
@@ -501,12 +497,58 @@ export function useConceptosDelTramite(tramiteId: string | null) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tramite_conceptos")
-        .select("id, concepto_id, momento, importe")
-        .eq("tramite_id", tramiteId ?? "");
+        .select("id, concepto_id, momento, importe, anulada, motivo_anulacion")
+        .eq("tramite_id", tramiteId ?? "")
+        .order("id");
       if (error) throw error;
       return (data ?? []).map((c) => Object.assign(c, { importe: aNumero(c.importe) }));
     },
   });
+}
+
+/** Las claves que se invalidan cuando cambia una linea: el total y la reserva se mueven solos. */
+const AL_TOCAR_EL_PRESUPUESTO = [
+  "tramite_conceptos", "tramite", "tramites", "saldos", "movimientos", "tramite_cambios",
+];
+
+/**
+ * Corregir el importe de una linea del presupuesto.
+ *
+ * NO HACE FALTA TOCAR NADA MAS: el trigger `h_conceptos_total_presupuesto` recalcula el total del
+ * tramite, y eso dispara el de la cuenta corriente, que escribe el `ajuste_reserva` por la
+ * DIFERENCIA. La reserva original nunca se toca, porque editarla haria que el saldo de ayer deje
+ * de ser reconstruible.
+ */
+export function useCorregirConcepto() {
+  return useGuardar(
+    async (v: { id: number; importe: number }) => {
+      const { error } = await supabase
+        .from("tramite_conceptos")
+        .update({ importe: v.importe })
+        .eq("id", v.id);
+      if (error) throw error;
+    },
+    { exito: "Importe corregido", invalidar: AL_TOCAR_EL_PRESUPUESTO },
+  );
+}
+
+/**
+ * Quitar una linea del presupuesto.
+ *
+ * ES UN UPDATE Y NO UN DELETE, y no es una limitacion tecnica: en este proyecto no hay delete
+ * para nadie. La linea queda con su motivo escrito y la plata vuelve sola a la tarjeta.
+ */
+export function useQuitarConcepto() {
+  return useGuardar(
+    async (v: { id: number; motivo: string }) => {
+      const { error } = await supabase
+        .from("tramite_conceptos")
+        .update({ anulada: true, motivo_anulacion: v.motivo })
+        .eq("id", v.id);
+      if (error) throw error;
+    },
+    { exito: "Línea quitada del presupuesto", invalidar: AL_TOCAR_EL_PRESUPUESTO },
+  );
 }
 
 export function useRequisitosDelTramite(tramiteId: string | null) {

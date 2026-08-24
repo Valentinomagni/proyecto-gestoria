@@ -88,18 +88,6 @@ export function formatearFechaHora(instante: string | Date): string {
 */
 
 /**
- * El dia habil siguiente a una fecha, en formato `YYYY-MM-DD`.
- *
- * Un deposito ordenado el VIERNES antes del corte no acredita el sabado. Sin esto, la pantalla
- * mostraria plata disponible un dia antes de que exista, que es el error que este sistema no
- * puede cometer.
- *
- * PENDIENTE Y DECLARADO: todavia no contempla feriados. La tabla `feriados` y el calendario
- * habil llegan con la capa de vencimientos; hasta entonces, un deposito ordenado el jueves
- * anterior a un feriado va a figurar como acreditado un dia antes de lo real. Es un error
- * conocido, acotado y escrito — no uno silencioso.
- */
-/**
  * Un instante -> la fecha que hay que escribir en una celda de Excel.
  *
  * ============================================================================
@@ -122,6 +110,19 @@ export function aFechaDeExcel(instante: string | Date): Date {
   return new Date(`${aFechaArgentina(instante)}T00:00:00Z`);
 }
 
+/**
+ * El dia habil siguiente a una fecha, en formato `YYYY-MM-DD`.
+ *
+ * ES LA FUNCION QUE DECIDE CUANDO HAY PLATA. Un deposito ordenado el VIERNES no acredita el
+ * sabado. Sin esto la pantalla mostraria saldo disponible un dia antes de que exista, y alguien
+ * mandaria a presentar un tramite contra plata que todavia no esta — que es exactamente lo que
+ * este sistema viene a evitar.
+ *
+ * LOS FERIADOS ENTRAN POR PARAMETRO, desde la tabla `feriados`. Con el conjunto vacio cuenta
+ * solo sabados y domingos, y entonces un deposito ordenado el jueves anterior a un feriado
+ * figura como acreditado un dia antes de lo real. Es un error CONOCIDO y acotado, no silencioso:
+ * Administracion avisa hasta donde llega el calendario cargado, con `revisarCobertura`.
+ */
 export function proximoDiaHabil(feriados: ReadonlySet<string>, desde: Date = new Date()): string {
   return sumarDiasHabiles(aFechaArgentina(desde), 1, feriados);
 }
@@ -147,9 +148,9 @@ export function proximoDiaHabil(feriados: ReadonlySet<string>, desde: Date = new
  *  Entonces salen de la tabla `feriados` y llegan acá como un conjunto de `YYYY-MM-DD`.
  *
  *  QUE PASA SI EL CONJUNTO ESTA VACIO: cuenta sólo sábados y domingos, y da un resultado
- *  OPTIMISTA — una fecha anterior a la real. Por eso quien llama tiene que comprobar que el
- *  calendario cubra el rango ANTES de mostrar el resultado como un vencimiento; de eso se
- *  ocupa `plazos.ts`, que es el único que decide si un vencimiento se puede mostrar.
+ *  OPTIMISTA — una fecha anterior a la real. Por eso Administración avisa hasta dónde llega el
+ *  calendario cargado, con `revisarCobertura` en `plazos.ts`: un año a medio cargar hace que la
+ *  app diga que la plata entra un día antes de que entre.
  *
  *  El día 0 es `desde`: sumar un día hábil a un viernes da el lunes siguiente.
  */
@@ -185,45 +186,4 @@ function aISO(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-/**
- * Suma días CORRIDOS a un día de calendario. No mira si son hábiles.
- *
- * Existe porque no todo plazo se cuenta en días hábiles, y suponer que sí sería inventar.
- * Vive acá y no en `plazos.ts` por la misma razón que todo lo demás de este archivo: el día
- * que alguien lo escriba en otro lado va a usar la zona del navegador sin darse cuenta.
- */
-export function sumarDiasCorridos(desde: string, dias: number): string {
-  const d = new Date(`${desde}T00:00:00Z`);
-  if (Number.isNaN(d.getTime())) throw new TypeError(`Fecha mal escrita: ${JSON.stringify(desde)}`);
-  d.setUTCDate(d.getUTCDate() + dias);
-  return aISO(d);
-}
 
-/**
- * Cuántos días hábiles hay entre dos días. NEGATIVO si el segundo ya pasó.
- *
- * El signo importa y por eso no se recorta a cero como en `minutosHasta`: acá quien dibuja
- * necesita distinguir "faltan 3" de "se pasó hace 3", que son dos mensajes distintos y una de
- * las dos es una alarma.
- */
-export function diasHabilesEntre(
-  desde: string,
-  hasta: string,
-  feriados: ReadonlySet<string>,
-): number {
-  const ida = desde <= hasta;
-  const cursor = new Date(`${ida ? desde : hasta}T00:00:00Z`);
-  const fin = new Date(`${ida ? hasta : desde}T00:00:00Z`).getTime();
-  if (Number.isNaN(cursor.getTime()) || Number.isNaN(fin)) {
-    throw new TypeError(`Fecha mal escrita: ${JSON.stringify([desde, hasta])}`);
-  }
-
-  let cuenta = 0;
-  // Se compara el instante y no el objeto: `cursor` se muta adentro del bucle, y comparar dos
-  // `Date` deja al linter creyendo que la condicion nunca cambia.
-  while (cursor.getTime() < fin) {
-    cursor.setUTCDate(cursor.getUTCDate() + 1);
-    if (esHabil(cursor, feriados)) cuenta += 1;
-  }
-  return ida ? cuenta : -cuenta;
-}
