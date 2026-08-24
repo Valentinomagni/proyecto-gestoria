@@ -9,6 +9,51 @@ todavía no salió.
 
 ## Sin publicar todavía — lo que está listo en la versión de prueba
 
+### Lo que cambió en la segunda revisión — 24/08/2026
+
+**El presupuesto es un solo número.** Antes había dos: la suma de los conceptos y, aparte, un
+"depósito que se solicita" que se escribía a mano — y era **ése** el que se descontaba de la
+tarjeta. La pantalla llegaba a tener una fila llamada "Diferencia con el depósito pedido" para
+explicar por qué no coincidían.
+
+Ahora el presupuesto **es** la suma de sus conceptos. Apenas se agrega, se corrige o se quita una
+línea, la reserva de la tarjeta se ajusta sola y el movimiento aparece en Operaciones con el
+apellido del cliente al lado. Si hace falta pedir de más —el arancel real recién se sabe en la
+ventanilla— se carga como un concepto más, con su nombre.
+
+**Al mirar los datos apareció lo que ese cambio venía a evitar:** un trámite tenía **$6.128.000
+presupuestados y ninguna reserva**. La pantalla de la tarjeta decía que esa plata estaba
+disponible. Los trámites que ya tenían presupuesto cargado quedaron emparejados; los ya pagados o
+retirados no se tocaron, porque ahí la reserva ya se había liberado.
+
+**Se puede corregir el presupuesto.** Cada línea tiene **Corregir** y **Quitar**. Una línea quitada
+no desaparece: queda tachada con el motivo escrito, porque cuando el trámite vuelve del registro y
+el número no cierra, lo que se pregunta es qué se sacó y por qué.
+
+**Se pueden corregir los datos del trámite, incluida la gestora que lo hace.** Cambiarla hace que
+el trámite le aparezca a ella y deje de aparecerle a la anterior. Cada cambio queda registrado con
+el nombre de quien lo hizo, en **un solo panel** que ahora muestra todo junto: los datos, los
+importes y el total.
+
+**Se puede anular un movimiento cargado mal.** Un depósito con un cero de más se anula escribiendo
+el motivo: queda tachado, con su compensación abajo, y el saldo vuelve a cerrar. No se borra nada,
+porque el saldo de ayer tiene que poder reconstruirse.
+
+**La Tarjeta muestra cuatro columnas con los nombres de la empresa:** Saldo día de hoy, Depósito
+pendiente de acreditación, Saldo reservado, y la Diferencia entre las dos primeras — que es con la
+que se decide si se manda a presentar.
+
+**Accesorios y Entrega de vehículo usado se contestan Sí o No.** No son papeles que puedan faltar:
+son hechos de la operación, y "No corresponde" sobre un hecho no significa nada.
+
+**Gestoría dejó de tener "Cargar trámite".** El trámite nace de un mail que le llega a
+administración, y el alta la hace quien recibe ese mail.
+
+**Se sacaron dos cosas de la pantalla:** la sección de Vencimientos de la ficha —con tres de los
+cinco plazos sin confirmar no mostraba fechas, mostraba renglones explicando qué faltaba— y la
+cuenta regresiva al corte de las 16:00. Administración conserva los plazos y los feriados; el día
+que estén confirmados, los vencimientos vuelven.
+
 ### La cuenta corriente de la Tarjeta Habitualista
 
 La pantalla calca la del sitio: arriba las cifras, abajo el listado de operaciones. Pero muestra

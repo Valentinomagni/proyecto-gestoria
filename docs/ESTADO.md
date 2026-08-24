@@ -17,18 +17,66 @@ son tres campos en un panel (abajo, con los valores exactos).
 
 | Qué | Cuánto | Comando |
 |---|---|---|
-| Tests, todos verdes | **163** en 19 archivos | `npx vitest run` |
-| Pruebas de permisos contra la API real | **29** | `npm run test:rls` |
+| Tests, todos verdes | **154** en 20 archivos | `npx vitest run` |
+| Pruebas de permisos contra la API real | **44** en 2 archivos | `npm run test:rls` |
 | Guardianes | **10** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `pruebas`, `migraciones`, `secretos`, `permisos` |
-| Migraciones aplicadas | **22** de 22 escritas | `npm run db:seco` dice "up to date" |
+| Migraciones aplicadas | **30** de 30 escritas | `npx supabase migration list --linked` |
 | Tablas en la base | **21**, más **5 vistas** | consulta a `pg_class` |
-| Módulos de lógica en `src/lib` | 15 | `ls src/lib` |
-| Archivos de código | 49 | `find src -name "*.ts*"` |
-| Peso de arranque | **86,82 kB** + 53,77 de Supabase + 11,72 de Query | `npx vite build` |
+| Módulos de lógica en `src/lib` | 20 | `ls src/lib/*.ts` |
+| Archivos de código | 73 | `find src -name "*.ts*"` |
+| Peso de arranque | **95,36 kB** + 53,77 de Supabase + 11,72 de Query | `npm run build` |
 | Sentry, en pedazo aparte | 148,56 kB, **no bloquea el primer dibujo** | idem |
 | Excel, en pedazo aparte | 19,69 kB, **se carga recién al apretar el botón** | idem |
-| Commits sin publicar a producción | **6** en `dev` | `git rev-list --count origin/main..dev` |
+| Commits sin publicar a producción | contarlos antes de decir que está publicado | `git rev-list --count origin/main..HEAD` |
 | Cuentas creadas | 4, con roles asignados | verificado entrando con cada una |
+
+---
+
+## La segunda revisión — 24/08/2026
+
+Ocho correcciones pedidas sobre fotos de la pantalla. Todas hechas y **miradas**, no sólo probadas.
+
+| Lo que pediste | Dónde quedó |
+|---|---|
+| Accesorios y Entrega de vehículo usado con Sí / No | Checklist del legajo, verificado en pantalla |
+| Quitar la sección Vencimientos | Fuera de la ficha. Administración conserva plazos y feriados |
+| Modificar presupuestos, con historial | Cada línea con Corregir y Quitar; panel Cambios unificado |
+| Cuatro columnas en la Tarjeta | Saldo día de hoy / Depósito pendiente / Saldo reservado / Diferencia |
+| Quitar el panel de "Paso siguiente" | Reemplazado por una barra de avance arriba |
+| Que el presupuesto se descuente solo | Lo hace un trigger: el total ES la suma de las líneas |
+| Gestoría sin "Cargar trámite" | Menú por rol, con test |
+| Modificar datos, por ejemplo la gestora | Panel Datos del trámite, editable, con historial |
+
+### Lo que apareció mirando los datos, y no leyendo el código
+
+1. **Un trámite tenía $6.128.000 presupuestados y CERO reservados.** Los dos números eran
+   independientes y nadie los comparaba. Lo empareja la migración `20260821194117`, que toca sólo
+   los trámites vivos.
+2. **Renombrar una tabla no la renombra adentro de las funciones**, porque el cuerpo de una
+   función plpgsql es texto. El trigger del historial quedó apuntando al nombre viejo y **no se
+   podía guardar ninguna línea de presupuesto**. El `db push` había dicho "Finished". Lo agarró la
+   comprobación que inserta una línea de verdad y compara el total contra un número escrito de
+   antemano.
+3. **El total se podía escribir a mano por la puerta de atrás**, salteando las líneas. Ahora lo
+   impide un trigger que distingue el recálculo por una marca local a la transacción.
+
+### Lo que se vio mirando la pantalla
+
+- El historial mostraba los **UUID crudos** de la gestora. Ahora dice "de Carla a Mariana".
+- El extracto **duplicaba el apellido** ("Presupuesto - X — X") y decía "Correccion" sin acento.
+- Los botones **Corregir** y **Quitar** medían **16 píxeles** en el teléfono — justo los que usa
+  la gestora parada en el registro. Ahora hay una constante `ACCION_CHICA` con los 44 que el
+  proyecto exige, para que la regla tenga dónde vivir.
+
+### Deuda conocida y anotada
+
+- **`npm run deadcode` está en rojo desde antes de esta tanda**: nueve dependencias sin usar y
+  nueve tipos exportados que nadie importa. Esta revisión no agregó ninguno, pero tampoco los
+  limpió.
+- **`npm run permisos` devuelve 0 cuando se saltea** por falta de token. Un guardián que se
+  saltea en silencio y dice que salió bien es medio guardián.
+- Las **claves foráneas** de `tramite_cambios` conservan el nombre viejo (`presupuesto_historial_*`).
+  Es cosmético: nunca se muestran.
 
 ---
 

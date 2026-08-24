@@ -77,3 +77,24 @@ export const BOTON_ANCHO =
 export const BOTON_SUAVE =
   "flex w-fit min-h-11 items-center justify-center gap-2 rounded-md border border-line px-3 " +
   "py-2 text-sm disabled:opacity-40";
+
+/**
+ * Una accion escrita, chica, al lado de una fila: Corregir, Quitar, Anular.
+ *
+ * ============================================================================
+ *  TIENE 44 PIXELES AUNQUE EL TEXTO SEA CHICO, Y ESE ES TODO EL PUNTO
+ * ============================================================================
+ *
+ * Se midio el 24/08/2026 en el telefono de 375 px: los botones Corregir y Quitar de cada linea
+ * del presupuesto median 16 PIXELES de alto. Son justo los que usa la gestora parada en el
+ * registro, con una mano y el legajo en la otra.
+ *
+ * Es exactamente el defecto que este archivo se escribio para evitar, reintroducido por escribir
+ * las clases a mano en vez de usar una constante. Por eso la constante existe: la regla que no
+ * tiene un lugar donde vivir se incumple sola.
+ *
+ * El texto queda chico —es una accion secundaria y no tiene que competir con el importe— pero la
+ * zona que se toca no.
+ */
+export const ACCION_CHICA =
+  "inline-flex min-h-11 items-center px-2 text-2xs text-ink2 underline";

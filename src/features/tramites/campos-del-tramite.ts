@@ -15,7 +15,7 @@ import type { Database } from "../../lib/database.types";
  *
  * Es la misma razón por la que el resto del proyecto arma sus parches con el tipo generado.
  */
-export type ColumnaEditable =
+type ColumnaEditable =
   | "cliente_nombre" | "oferta_referencia" | "cliente_cuenta" | "vehiculo" | "dominio"
   | "subtipo" | "gestora_id" | "administrativo" | "seccional" | "numero_pago_registro"
   | "documentacion_retirada" | "observaciones_gestora";

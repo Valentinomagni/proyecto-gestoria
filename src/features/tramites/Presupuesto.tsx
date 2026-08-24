@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Panel } from "../../components/Panel";
 import { aCentavos, aPesos, formatear, parsear } from "../../lib/plata";
-import { CAMPO_SUELTO } from "../../lib/campos";
+import { ACCION_CHICA, CAMPO_SUELTO } from "../../lib/campos";
 
 /**
  * ============================================================================
@@ -99,14 +99,14 @@ export function Presupuesto({
                           setNuevoImporte(String(l.importe));
                           setQuitando(null);
                         }}
-                        className="text-2xs text-ink2 underline"
+                        className={ACCION_CHICA}
                       >
                         Corregir
                       </button>
                       <button
                         type="button"
                         onClick={() => { setQuitando(l.id); setMotivo(""); setCorrigiendo(null); }}
-                        className="text-2xs text-ink2 underline"
+                        className={ACCION_CHICA}
                       >
                         Quitar
                       </button>

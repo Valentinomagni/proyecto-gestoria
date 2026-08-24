@@ -8,45 +8,33 @@
  *  cargar, no mostraba fechas — mostraba cinco renglones explicando que faltaba para poder
  *  mostrarlas. Media pantalla ocupada por un cartel de "todavia no".
  *
- *  QUEDA `revisarCobertura`, que es lo que Administracion usa para avisar hasta donde llega el
- *  calendario de feriados cargado. Eso SI sirve hoy: la fecha de acreditacion de un deposito
- *  depende de los feriados, y un calendario que se quedo corto hace que la app diga que la plata
- *  entra un dia antes de que entre.
+ *  ============================================================================
+ *   LO QUE QUEDA, Y POR QUE SIGUE HACIENDO FALTA
+ *  ============================================================================
+ *
+ *  `revisarCobertura`, que es lo que Administracion usa para avisar hasta donde llega el
+ *  calendario de feriados cargado. Eso SI sirve hoy, aunque no haya vencimientos: la fecha de
+ *  acreditacion de un deposito depende de los feriados —la calcula `proximoDiaHabil`— y un
+ *  calendario que se quedo corto hace que la app diga que la plata entra un dia antes de que
+ *  entre. O sea que sigue cuidando plata, que es lo unico que este archivo tiene que hacer.
  *
  *  ============================================================================
  *   LO QUE SE FUE, PARA QUE SE SEPA QUE SE PERDIO
  *  ============================================================================
  *
- *  `calcular`, `plazoDe`, `plazosDeTipo`, `inicioDe` y el tipo `Vencimiento`, con sus once
- *  tests. Los cuatro mas valiosos no probaban que calculara bien: probaban que SE NEGARA bien
- *  —sin plazo confirmado, sin fecha de inicio, con el calendario vacio, o con un vencimiento mas
- *  alla de donde llega el calendario—. Un sistema que avisa un vencimiento equivocado es peor
- *  que uno que no avisa nada, porque el primero se deja de mirar.
+ *  `calcular`, `plazoDe`, `plazosDeTipo`, `inicioDe`, el tipo `Vencimiento` y los tipos `Plazo`
+ *  y `Calendario`, con sus once tests. Los cuatro mas valiosos no probaban que calculara bien:
+ *  probaban que SE NEGARA bien —sin plazo confirmado, sin fecha de inicio, con el calendario
+ *  vacio, o con un vencimiento mas alla de donde llega el calendario—. Un sistema que avisa un
+ *  vencimiento equivocado es peor que uno que no avisa nada, porque el primero se deja de mirar.
+ *
+ *  Administracion sigue confirmando plazos y cargando feriados, con su propia forma (`FilaPlazo`,
+ *  en Calendario.tsx): esa incluye los plazos SIN confirmar, que es justo lo que esa pantalla
+ *  necesita y lo que el calculo, a proposito, no podia ver.
  *
  *  Esta todo en el historial de git. Si vuelven los vencimientos, vuelven con esas pruebas: son
  *  mas valiosas que el calculo.
  */
-
-export interface Plazo {
-  clave: string;
-  nombre: string;
-  aplica_a: string;
-  desde: string;
-  dias: number;
-  habiles: boolean;
-  consecuencia: string;
-  norma: string | null;
-  verificado_el: string;
-  verificado_por: string;
-}
-
-/** Hasta dónde llega el calendario de feriados que se cargó. */
-export interface Calendario {
-  feriados: ReadonlySet<string>;
-  /** El último día cubierto, `YYYY-MM-DD`. Más allá de acá el cálculo no es confiable. */
-  cubreHasta: string | null;
-}
-
 
 /**
  * Avisa si la cobertura declarada no parece respaldada por los feriados cargados.

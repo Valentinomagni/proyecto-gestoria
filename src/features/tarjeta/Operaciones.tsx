@@ -3,7 +3,7 @@ import { Panel } from "../../components/Panel";
 import { SkeletonLineas } from "../../components/Skeleton";
 import { aCentavos, formatear } from "../../lib/plata";
 import { formatearFechaHora, hoyArgentina } from "../../lib/fechas";
-import { BOTON_SUAVE, CAMPO_SUELTO } from "../../lib/campos";
+import { ACCION_CHICA, BOTON_SUAVE, CAMPO_SUELTO } from "../../lib/campos";
 
 /**
  * ============================================================================
@@ -116,7 +116,7 @@ export function Operaciones({
                         <button
                           type="button"
                           onClick={() => { setAnulandoId(m.id); setMotivo(""); }}
-                          className="text-2xs text-ink2 underline"
+                          className={ACCION_CHICA}
                         >
                           Anular
                         </button>

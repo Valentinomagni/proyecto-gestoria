@@ -202,7 +202,7 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4 p-6">
-      <button type="button" onClick={alVolver} className="flex w-fit items-center gap-2 text-sm text-ink2">
+      <button type="button" onClick={alVolver} className="flex min-h-11 w-fit items-center gap-2 text-sm text-ink2">
         <ArrowLeft aria-hidden="true" size={14} /> Volver al listado
       </button>
 
