@@ -515,7 +515,7 @@ Cuatro cosas, todas por npm, todas en el perfil del usuario.
 | `@radix-ui/react-dropdown-menu`, `-dialog`, `-collapsible` | El menú de usuario, los formularios y las secciones plegables. Teclado, foco atrapado, Escape y lectores de pantalla resueltos. Hacerlo a mano es donde se ve lo barato | ~15 kB, sin estilos: se visten con los tokens del proyecto |
 | `@lhci/cli` | Lighthouse en la terminal. Un número que dice si la app está rápida y accesible, en vez de una opinión | Sólo desarrollo, 0 kB en producción |
 | `vite-plugin-pwa` | **Ya está**: sólo hay que encenderlo. La gestora en un registro con mala señal abre la app y ve lo último que cargó | 0 kB nuevos |
-| `prettier` con `prettier-plugin-tailwindcss` | Ordena las clases de Tailwind siempre igual. Suena menor: es lo que evita que un archivo tenga tres estilos de escritura | Sólo desarrollo |
+| `oxfmt` | Formateador del **mismo equipo que `oxlint`**, que ya se usa. Un archivo con tres estilos de escritura se lee mal y esconde diferencias en los `diff`. Se eligió sobre Prettier al ver que `claude-code-viewer` usa la cadena completa de Oxc — ver 8.7 | Sólo desarrollo |
 
 ### 8.4 Lo que NO conviene agregar, y por qué
 
@@ -589,6 +589,126 @@ escribir una línea de CSS.** Eso está escrito acá para que no se olvide.
 - **pgTAP para probar la base** — necesita Postgres local, que necesita Docker, que no está
   disponible acá. El arnés de permisos contra la API real ya cubre eso mejor: prueba lo que
   devuelve PostgREST, no lo que dice la policy.
+
+
+### 8.7 Los siete repos que se pidieron analizar
+
+Se buscaron y se leyeron los siete. **La conclusión general primero, porque ahorra tiempo: los
+siete son clientes para agentes de codificación** —interfaces para manejar Claude Code desde la
+web, el escritorio o el teléfono—. Comparten casi nada de dominio con una gestoría del automotor.
+
+Aun así, dos de ellos dejaron algo concreto, y está abajo.
+
+| Prioridad | Repo | Qué es en realidad | Qué se puede tomar |
+|---|---|---|---|
+| 1 | **Claudable** (`opactorai/Claudable`) | Un constructor de webs por IA. Next.js, Prisma, SQLite, Electron, shadcn/ui. Es una **aplicación monolítica**, no una librería | **Nada aplicable.** Next.js no es el stack de acá y no hay piezas extraíbles. Lo único que aporta es confirmar que Tailwind + shadcn es el estándar del que ya se habló en 8.4 |
+| 2 | **cdesktop** | No se encontró un repositorio con ese nombre. Puede ser un nombre interno o un proyecto renombrado | Nada, hasta tener el enlace exacto |
+| 3 | **Claude Code Viewer** (`d-kimuson/claude-code-viewer`) | Cliente web de Claude Code. **PWA instalable en el teléfono, con notificaciones push** | **Dos cosas, y las dos valen.** Ver abajo |
+| 4 | **Happy** (`slopus/happy`) | Cliente móvil y web con voz en tiempo real y cifrado punta a punta | Los patrones de sincronización en vivo son interesantes, pero está hecho en React Native con Expo: otro mundo, no se traslada |
+| 5 | **Claude Code UI** (`siteboon/claudecodeui`) | Interfaz simple para manejar sesiones de Claude Code de forma remota | Poco. Es una capa de UI sobre un CLI |
+| 6 | **Personal Website** | Demasiado genérico para identificar un repositorio concreto | Nada, hasta tener el enlace |
+| 7 | **Claude Code Native** | No se encontró un repositorio con ese nombre | Nada, hasta tener el enlace |
+
+#### Lo que sí salió de Claude Code Viewer
+
+**Primero: `oxfmt` en lugar de Prettier.** Ese proyecto usa **Oxlint + Oxfmt + Lefthook**. Acá ya
+se usa `oxlint`, y `oxfmt` es el formateador **del mismo equipo y de la misma cadena** — está
+publicado en npm, versión 0.65.0, escrito en Rust. En la sección 8.3 yo había propuesto Prettier
+con su plugin de Tailwind; **eso cambia a `oxfmt`**: un solo juego de herramientas en vez de dos
+que se pisan la configuración, y bastante más rápido.
+
+**Segundo: cómo se arma una PWA instalable.** Es exactamente lo que la app de la gestora necesita
+—que se instale en el teléfono y abra sin señal— y acá `vite-plugin-pwa` ya está instalado y
+apagado. Sirve como referencia de qué encender, aunque el código no se copie.
+
+**Lo que NO se toma de ahí:** las notificaciones push. Requieren un service worker con
+suscripción, un servidor que las emita y permisos del navegador. Está declarado en la sección 14
+como fuera de alcance, y sigue estándolo.
+
+### 8.8 CodeGraph: la respuesta honesta
+
+**No lo estoy usando, y nunca lo dije. Eso último es lo que estuvo mal**, más que no tenerlo: se
+pidió, no se instaló, y no se avisó. No hay `.mcp.json` en el proyecto ni ningún servidor MCP
+configurado.
+
+#### Qué es
+
+Un servidor MCP que arma un grafo semántico del código —funciones, clases, importaciones, quién
+llama a quién— y lo expone con unas 42 herramientas: buscar por significado, ver el árbol de
+llamadas, analizar el impacto de un cambio. Es local, es MIT, y se instala por npm. Hay varias
+implementaciones con el mismo nombre; la más difundida es `@colbymchenry/codegraph`.
+
+#### Por qué se pidió, y el problema es real
+
+Para no leer archivos enteros y gastar tokens de más. **Y el diagnóstico es correcto:** se leyó
+`Ficha.tsx` entero —1.083 líneas— más de una vez en la misma sesión.
+
+#### Por qué la recomendación igual es no, todavía
+
+Se midió el proyecto antes de opinar:
+
+```
+archivos ts/tsx  73
+lineas          11.623   (de las cuales 1.486 son tipos generados)
+el archivo escrito a mano mas grande: datos.ts, 713 lineas
+```
+
+**Once mil líneas.** CodeGraph rinde cuando el grafo no entra en la cabeza de nadie: cien mil
+líneas, cientos de módulos, gente que no sabe qué rompe si toca algo. Acá `grep` encuentra
+cualquier cosa en milisegundos y el módulo más grande se lee en una pasada.
+
+Y tiene costo: un servidor MCP más cuyas 42 herramientas ocupan lugar en **cada** sesión, un
+índice que hay que mantener fresco en cada cambio, y un modelo de embeddings que descargar.
+
+**El problema que señalaste tiene una causa más simple: leí de más.** Se arregla gratis y hoy,
+con una regla escrita:
+
+> **Antes de leer un archivo entero, buscá con `grep` y leé sólo el rango.** Un archivo se lee
+> completo la primera vez que se toca en una sesión, y nunca dos veces. Para cambiar diez líneas
+> de un archivo de setecientas, se leen esas diez con su contexto.
+
+Eso va al `CLAUDE.md`. **Y el umbral queda escrito para no discutirlo de nuevo: si el proyecto
+pasa de 30.000 líneas o de 200 archivos, se reevalúa CodeGraph.**
+
+### 8.9 La caja de herramientas completa, por etapa
+
+Lo pedido: que haya herramienta para cada paso, de front, de back y de auditoría. Esto es lo que
+hay y lo que falta, sin huecos.
+
+| Etapa | Herramienta | Estado |
+|---|---|---|
+| **Lluvia de ideas** | `superpowers:brainstorming` | En uso, es lo que produjo este documento |
+| | `ui-ux-pro-max` — 161 paletas, 57 pares tipográficos, 99 guías de UX | Instalada, **sin usar todavía** |
+| **Planear** | `superpowers:writing-plans` | En uso |
+| | `design-system` — arquitectura de tokens en tres capas | Instalada, **sin usar** |
+| **Ejecutar** | `superpowers:executing-plans` | En uso |
+| | `ui-styling` — shadcn, Tailwind, accesibilidad | Instalada, **sin usar** |
+| **Front** | Vite 8, React 19, Tailwind 4, TanStack Query | En uso |
+| | Radix (menú, diálogo, plegables) | **Se agrega** |
+| | View Transitions API | **Se enciende**, cuesta cero |
+| | `vite-plugin-pwa` | Instalada, **se enciende** |
+| **Back** | Supabase con RLS, triggers y libro mayor | En uso |
+| | CLI de Supabase para migraciones y tipos | En uso |
+| | Los diez guardianes propios | En uso |
+| **Pruebas** | `vitest` — unidad | En uso, 154 pruebas |
+| | Arnés de permisos contra la API real | En uso, 44 pruebas |
+| | `@playwright/test` con el **Chrome real** | Instalado, **se cablea** |
+| | `toHaveScreenshot()` — que nada se corra de lugar | **Se enciende** |
+| **Auditoría** | `@axe-core/playwright` — accesibilidad y contraste | Instalado, **sin usar** |
+| | `@lhci/cli` — Lighthouse | **Se agrega** |
+| | `knip` — código muerto | En uso, en rojo con deuda vieja |
+| | `security-review` y `code-review` | Instaladas, **sin usar en este proyecto** |
+| | `senior-frontend`, `senior-backend` | Instaladas, **sin usar** |
+| **Formato** | `oxlint` | En uso |
+| | `oxfmt` — del mismo equipo | **Se agrega**, reemplaza a la idea de Prettier |
+| **Monitoreo** | `@sentry/react` | En uso |
+| **Búsqueda de código** | `grep` y `glob`, con la regla de 8.8 | En uso |
+| | CodeGraph | **No**, hasta pasar 30.000 líneas |
+
+**Lo que salta a la vista de esta tabla:** casi todo lo que hace falta ya está instalado y sin
+usar. Lo que se agrega son cuatro paquetes chicos. El salto de calidad no viene de instalar
+cosas: viene de **encender lo que ya está pago** y de invocar las skills de diseño antes de
+escribir CSS, no después.
 
 ---
 ## 9. Lo que se saca
@@ -710,7 +830,7 @@ siguiente.**
 
 | | Plan | Qué entrega | Por qué en ese orden |
 |---|---|---|---|
-| **A** | La base y el andamio | Saldo inicial arreglado, cadena de seis estados, la vista de "esperando plata", el guardián de índices parciales, Playwright configurado contra el Chrome real, y los guardianes de espacio y color | Es corto y desbloquea todo. Con la cadena vieja, las dos apps se construirían sobre estados que van a desaparecer. Y sin los guardianes, el acabado de B se degrada solo |
+| **A** | La base y el andamio | Saldo inicial arreglado, cadena de seis estados, la vista de "esperando plata", el guardián de índices parciales, Playwright contra el Chrome real, `oxfmt`, los guardianes de espacio y color, y **las dos enmiendas al `CLAUDE.md`** — la del color (sección 6) y la de cómo leer código (sección 8.8) | Es corto y desbloquea todo. Con la cadena vieja, las dos apps se construirían sobre estados que van a desaparecer. Y sin los guardianes, el acabado de B se degrada solo |
 | **B** | La app de la oficina | Resumen → empresa → trámite, sin barra lateral, la paleta de Habitualista, las nueve decisiones de la sección 7, y todo lo que se saca | Es lo que ella mira. Es la muestra que tiene que aprobarse |
 | **C** | La app de la gestora | La cola de tareas en el teléfono, con el salto en vivo, y la app instalable para que abra sin señal | Es lo que hace que el sistema se alimente solo |
 
