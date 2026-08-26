@@ -3,6 +3,11 @@
 **Fecha:** 26/08/2026
 **Estado:** aprobado en conversación, pendiente de los tres planes de ejecución.
 
+**Cómo leerlo.** Las secciones 1 a 5 son el producto: por qué se rechaza y qué se construye. La 6
+y la 7 son el aspecto. La 8 y la 9 son con qué y cómo se trabaja — **la 9 es la que más cambia el
+resultado y es la que faltaba**. De la 10 en adelante, los recortes, los arreglos, las pruebas y
+el corte en tres planes.
+
 ---
 
 ## 1. El problema, y por qué las tres muestras se rechazaron
@@ -622,7 +627,7 @@ que se pisan la configuración, y bastante más rápido.
 apagado. Sirve como referencia de qué encender, aunque el código no se copie.
 
 **Lo que NO se toma de ahí:** las notificaciones push. Requieren un service worker con
-suscripción, un servidor que las emita y permisos del navegador. Está declarado en la sección 14
+suscripción, un servidor que las emita y permisos del navegador. Está declarado en la sección 15
 como fuera de alcance, y sigue estándolo.
 
 ### 8.8 CodeGraph: la respuesta honesta
@@ -711,7 +716,183 @@ cosas: viene de **encender lo que ya está pago** y de invocar las skills de dis
 escribir CSS, no después.
 
 ---
-## 9. Lo que se saca
+## 9. Cómo se trabaja: la capa que falta
+
+### 9.1 La pregunta era buena y la respuesta es que sí, hay mejor
+
+Tres veces seguidas contesté "no hace falta cambiar nada" en las etapas de ideas, plan y
+ejecución. La repregunta —*"¿en serio no hay nada mejor?"*— era correcta.
+
+**Me equivoqué en dónde miré.** Estuve comparando librerías de front, y el problema no está ahí:
+el stack está bien y abajo está el análisis de por qué. Lo que falta es **la capa de Claude
+Code**, y hay evidencia de esta misma semana.
+
+### 9.2 La evidencia: tres reglas escritas, tres incumplidas
+
+Esta semana rompí tres reglas que **ya estaban escritas en el proyecto**:
+
+1. **Los botones de 16 píxeles.** `src/lib/campos.ts` documenta la regla de 44 px y hasta la
+   medición que la produjo —"se midió en un teléfono de 375 px: había once controles de menos de
+   40"—. La rompí igual, escribiendo las clases a mano.
+2. **El índice parcial del saldo inicial.** Arreglé exactamente esa forma dos días antes, en
+   `tramite_conceptos`, y escribí el porqué. No la generalicé, y las dos tarjetas quedaron sin
+   poder recargar su saldo.
+3. **Leer archivos enteros.** Leí `Ficha.tsx` —1.083 líneas— más de una vez en la misma sesión.
+
+No es distracción. Es lo que la documentación de Anthropic describe textual:
+
+> *"Bloated CLAUDE.md files cause Claude to ignore your actual instructions."*
+>
+> *"If Claude already does something correctly without the instruction, delete it or **convert it
+> to a hook**."*
+
+El `CLAUDE.md` de este proyecto tiene **335 líneas y 18,5 kB**. Está excelentemente escrito —es
+lo mejor del proyecto— y es **demasiado largo para obedecerse**. Se carga entero en cada sesión y
+compite consigo mismo.
+
+### 9.3 Los hooks: la diferencia entre pedir por favor y garantizar
+
+**No hay ninguno configurado.** Es el hallazgo más importante de toda esta investigación.
+
+Un hook es un comando que Claude Code corre solo, en un momento fijo, y **cuyo resultado no se
+puede ignorar**. El `CLAUDE.md` es un consejo; un hook es una barrera. Es exactamente la misma
+distinción que este proyecto ya aplica en la base de datos con los poka-yokes:
+
+> *¿Puede la base hacerlo imposible, en vez de que el front lo pida por favor?*
+
+La respuesta para el proceso de trabajo es la misma, y hasta ahora no se aplicó.
+
+| Cuándo corre | Qué corre | Qué error mata |
+|---|---|---|
+| Después de editar `src/**/*.ts` o `.tsx` | `oxlint` sobre ese archivo | Las advertencias que se acumulan hasta que nadie las mira |
+| Después de escribir `supabase/migrations/*.sql` | `npm run migraciones` | **La migración vacía.** Ese error ya pasó dos veces |
+| Después de editar `*.tsx` | Los guardianes de tipografía, campos y casa | Los botones de 16 píxeles |
+| Antes de un `git push` | Los cuatro comandos | Publicar algo en rojo |
+| **Al terminar el turno** (`Stop`) | Los cuatro comandos y los guardianes | **Que yo diga "listo" con algo roto** |
+
+**El último es el que cambia todo.** Bloquea el fin del turno hasta que esté verde. Deja de
+depender de que me acuerde de correr los comandos, que es de lo que depende hoy.
+
+### 9.4 Los tres revisores existen y nunca los usé
+
+El proyecto tiene tres subagentes definidos: **`revisor-contable`**, **`revisor-producto`** y
+**`revisor-seguridad`**. Están disponibles y **no los usé ni una vez** en toda la reconstrucción.
+
+Y el `CLAUDE.md` dice, en la sección de disciplina:
+
+> *"Ninguna etapa cierra sin una revisión de alguien que no la escribió."*
+
+**Toda esta semana me revisé a mí mismo.** El proyecto tiene escrito por qué eso falla: la matriz
+de cobertura del Tablero Contable *"se declaró completa a sí misma"*, y una revisión
+independiente encontró once hallazgos adentro, incluida una contraseña en texto plano.
+
+Cuándo va cada uno, de acá en adelante:
+
+| Revisor | Se invoca cuando | Qué mira |
+|---|---|---|
+| `revisor-seguridad` | Antes de cada publicación que toque la base, la RLS o los permisos | Que no se filtre nada, que las policies digan lo que parecen decir |
+| `revisor-contable` | Cuando se toque plata, saldos, fechas o el libro mayor | Que los números y las fechas sean correctos desde la lógica contable |
+| `revisor-producto` | Cuando se agregue una pantalla o se cambie un texto | Que sirva a quien la usa y no contradiga los valores del proyecto |
+| `/code-review` | Sobre el diff, antes de cada publicación | Defectos de corrección, en contexto limpio |
+
+Un revisor que corre en su propia ventana **ve el diff y no el razonamiento que lo produjo**. Por
+eso encuentra lo que el que escribió no puede ver.
+
+### 9.5 El CLAUDE.md se parte en dos
+
+De 335 líneas a unas 60. **No se tira nada**: lo que sale se convierte en skills, que Claude
+carga sólo cuando hacen falta en vez de en cada sesión.
+
+**Lo que se queda en el `CLAUDE.md`** —porque sin esto se cometen errores en cualquier tarea:
+
+- Las rarezas del entorno: el PATH que no trae node, el puerto 5173 con `strictPort`, cómo se
+  leen los códigos de salida, que `db push` necesita `--yes`.
+- Las reglas duras del producto: cero emojis, no se mide a las personas, voseo, nada se borra.
+- **La regla del color, enmendada** según la sección 6: el teal va en el marco y en un acento;
+  los números nunca son del color de la marca.
+- **La regla de cómo se lee código**, de la sección 8.8: buscar con `grep` y leer el rango, no el
+  archivo entero.
+- Las trampas de la base: la recursión de RLS en `perfiles`, `security_invoker` en toda vista,
+  nunca `force row level security` sobre `movimientos`.
+- La plata: centavos enteros en JavaScript, `numeric(14,2)` en Postgres.
+- La regla que manda: si escribís "verificado", escribí al lado el comando.
+
+**Lo que se muda a `.claude/skills/`** —narrativa valiosa que no hace falta en cada tarea:
+
+| Skill | Qué contiene | Cuándo se carga |
+|---|---|---|
+| `metodo-gestoria` | 5S, Kaizen, Poka-yoke, Andon, Genchi genbutsu, con sus post mortem | Al planificar o al revisar |
+| `dominio-gestoria` | La cadena de seis estados, el modelo de plata, qué es un habitualista | Al tocar trámites o saldos |
+| `marca-grupo-paris` | El manual de marca, la tipografía, la paleta | Al tocar diseño |
+| `base-de-datos` | Migraciones, RLS, triggers, el libro mayor | Al tocar SQL |
+
+**Cómo se comprueba que sirvió:** si vuelvo a romper una regla escrita, el corte se hizo mal.
+
+### 9.6 El router: la pieza que está instalada y apagada
+
+`@tanstack/react-router` **está en `package.json` y no se usa**. `knip` lo viene marcando como
+dependencia muerta y nadie lo miró. La navegación de hoy es un `useState` en `App.tsx`.
+
+**La consecuencia, hoy mismo: el botón "atrás" del navegador no funciona y no hay ninguna URL que
+se pueda compartir o guardar en favoritos.**
+
+Para alguien que prefiere el Excel, el botón atrás que no anda es de las cosas que hacen
+abandonar una herramienta sin poder explicar por qué. Y con la estructura nueva de tres niveles
+hace falta de verdad:
+
+| URL | Qué muestra | Por qué importa |
+|---|---|---|
+| `/` | El resumen de las cinco empresas | |
+| `/paris-autos` | La empresa | **La dueña la deja en favoritos y entra directo** |
+| `/paris-autos/martinez-diego-armando` | El trámite | Se manda por WhatsApp y el otro abre esa ficha |
+| `/mis-tramites` | La cola de la gestora | Es lo único que ella necesita en su teléfono |
+
+Y resuelve otra cosa sin esfuerzo: **las dos apps son dos rutas**, no un `if` sobre el rol.
+
+### 9.7 Las sesiones de trabajo
+
+La documentación de Anthropic nombra un patrón de falla que describe exactamente esta sesión:
+*"the kitchen sink session"* — empezar con una tarea, seguir con otra sin relación, volver, y
+terminar con el contexto lleno de cosas que ya no importan.
+
+**Una sesión por plan.** El Plan A empieza en una sesión nueva, con el spec como entrada. Cuando
+termina y se publica, se cierra. Contexto limpio para el Plan B.
+
+### 9.8 Lo que sí miré y NO cambio, con el motivo
+
+Para que quede escrito y no se vuelva a discutir:
+
+| Se evaluó | Veredicto | Por qué |
+|---|---|---|
+| **Next.js** en lugar de Vite | **No** | Es una app privada, sin buscadores y sin necesidad de renderizar en el servidor. Vite es más simple y más rápido de desarrollar. Next.js traería un servidor que nadie necesita |
+| **Drizzle** u otro ORM | **No** | Los poka-yokes viven en la base —triggers, índices únicos, RLS— y ahí un ORM estorba. El SQL a mano es lo que hace posible que la base impida cosas |
+| **Zustand, Jotai, Redux** | **No** | El estado del servidor lo maneja TanStack Query y el de pantalla es local. Agregar un contenedor global sería inventar un problema |
+| **shadcn/ui completo** | **No** | Ver 8.4. Se toma Radix, que es lo que shadcn usa por debajo |
+| **gstack** | **No** | Ver 8.4. El 80% ya está instalado con otro nombre |
+| **CodeGraph** | **No, todavía** | Ver 8.8. Once mil líneas no lo justifican |
+| **Selenium** | **No** | Playwright ya está instalado y es mejor |
+| **Vite 8, React 19, TS 7, Tailwind 4** | **Se quedan** | Son las versiones actuales y son las correctas para esto |
+| **Supabase** | **Se queda** | RLS, Realtime y autenticación en un solo lugar, gratis. Nada lo reemplaza mejor acá |
+| **TanStack Query** | **Se queda** | Ya resuelve el caché, el refresco y la invalidación |
+| **Playwright + vitest** | **Se quedan** | Instalados y correctos |
+
+**La conclusión honesta: el stack está bien elegido. Lo que estaba mal es cómo trabajo sobre
+él.** El salto de calidad que se pidió no sale de cambiar React por otra cosa: sale de los
+hooks, de los tres revisores, del router que está apagado, y de un `CLAUDE.md` corto que se
+pueda obedecer.
+
+### 9.9 Qué de esto entra en el Plan A
+
+Todo lo de esta sección menos el router, que es del Plan B porque la navegación es la app misma:
+
+- Los cinco hooks, con el `Stop` primero.
+- El `CLAUDE.md` partido y las cuatro skills escritas.
+- Los tres revisores invocados al cerrar cada plan, y `/code-review` sobre el diff.
+
+**Es media jornada de trabajo y es lo que evita las próximas tres semanas de correcciones.**
+
+---
+## 10. Lo que se saca
 
 | Se va | Por qué |
 |---|---|
@@ -733,7 +914,7 @@ cuándo acredita un depósito, que es lo que separa el saldo de hoy del de maña
 
 ---
 
-## 10. El tiempo real
+## 11. El tiempo real
 
 No necesita nada nuevo en la base. Comprobado el 26/08/2026 contra el proyecto remoto:
 
@@ -752,7 +933,7 @@ esto, y esa es exactamente la comprobación que Playwright sí puede automatizar
 
 ---
 
-## 11. Los arreglos de base
+## 12. Los arreglos de base
 
 ### 9.1 El saldo inicial no se puede volver a cargar
 
@@ -795,7 +976,7 @@ exactamente el mismo número.
 
 ---
 
-## 12. Cómo se prueba
+## 13. Cómo se prueba
 
 Las herramientas están en la sección 8; acá va **qué** se prueba con ellas.
 
@@ -823,14 +1004,14 @@ no un test.
 
 ---
 
-## 13. Cómo se corta el trabajo
+## 14. Cómo se corta el trabajo
 
 Tres planes en secuencia. **Cada uno termina, se prueba y se publica antes de empezar el
 siguiente.**
 
 | | Plan | Qué entrega | Por qué en ese orden |
 |---|---|---|---|
-| **A** | La base y el andamio | Saldo inicial arreglado, cadena de seis estados, la vista de "esperando plata", el guardián de índices parciales, Playwright contra el Chrome real, `oxfmt`, los guardianes de espacio y color, y **las dos enmiendas al `CLAUDE.md`** — la del color (sección 6) y la de cómo leer código (sección 8.8) | Es corto y desbloquea todo. Con la cadena vieja, las dos apps se construirían sobre estados que van a desaparecer. Y sin los guardianes, el acabado de B se degrada solo |
+| **A** | La base y el andamio de trabajo | Saldo inicial arreglado, cadena de seis estados, la vista de "esperando plata", el guardián de índices parciales, Playwright contra el Chrome real, `oxfmt`, los guardianes de espacio y color, y **toda la capa de trabajo de la sección 9**: los cinco hooks, el `CLAUDE.md` partido en cuatro skills, y los tres revisores puestos a trabajar | Es corto y desbloquea todo. Con la cadena vieja, las dos apps se construirían sobre estados que van a desaparecer. Y sin los guardianes, el acabado de B se degrada solo |
 | **B** | La app de la oficina | Resumen → empresa → trámite, sin barra lateral, la paleta de Habitualista, las nueve decisiones de la sección 7, y todo lo que se saca | Es lo que ella mira. Es la muestra que tiene que aprobarse |
 | **C** | La app de la gestora | La cola de tareas en el teléfono, con el salto en vivo, y la app instalable para que abra sin señal | Es lo que hace que el sistema se alimente solo |
 
@@ -844,7 +1025,7 @@ valía la pena, y no hace falta instalar nada para hacerla.
 
 ---
 
-## 14. Lo que este diseño NO hace
+## 15. Lo que este diseño NO hace
 
 Escrito para que nadie lo suponga:
 
@@ -855,11 +1036,11 @@ Escrito para que nadie lo suponga:
   con motivo y quedan a la vista.
 - **No separa la base de desarrollo de la de producción.** Sigue siendo una sola, y la app lo
   sigue diciendo en pantalla.
-- **No toca el libro mayor ni las policies**, salvo lo que dice la sección 11.
+- **No toca el libro mayor ni las policies**, salvo lo que dice la sección 12.
 
 ---
 
-## 15. Lo que depende del usuario
+## 16. Lo que depende del usuario
 
 1. **Cambiar la contraseña genérica** antes de que haya saldos reales.
 2. **La segunda base de Supabase**, antes de cargar el `saldo_inicial` real. Hoy hay una sola y
@@ -869,7 +1050,7 @@ Escrito para que nadie lo suponga:
 
 ---
 
-## 16. Deuda conocida que este diseño no cierra
+## 17. Deuda conocida que este diseño no cierra
 
 - `npm run deadcode` está en rojo desde antes: nueve dependencias sin usar y nueve tipos
   exportados que nadie importa.
