@@ -310,38 +310,288 @@ oficina eso no es el camino principal: se hace desde la ficha del trámite, no d
 
 ---
 
-## 6. El color
+## 6. El color: la gama de la Tarjeta Habitualista
 
-### La tensión, dicha de frente
+### La decisión, y quién la tomó
 
-La dueña quiere la gama de la Tarjeta Habitualista. El proyecto tiene escrita la regla contraria:
+Yo propuse usar la misma **familia** de color pero con un tono propio, porque el hexadecimal de
+Habitualista es la identidad de otra empresa. Lo planteé una vez; la respuesta fue que sea la
+gama de Habitualista, para que le resulte agradable a la dueña. **Va como se pidió.**
 
-> *Color: monocromo. El color aparece sólo en estados. En un sistema donde lo que importa es si
-> algo vence o si falta plata, un color "de marca" en un botón compite con la única señal que
-> importa.*
+Queda escrito quién decidió qué, porque dentro de un año alguien va a preguntar por qué una
+herramienta de Grupo Paris usa el color de otra marca, y la respuesta es que fue una decisión
+deliberada de producto, no un descuido.
 
-Esa regla es correcta y el pedido también. Se resuelven separando **marco** de **contenido**:
+### Dónde va el teal y dónde no
 
-- **El marco es teal.** La tira de arriba y la de migas llevan el verde azulado de la familia de
-  Habitualista. Es lo primero que se ve al abrir y es lo que produce el *"esto se parece a lo que
-  uso"*.
-- **El contenido sigue monocromo.** Cifras, tablas y secciones en gris y negro. Ahí el único
-  color son los estados: verde hecho, ámbar atención, rojo falta plata.
+El color entra en el **marco** y en **un solo acento**. No entra en los números.
 
-### Dos límites
+| Zona | Color | Por qué |
+|---|---|---|
+| Tira superior | Teal oscuro | Es lo primero que se ve. Produce el "esto se parece a lo que uso" |
+| Tira de migas | Teal medio | Calca la segunda barra del sitio |
+| Botón principal, foco, sección abierta | Teal | Un solo acento en toda la app |
+| Cifras, tablas, texto | Gris y negro | Si el teal invade los números se pierde la señal |
+| Estados | Verde, ámbar, rojo | Hecho, atención, falta plata. Intocables |
 
-1. **No se copia el hexadecimal de Habitualista.** Esa es la identidad de otra empresa y usarla
-   exacta en una herramienta de Grupo Paris está mal. Se usa la misma **familia** —teal oscuro
-   arriba, teal claro en las migas— con un tono propio.
-2. **Los valores se eligen midiendo contraste**, en claro y en oscuro, no a ojo. El proyecto ya
-   tiene tema oscuro y el teal tiene que funcionar en los dos.
+La regla que sobrevive es la que importa: **un número nunca es del color de la marca**. Cuando
+todo es teal, el rojo de "falta plata" deja de gritar — y ese grito es la razón de ser del
+sistema.
 
-Esto **enmienda una regla escrita del `CLAUDE.md`**, así que la enmienda se escribe ahí con su
-porqué. Una regla que se incumple sin actualizarla deja de ser una regla.
+### La paleta
+
+Punto de partida, tomado del sitio de Habitualista. **Los valores finales se sacan muestreando
+una captura del sitio y se ajustan hasta pasar contraste AA** (4,5:1 para texto, 3:1 para
+elementos de interfaz), medido, no a ojo.
+
+| Token | Claro | Para qué |
+|---|---|---|
+| `--marca` | `#0E7C8C` aprox. | Tira superior, botón principal |
+| `--marca-2` | `#5FB4C4` aprox. | Tira de migas |
+| `--marca-suave` | `#E4F1F5` aprox. | Fondo de fila seleccionada, sección abierta |
+| `--marca-ink` | `#FFFFFF` | Texto sobre teal oscuro |
+
+En **modo oscuro** el teal baja de luminosidad, no de saturación: un teal desaturado se ve
+enfermo. Los tres tokens tienen su par oscuro y se validan igual.
+
+Se escriben en **OKLCH**, que es lo que Tailwind 4 usa nativamente. No es capricho: interpolar
+entre dos colores en RGB pasa por grises embarrados, y en OKLCH no. Importa para las
+transiciones de la sección 7.
+
+### La trampa que ya costó cinco pantallas
+
+`--ring` es un **color** y `--ring-sh` es una **sombra**. `box-shadow: var(--ring), var(--shadow)`
+es CSS inválido y el navegador **descarta la declaración entera, en silencio**. Está en el
+`CLAUDE.md` y sigue valiendo con los tokens nuevos.
+
+### La enmienda al CLAUDE.md
+
+El `CLAUDE.md` dice hoy: *"monocromo; el color aparece sólo en estados"*. Esta sección lo
+enmienda, y la enmienda se escribe ahí con su porqué. Una regla que se incumple sin actualizarla
+deja de ser una regla y pasa a ser una decoración — que es exactamente lo que el método del
+proyecto dice que no puede pasar.
 
 ---
 
-## 7. Lo que se saca
+## 7. El salto de calidad visual
+
+El pedido es que se vea como una herramienta cara. Esa impresión no sale de agregar efectos:
+sale de **nueve decisiones concretas**, cada una verificable. Las listo con lo que hay que hacer
+y cómo se comprueba, porque "que se vea premium" no es un criterio que se pueda revisar.
+
+### 7.1 Jerarquía de tamaños, de verdad
+
+Hoy casi todo es `text-sm` y `text-2xs`. Una app se ve barata cuando todos los textos miden
+parecido. La escala de nueve pasos ya existe y está sin usar.
+
+**Regla:** el número que decide algo va en `text-3xl` o `text-4xl`, y su rótulo en `text-2xs`.
+En el resumen, la Diferencia de cada empresa es el número más grande de la pantalla. En la
+empresa, también.
+
+**Se comprueba:** en la pantalla del resumen tiene que haber al menos cuatro pasos distintos de
+la escala.
+
+### 7.2 Los números no bailan
+
+`.tnum` ya está. Falta lo otro: **toda columna de plata alineada a la derecha, con ancho fijo, y
+los miles siempre con punto.**
+
+Y una decisión nueva: en las cifras grandes del resumen, **si los centavos son cero no se
+muestran**. `9.435.000` se lee de un golpe; `9.435.000,00` obliga a contar. En el extracto y en
+el presupuesto los centavos van siempre, porque ahí la exactitud es el punto.
+
+**Se comprueba:** capturas de pantalla comparadas contra una referencia. Si una columna se
+corre un píxel, la prueba falla.
+
+### 7.3 Un ritmo de espacio, no quince
+
+Hoy conviven `gap-2 gap-3 gap-4 p-6 mt-1 mb-2 py-1 py-2` sin criterio. **Seis pasos y ninguno
+más**, sobre una base de 4 px: 4, 8, 12, 16, 24, 32.
+
+**Se comprueba:** un guardián, como el de tipografía, que falle si aparece un valor de espacio
+fuera de la escala.
+
+### 7.4 Elevación, no bordes
+
+`Panel` hoy es un borde de 1 px. Una superficie que flota se ve cara; un rectángulo con borde se
+ve barato. **Dos capas de sombra** —una de contacto corta y opaca, una de ambiente larga y
+difusa— y un token para cada nivel.
+
+Tres niveles y basta: `--sombra-plana` (tablas), `--sombra-panel` (tarjetas), `--sombra-flotante`
+(menús y diálogos).
+
+### 7.5 El foco se ve, y se ve bien
+
+El anillo de foco del navegador es gris y feo. Un anillo de 2 px en teal con 2 px de separación,
+en **todo** lo que recibe foco. Es el detalle que más separa una app cuidada de una que no, y es
+además lo que la hace usable con teclado.
+
+**Se comprueba:** `@axe-core/playwright`, que ya está instalado y nunca se usó.
+
+### 7.6 Las cosas se mueven de donde estaban a donde van
+
+Ésta es la única animación que el producto necesita, y no es decoración: **cuando la tarjeta de
+la gestora salta de "esperando" a "te toca", tiene que verse el viaje.** Si aparece de la nada,
+ella no entiende que es la misma tarjeta.
+
+Se hace con la **View Transitions API**, que Chrome soporta y que cuesta **cero bytes**: se le
+pone un `view-transition-name` a la tarjeta y el navegador anima el cambio de posición solo. No
+hace falta ninguna librería de animación.
+
+Todo lo demás —abrir una sección, cambiar de nivel— con transiciones de 150 a 200 ms y la curva
+`--ease-salida` que ya existe. Nada más largo: una app lenta se siente barata, no cara.
+
+**Y respeta `prefers-reduced-motion`.** Quien tenga el sistema configurado para no animar, no ve
+nada moverse.
+
+### 7.7 Los esqueletos tienen la forma de lo que viene
+
+Hoy `SkeletonLineas` dibuja rayas genéricas. Un esqueleto que no se parece al contenido produce
+un salto al cargar, y ese salto es exactamente lo que se ve barato. El del resumen tiene cinco
+filas con cuatro columnas; el de la empresa tiene el encabezado de cifras y tres secciones.
+
+### 7.8 Los estados vacíos dicen qué hacer
+
+Ya hay un `EmptyState` y está bien. Falta usarlo en todos lados y que cada uno diga la acción
+siguiente, no una lástima. "Todavía no hay movimientos" es peor que "Cargá el saldo inicial de la
+tarjeta para empezar", con el botón al lado.
+
+### 7.9 Una sola densidad, la de una tabla financiera
+
+Filas de 36 a 40 px, no de 56. Suficiente para el dedo en el teléfono y suficientemente compacto
+para que entren quince trámites en una pantalla sin scrollear. Es lo que hace que se parezca a
+una herramienta de trabajo y no a una landing.
+
+### Cómo se verifica el acabado, y no de palabra
+
+| Qué | Herramienta | Umbral |
+|---|---|---|
+| Contraste y accesibilidad | `@axe-core/playwright` | Cero violaciones serias |
+| Que nada se corra | `toHaveScreenshot()` de Playwright | Diferencia por debajo del umbral |
+| Peso y velocidad | `@lhci/cli` (Lighthouse) | Rendimiento y accesibilidad por encima de 90 |
+| Espacios y tipografía fuera de escala | Guardianes propios | Cero |
+| Que se vea bien | **Mirarlo** | Los tres peores defectos de esta semana los agarró alguien mirando, no un test |
+
+---
+
+## 8. Las herramientas
+
+### 8.1 Nada de lo que hace falta pide permiso de administrador
+
+Comprobado en esta máquina el 26/08/2026:
+
+```
+npm config get prefix  ->  C:\Users\Vmagni\tools\node-v22.17.0-win-x64
+npm config get cache   ->  C:\Users\Vmagni\AppData\Local\npm-cache
+```
+
+**Todo lo que instala npm vive adentro del perfil del usuario.** No hay un solo paquete de este
+diseño que necesite escribir en `Program Files` ni tocar el registro. La regla general: si se
+instala con `npm i -D`, no pide administrador nunca.
+
+### 8.2 Lo que ya está instalado y no se usa
+
+Antes de agregar nada, esto es lo que el proyecto ya tiene pago y sin estrenar:
+
+| Ya instalado | Estado | Para qué sirve acá |
+|---|---|---|
+| `@playwright/test` | Instalado, **sin configurar** | Las pruebas en Chrome. Falta `playwright.config.ts` |
+| Navegadores de Playwright | **Ya descargados** en `%LOCALAPPDATA%\ms-playwright` | No hay nada que bajar |
+| Chrome de escritorio | Instalado en la máquina | Playwright puede usar el Chrome REAL con `channel: "chrome"` |
+| `@axe-core/playwright` | Instalado, **sin usar** | Accesibilidad y contraste automáticos |
+| `vite-plugin-pwa` | Instalado, **sin usar** | Que la app de la gestora se instale en el teléfono y abra sin señal |
+| `@sentry/react` | En uso | Enterarse de los errores sin que avisen por WhatsApp |
+| `knip`, `oxlint`, `vitest` | En uso | Código muerto, lint, pruebas |
+
+**No hace falta Selenium.** Playwright es la misma herramienta para el mismo trabajo, más rápida
+y más estable, y además ya está pago. Instalarlo sería un segundo martillo para el mismo clavo.
+
+### 8.3 Lo que conviene agregar
+
+Cuatro cosas, todas por npm, todas en el perfil del usuario.
+
+| Qué | Por qué | Costo |
+|---|---|---|
+| `@radix-ui/react-dropdown-menu`, `-dialog`, `-collapsible` | El menú de usuario, los formularios y las secciones plegables. Teclado, foco atrapado, Escape y lectores de pantalla resueltos. Hacerlo a mano es donde se ve lo barato | ~15 kB, sin estilos: se visten con los tokens del proyecto |
+| `@lhci/cli` | Lighthouse en la terminal. Un número que dice si la app está rápida y accesible, en vez de una opinión | Sólo desarrollo, 0 kB en producción |
+| `vite-plugin-pwa` | **Ya está**: sólo hay que encenderlo. La gestora en un registro con mala señal abre la app y ve lo último que cargó | 0 kB nuevos |
+| `prettier` con `prettier-plugin-tailwindcss` | Ordena las clases de Tailwind siempre igual. Suena menor: es lo que evita que un archivo tenga tres estilos de escritura | Sólo desarrollo |
+
+### 8.4 Lo que NO conviene agregar, y por qué
+
+Esto es la parte que ahorra tiempo, así que va con el razonamiento entero.
+
+**shadcn/ui completo — no.** Es el estándar de la industria y es bueno. Pero copia unos quince
+archivos con sus propias convenciones de tokens, y este proyecto ya tiene un sistema de diseño
+con guardianes que fallan si alguien se sale de la escala. Los dos sistemas pelearían, y el que
+perdería es el que tiene los guardianes. **Se toma lo que shadcn toma —Radix por debajo— y se
+viste con los tokens de acá.** Misma calidad, sin la pelea.
+
+**Una librería de animación (`motion`) — no por ahora.** Son unos 30 kB gzip para una sola
+animación que la View Transitions API hace gratis. Si alguna vez hace falta algo que la API no
+pueda, se agrega entonces y con el motivo escrito.
+
+**gstack — analizado, y la recomendación es no.**
+
+Es el marco de Garry Tan: 23 slash commands que convierten Claude Code en un equipo de
+ingeniería, MIT, muy bueno, y con resultados medidos. Lo miré en serio. El problema es que
+**alrededor del 80% ya está instalado acá con otro nombre**:
+
+| Lo que trae gstack | Lo que ya hay |
+|---|---|
+| `/plan-eng-review`, `/autoplan`, `/office-hours` | `superpowers:brainstorming`, `writing-plans`, `executing-plans` |
+| `/review` | `code-review` |
+| `/cso` (auditoría de seguridad) | `security-review` |
+| `/qa` con navegador | Playwright + el navegador de la sesión |
+| `/design-consultation` | `ui-ux-pro-max`, `design-system`, `ui-styling` |
+| `/learn`, `/retro` | La memoria del proyecto y el `CLAUDE.md` |
+
+Lo único genuinamente aditivo es **`/design-shotgun`** —generar cuatro a seis variantes de una
+pantalla y compararlas— y eso se puede hacer sin instalar nada.
+
+Los tres costos de instalarlo, dichos claro:
+
+1. **Vocabulario doble.** Dos juegos de comandos que hacen lo mismo con nombres distintos, en un
+   proyecto cuyo mayor riesgo declarado es la complejidad.
+2. **Necesita Bun.** Instalable sin administrador, pero es una segunda cadena de herramientas
+   para mantener al lado de Node.
+3. **Es código de terceros sin verificar.** Son prompts en Markdown, no ejecutables, así que el
+   riesgo es acotado — pero un marketplace de GitHub no tiene revisión, y este proyecto administra
+   saldos.
+
+**Si igual lo querés, la forma barata es tomar la idea sin el marco:** que el plan de la app de
+la oficina incluya un paso de "generar tres variantes de la pantalla del resumen y elegir", que
+es lo que `/design-shotgun` hace.
+
+### 8.5 Las skills de diseño que ya tenés
+
+Esto no hay que buscarlo en GitHub porque ya está instalado en tu Claude Code:
+
+- **`ui-ux-pro-max`** — base de datos local con 161 paletas, 57 pares tipográficos, 99 guías de
+  UX y 161 tipos de producto, para React y Tailwind. Es exactamente la herramienta para elegir la
+  paleta teal y la jerarquía tipográfica.
+- **`design-system`** — arquitectura de tokens en tres capas y especificación de componentes.
+- **`ui-styling`** — shadcn, Tailwind y accesibilidad.
+- **`dataviz`** — por si alguna vez hay un gráfico.
+- **`senior-frontend`** y **`senior-backend`** — revisión de calidad de código.
+- **`security-review`** y **`code-review`** — auditoría antes de publicar.
+
+**El plan de la app de la oficina tiene que invocar `ui-ux-pro-max` y `design-system` antes de
+escribir una línea de CSS.** Eso está escrito acá para que no se olvide.
+
+### 8.6 Lo que se investigó y no aplica
+
+- **Magic UI, Aceternity y los kits de componentes animados** — 150 componentes con animaciones
+  llamativas. Son para páginas de venta, no para una herramienta de trabajo donde lo que importa
+  es leer un número rápido. Agregarían peso y ruido.
+- **Plantillas de dashboard premium** (Haze y similares) — traen 96 pantallas que no se usan y
+  una estructura que habría que desarmar. Este proyecto tiene cinco pantallas y un sistema propio.
+- **pgTAP para probar la base** — necesita Postgres local, que necesita Docker, que no está
+  disponible acá. El arnés de permisos contra la API real ya cubre eso mejor: prueba lo que
+  devuelve PostgREST, no lo que dice la policy.
+
+---
+## 9. Lo que se saca
 
 | Se va | Por qué |
 |---|---|
@@ -363,7 +613,7 @@ cuándo acredita un depósito, que es lo que separa el saldo de hoy del de maña
 
 ---
 
-## 8. El tiempo real
+## 10. El tiempo real
 
 No necesita nada nuevo en la base. Comprobado el 26/08/2026 contra el proyecto remoto:
 
@@ -382,7 +632,7 @@ esto, y esa es exactamente la comprobación que Playwright sí puede automatizar
 
 ---
 
-## 9. Los arreglos de base
+## 11. Los arreglos de base
 
 ### 9.1 El saldo inicial no se puede volver a cargar
 
@@ -425,14 +675,14 @@ exactamente el mismo número.
 
 ---
 
-## 10. Cómo se prueba
+## 12. Cómo se prueba
 
-Playwright ya está instalado (`@playwright/test`) con su script `npm run e2e`, pero **nunca se
-cableó**: falta la configuración y las pruebas. No hace falta Selenium — es la misma herramienta,
-maneja Chrome igual, y es más rápida y más estable. Instalarlo sería un segundo martillo para el
-mismo clavo.
+Las herramientas están en la sección 8; acá va **qué** se prueba con ellas.
 
-Tres cosas que hoy no se pueden comprobar de ninguna otra manera:
+Playwright puede manejar el **Chrome de escritorio que ya está instalado en esta máquina**, con
+`channel: "chrome"`. No es un navegador de mentira: es el mismo que abre la dueña.
+
+Cinco cosas que hoy no se pueden comprobar de ninguna otra manera:
 
 1. **El circuito de la oficina** — cargar un trámite, controlarlo, entregarlo, verlo aparecer en
    ESPERAN PLATA de la empresa correcta.
@@ -440,6 +690,10 @@ Tres cosas que hoy no se pueden comprobar de ninguna otra manera:
    entra la plata.
 3. **El tiempo real** — dos contextos de navegador a la vez: un usuario deposita, el otro lo ve
    sin tocar nada.
+4. **Que nada se corra de lugar** — capturas comparadas contra una referencia, con
+   `toHaveScreenshot()`. Una columna de plata que se mueve un píxel hace fallar la prueba.
+5. **Accesibilidad y contraste** — `@axe-core/playwright`, que ya está instalado y nunca se usó.
+   Cero violaciones serias, incluido el contraste del teal nuevo sobre blanco y sobre oscuro.
 
 Las pruebas entran con las cuentas de `.env.local`, igual que el arnés de permisos.
 
@@ -449,20 +703,28 @@ no un test.
 
 ---
 
-## 11. Cómo se corta el trabajo
+## 13. Cómo se corta el trabajo
 
 Tres planes en secuencia. **Cada uno termina, se prueba y se publica antes de empezar el
 siguiente.**
 
 | | Plan | Qué entrega | Por qué en ese orden |
 |---|---|---|---|
-| **A** | La base y las pruebas | Saldo inicial arreglado, cadena de seis estados, la vista de "esperando plata", el guardián nuevo, Playwright configurado | Es corto y desbloquea todo. Con la cadena vieja, las dos apps se construirían sobre estados que van a desaparecer |
-| **B** | La app de la oficina | Resumen → empresa → trámite, sin barra lateral, color nuevo, y todo lo que se saca | Es lo que ella mira. Es la muestra que tiene que aprobarse |
-| **C** | La app de la gestora | La cola de tareas en el teléfono, con el salto en vivo | Es lo que hace que el sistema se alimente solo |
+| **A** | La base y el andamio | Saldo inicial arreglado, cadena de seis estados, la vista de "esperando plata", el guardián de índices parciales, Playwright configurado contra el Chrome real, y los guardianes de espacio y color | Es corto y desbloquea todo. Con la cadena vieja, las dos apps se construirían sobre estados que van a desaparecer. Y sin los guardianes, el acabado de B se degrada solo |
+| **B** | La app de la oficina | Resumen → empresa → trámite, sin barra lateral, la paleta de Habitualista, las nueve decisiones de la sección 7, y todo lo que se saca | Es lo que ella mira. Es la muestra que tiene que aprobarse |
+| **C** | La app de la gestora | La cola de tareas en el teléfono, con el salto en vivo, y la app instalable para que abra sin señal | Es lo que hace que el sistema se alimente solo |
+
+**El Plan B empieza invocando `ui-ux-pro-max` y `design-system`**, antes de escribir una línea de
+CSS. Los tokens y la escala se eligen ahí, con la base de datos de paletas y de guías que esas
+skills ya traen, y recién después se dibuja. Escrito acá para que no se saltee.
+
+**Y el Plan B incluye un paso de tres variantes:** antes de fijar la pantalla del resumen se
+dibujan tres versiones distintas y se elige una mirándolas al lado. Es la única idea de gstack que
+valía la pena, y no hace falta instalar nada para hacerla.
 
 ---
 
-## 12. Lo que este diseño NO hace
+## 14. Lo que este diseño NO hace
 
 Escrito para que nadie lo suponga:
 
@@ -473,11 +735,11 @@ Escrito para que nadie lo suponga:
   con motivo y quedan a la vista.
 - **No separa la base de desarrollo de la de producción.** Sigue siendo una sola, y la app lo
   sigue diciendo en pantalla.
-- **No toca el libro mayor ni las policies**, salvo lo que dice la sección 9.
+- **No toca el libro mayor ni las policies**, salvo lo que dice la sección 11.
 
 ---
 
-## 13. Lo que depende del usuario
+## 15. Lo que depende del usuario
 
 1. **Cambiar la contraseña genérica** antes de que haya saldos reales.
 2. **La segunda base de Supabase**, antes de cargar el `saldo_inicial` real. Hoy hay una sola y
@@ -487,7 +749,7 @@ Escrito para que nadie lo suponga:
 
 ---
 
-## 14. Deuda conocida que este diseño no cierra
+## 16. Deuda conocida que este diseño no cierra
 
 - `npm run deadcode` está en rojo desde antes: nueve dependencias sin usar y nueve tipos
   exportados que nadie importa.
