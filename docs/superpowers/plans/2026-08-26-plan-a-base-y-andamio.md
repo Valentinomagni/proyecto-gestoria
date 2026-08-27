@@ -705,7 +705,19 @@ cd "C:/Users/Vmagni/Desktop/GRUPO PARIS/GESTORIA" && export PATH="$HOME/tools/no
 **No aplicar todavía.** Si toca más de veinte archivos, el diff de esta tarea tapa el resto del
 plan. En ese caso, aplicarlo **en un commit propio y solo**, que es el paso siguiente.
 
-- [ ] **Paso 4: Aplicarlo y comprobar que no rompió nada**
+**MEDIDO EL 27/08/2026, y cambia la decisión:** toca **89 de 122 archivos**, no veinte. Y al
+mirar el diff de uno solo, casi todo es **fin de línea**: oxfmt convierte CRLF a LF, y el repo
+tiene 31 archivos CRLF contra 54 LF — ya estaba mezclado. El único cambio de formato real en
+`campos.ts` fue unir una línea de 80 a 100 columnas.
+
+**Entonces se difiere.** Los scripts quedan escritos y `npm run formato:check` disponible, pero
+**el formateo no se aplica hasta terminar el Plan A**. Un diff de 89 archivos ahora enterraría las
+cinco migraciones que mueven plata, y esas son las que hay que poder revisar línea por línea.
+
+Al aplicarlo, al final, va con un `.gitattributes` que fije `* text=auto eol=lf`: sin eso la
+normalización se deshace sola en la próxima máquina.
+
+- [ ] **Paso 4: Aplicarlo — DIFERIDO al cierre del Plan A, ver arriba**
 
 ```bash
 cd "C:/Users/Vmagni/Desktop/GRUPO PARIS/GESTORIA" && export PATH="$HOME/tools/node-v22.17.0-win-x64:$PATH" && npm run formato > /tmp/f.log 2>&1; echo "FORMATO: $?"; npx tsc -b > /tmp/a.log 2>&1; echo "TIPOS: $?"; npm run lint > /tmp/b.log 2>&1; echo "LINT: $?"; npm test > /tmp/c.log 2>&1; echo "TESTS: $?"; grep -E "Tests " /tmp/c.log | tail -1
@@ -1499,13 +1511,27 @@ git add -A && git commit -m "El saldo inicial se puede recargar, y una anulacion
 ## Tarea 7: La cadena de seis estados
 
 **Archivos:**
-- Crear: `supabase/migrations/<generado>_cadena_de_seis_estados.sql`
+- Crear: `supabase/migrations/<generado>_cadena_de_seis_estados.sql` — una sola migración que
+  toca las cinco cosas de la tabla de abajo. Van juntas a propósito: aplicadas por separado
+  dejarían la base en un estado intermedio donde la plata no cierra.
 
 **Interfaces:**
 - Consume: `public.c_tramites_transicion()`, `public.orden_estado(text)`,
-  `public.e_tramites_cuenta_corriente()`.
+  `public.e_tramites_cuenta_corriente()`, `public.b_conceptos_no_despues_de_pagado()`, y la
+  policy `tramites_update_gestora`.
 - Produce: la máquina de estados con `recibido, controlado, entregado, presupuestado, resuelto,
   devuelto, anulado`, y la columna `tramites.resuelto_at`.
+
+**CINCO COSAS NOMBRAN LOS ESTADOS VIEJOS Y LAS CINCO HAY QUE TOCARLAS.** La primera versión de
+esta tarea tocaba tres, y una revisión adversarial encontró las otras dos antes de aplicarla:
+
+| Qué | Si no se toca |
+|---|---|
+| `c_tramites_transicion` | La cadena nueva no existe |
+| `orden_estado` | Devuelve null para `resuelto` y la regla de "ir para atrás" se vuelve indefinida |
+| `e_tramites_cuenta_corriente` | **La reserva no se libera nunca**, ni al resolver ni al anular |
+| `b_conceptos_no_despues_de_pagado` | El presupuesto de un trámite resuelto vuelve a ser editable |
+| `tramites_update_gestora` | **La gestora no puede cerrar su trámite, y no ve ningún error** |
 
 **LO MÁS PELIGROSO DEL PLAN ESTÁ ACÁ.** La reserva se libera cuando el trámite pasa a `pagado`, y
 ese estado desaparece. Si el trigger de la cuenta corriente no se actualiza en esta misma
@@ -1737,9 +1763,21 @@ Seguir en el mismo archivo:
 -- ------------------------------------------------------------
 -- 5) LA PARTE PELIGROSA: la reserva se libera en `resuelto`
 --
---    Se reescribe la funcion entera. El unico cambio de conducta es que la rama que liberaba la
---    reserva y descontaba el costo real deja de mirar `pagado` y mira `resuelto`. Si esto no se
---    hiciera, la reserva no se liberaria NUNCA y la plata quedaria comprometida para siempre.
+--    Se reescribe la funcion ENTERA, y eso tiene CUATRO cambios de conducta, no uno. La primera
+--    version de este plan decia que era uno solo y se equivocaba; una revision adversarial lo
+--    agarro antes de aplicarla:
+--
+--      1. La rama que libera la reserva deja de mirar `pagado` y mira `resuelto`.
+--      2. La rama de ALTA de preexistentes conserva su filtro por estado, ahora reducido a
+--         `presupuestado`. Sin el, un preexistente ya pagado reservaria plata que el banco ya
+--         descontó — y la descontaria dos veces.
+--      3. La rama de correccion del presupuesto conserva su guarda, ahora `<> 'resuelto'`.
+--      4. La rama de ANULACION se conserva. Casi se pierde, y perderla significaba que anular un
+--         tramite presupuestado dejara la reserva viva PARA SIEMPRE, sin error y sin forma de
+--         arreglarlo desde la app.
+--
+--    `create or replace function` reemplaza el cuerpo entero: lo que no se vuelve a escribir, se
+--    borra. Media funcion pegada es como se pierde una validacion sin que nadie lo note.
 -- ------------------------------------------------------------
 
 create or replace function public.e_tramites_cuenta_corriente()
@@ -1751,31 +1789,50 @@ begin
   if new.medio_pago <> 'tarjeta_habitualista' then return new; end if;
   if new.tarjeta_id is null then return new; end if;
 
+  /*
+    ALTA de un tramite preexistente: los que estaban a mitad de camino el dia del corte.
+
+    EL FILTRO POR ESTADO NO SE PUEDE SACAR, y casi se saca. Dice la version original, textual:
+    "Ya pagado -> NINGUN movimiento: el banco ya lo descontó y está dentro del saldo_inicial.
+    Generarlo lo descontaria DOS VECES."
+
+    En la cadena vieja los estados que todavia debian plata eran presupuestado, frenado_por_saldo
+    y presentado. En la cadena nueva es UNO SOLO: presupuestado. Un preexistente en `resuelto` ya
+    pago, y su plata ya esta adentro del saldo inicial.
+  */
   if tg_op = 'INSERT' then
     if new.origen = 'preexistente'
+       and new.estado = 'presupuestado'
        and coalesce(new.deposito_solicitado,0) > 0 then
       insert into public.movimientos
         (tarjeta_id, tipo, importe, tramite_id, gestora_id, concepto, origen, creado_por)
       values (new.tarjeta_id, 'reserva', -new.deposito_solicitado, new.id, new.gestora_id,
-              'Presupuesto - ' || new.cliente_nombre, 'tramite', auth.uid());
+              'Presupuesto al corte - ' || new.cliente_nombre, 'preexistente', auth.uid());
     end if;
     return new;
   end if;
 
   if new.origen <> 'app' then return new; end if;
 
-  -- La primera vez que hay presupuesto: se reserva.
+  -- 1) Primera carga del deposito solicitado -> reserva.
   if coalesce(old.deposito_solicitado,0) = 0 and coalesce(new.deposito_solicitado,0) > 0 then
     insert into public.movimientos
       (tarjeta_id, tipo, importe, tramite_id, gestora_id, concepto, origen, creado_por)
     values (new.tarjeta_id, 'reserva', -new.deposito_solicitado, new.id, new.gestora_id,
             'Presupuesto - ' || new.cliente_nombre, 'tramite', auth.uid());
 
-  -- Si cambia: un ajuste POR LA DIFERENCIA. La reserva original nunca se toca, porque editarla
-  -- haria que el saldo de ayer deje de ser reconstruible.
+  /*
+    2) Correccion del deposito -> ajuste POR LA DIFERENCIA. La reserva original NUNCA se toca:
+       editarla haria que el saldo de ayer deje de ser reconstruible.
+
+       LA GUARDA POR ESTADO TAMPOCO SE PUEDE SACAR. Antes decia `new.estado <> 'pagado'` y ahora
+       dice `<> 'resuelto'`: despues de resolverse la reserva YA SE LIBERO, asi que un ajuste
+       sobre ella comprometeria plata que no esta comprometida por nada.
+  */
   elsif coalesce(old.deposito_solicitado,0) > 0
         and coalesce(new.deposito_solicitado,0) > 0
-        and new.deposito_solicitado is distinct from old.deposito_solicitado then
+        and new.deposito_solicitado is distinct from old.deposito_solicitado
+        and new.estado <> 'resuelto' then
     insert into public.movimientos
       (tarjeta_id, tipo, importe, tramite_id, gestora_id, concepto, origen, creado_por)
     values (new.tarjeta_id, 'ajuste_reserva',
@@ -1783,13 +1840,12 @@ begin
             new.id, new.gestora_id, 'Correccion del presupuesto', 'tramite', auth.uid());
   end if;
 
-  -- ============================================================================
-  --  AL RESOLVERSE: se libera la reserva entera y se descuenta lo que de verdad salio.
-  --
-  --  ANTES ESTO MIRABA `pagado`. Cambia acá con la cadena de seis estados, y es el punto mas
-  --  delicado de toda la migracion: si mirara un estado que ya no existe, la reserva no se
-  --  liberaria nunca y no habria ningun error que lo dijera.
-  -- ============================================================================
+  /*
+    3) RESUELTO -> se devuelve TODO lo reservado y se descuenta el costo real.
+
+    ANTES ESTO MIRABA `pagado`. Es el punto mas delicado de la migracion: si mirara un estado que
+    ya no existe, la reserva no se liberaria nunca y no habria ningun error que lo dijera.
+  */
   if new.estado = 'resuelto' and old.estado is distinct from 'resuelto' then
     select coalesce(sum(-importe), 0) into v_reservado
       from public.movimientos
@@ -1810,7 +1866,37 @@ begin
       insert into public.movimientos
         (tarjeta_id, tipo, importe, tramite_id, gestora_id, concepto, origen, creado_por)
       values (new.tarjeta_id, 'pago', -v_real, new.id, new.gestora_id,
-              'Pago en el registro', 'tramite', auth.uid());
+              'Pago en el registro - ' || coalesce(new.seccional,''), 'tramite', auth.uid());
+    end if;
+  end if;
+
+  /*
+    4) ANULACION. DOS COMPORTAMIENTOS DISTINTOS, y tratarlos igual inventa plata:
+         antes de resolverse  -> se revierte la reserva y el disponible vuelve;
+         despues de resolverse-> NO se devuelve nada, porque la plata se fue de verdad. Si el
+                                 registro reintegra algo, entra como ingreso con su motivo.
+
+    ESTE BLOQUE CASI DESAPARECE, y una revision adversarial lo agarro. La primera version de esta
+    migracion tenia tres bloques donde la funcion vigente tiene cuatro, y como `create or replace
+    function` reemplaza el cuerpo entero, este se perdia.
+
+    La consecuencia habria sido: anular un tramite presupuestado deja la reserva viva PARA
+    SIEMPRE. El comprometido de la tarjeta nunca baja, la Diferencia queda mal para siempre, y no
+    hay error ni aviso. Y no habria forma de arreglarlo desde la app: `anular_movimiento` rechaza
+    los movimientos que genero un tramite, y `b_conceptos_no_despues_de_pagado` impide tocar el
+    presupuesto de un tramite anulado.
+  */
+  if new.estado = 'anulado' and old.estado is distinct from 'anulado' then
+    if old.estado <> 'resuelto' then
+      select coalesce(sum(-importe), 0) into v_reservado
+        from public.movimientos
+       where tramite_id = new.id and tipo in ('reserva','ajuste_reserva','reversa_reserva');
+      if v_reservado > 0 then
+        insert into public.movimientos
+          (tarjeta_id, tipo, importe, tramite_id, gestora_id, concepto, origen, creado_por)
+        values (new.tarjeta_id, 'reversa_reserva', v_reservado, new.id, new.gestora_id,
+                'Anulado: libera la reserva', 'tramite', auth.uid());
+      end if;
     end if;
   end if;
 
@@ -1819,6 +1905,54 @@ end;
 $$;
 
 revoke execute on function public.e_tramites_cuenta_corriente() from public, anon, authenticated;
+
+-- ------------------------------------------------------------
+-- 6) El presupuesto tampoco se toca despues de RESUELTO
+--
+--    `b_conceptos_no_despues_de_pagado` nombraba los estados de la cadena vieja. Sin este cambio,
+--    el presupuesto de un tramite resuelto volveria a ser editable, y editarlo escribiria un
+--    `ajuste_reserva` sobre una reserva que ya se libero.
+-- ------------------------------------------------------------
+
+create or replace function public.b_conceptos_no_despues_de_pagado()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  v_estado text;
+begin
+  if new.momento <> 'presupuesto' then return new; end if;
+  if auth.uid() is null then return new; end if;              -- consola de la base
+
+  select estado into v_estado from public.tramites where id = new.tramite_id;
+
+  if v_estado in ('resuelto', 'devuelto', 'anulado') then
+    raise exception 'regla_tramite: El tramite ya esta %. El presupuesto no se cambia despues de resolverlo: corregilo con un ajuste en la cuenta.', v_estado;
+  end if;
+
+  return new;
+end;
+$$;
+
+revoke execute on function public.b_conceptos_no_despues_de_pagado() from public, anon, authenticated;
+
+-- ------------------------------------------------------------
+-- 7) La gestora tiene que poder cerrar su propio tramite
+--
+--    LA POLICY NOMBRA LOS ESTADOS UNO POR UNO, y `resuelto` no existia cuando se escribio. Sin
+--    este cambio la gestora aprieta "Entregar a administracion" y NO PASA NADA: la clausula
+--    `using` no la deja, el update afecta cero filas, y PostgREST no devuelve error por cero
+--    filas. La pantalla diria que guardo y el tramite se quedaria donde estaba.
+--
+--    Es la peor forma de fallar que hay, y es la que este proyecto tiene documentada como la que
+--    hace perder la confianza en la herramienta entera.
+-- ------------------------------------------------------------
+
+drop policy if exists "tramites_update_gestora" on public.tramites;
+create policy "tramites_update_gestora" on public.tramites for update to authenticated
+  using (
+    public.es_gestora() and gestora_id = public.mi_gestora_id()
+    and estado in ('entregado','presupuestado','resuelto')
+  )
+  with check (public.es_gestora() and gestora_id = public.mi_gestora_id());
 
 -- ============================================================================
 --  COMO COMPROBAR QUE QUEDO BIEN
@@ -1860,6 +1994,33 @@ revoke execute on function public.e_tramites_cuenta_corriente() from public, ano
 --  5) Y saltearse un paso tampoco. TIENE QUE FALLAR:
 --       update public.tramites set estado = 'resuelto' where id = '<uno en recibido>';
 --     Esperado: 'No se puede pasar de recibido a resuelto'.
+--
+--  6) ANULAR UN TRAMITE PRESUPUESTADO DEVUELVE LA PLATA. Esta comprobacion existe porque esa
+--     rama casi se pierde en la primera version de esta migracion:
+--       -- anota el comprometido, presupuesta otro tramite, y anulalo:
+--       update public.tramites set estado = 'anulado', motivo_anulacion = 'prueba de la rama 4'
+--        where id = '<uno presupuestado>';
+--       select comprometido from public.v_saldos where tarjeta_id = '<la tarjeta>';
+--     Esperado: EXACTAMENTE el mismo comprometido que antes de presupuestarlo. Y en el libro:
+--       select tipo, importe from public.movimientos where tramite_id = '<id>' order by id;
+--     Esperado: reserva negativa y `reversa_reserva` positiva por el mismo importe.
+--     **Si el comprometido no vuelve, esta migracion perdio la rama de anulacion.**
+--
+--  7) Y anular uno YA RESUELTO no devuelve nada, porque la plata se fue de verdad:
+--       update public.tramites set estado = 'anulado', motivo_anulacion = 'prueba'
+--        where id = '<uno resuelto>';
+--     Esperado: NINGUN movimiento nuevo. Si aparece una reversa, se estaria inventando plata.
+--
+--  8) El presupuesto de un tramite resuelto NO se toca. Contra la API con una gestora,
+--     TIENE QUE FALLAR:
+--       update tramite_conceptos set importe = 1 where tramite_id = '<uno resuelto>';
+--     Esperado: 'El tramite ya esta resuelto'.
+--
+--  9) Y la gestora SI puede cerrar el suyo. Contra la API, con la gestora asignada:
+--       update tramites set estado = 'devuelto' where id = '<uno resuelto suyo>';
+--     Esperado: el estado CAMBIA. Si el update afecta cero filas sin error, la policy
+--     `tramites_update_gestora` se olvido de `resuelto` — que es el defecto que el paso 7 de
+--     esta migracion arregla.
 -- ============================================================================
 ```
 
@@ -1932,35 +2093,82 @@ fetch("https://api.supabase.com/v1/projects/drsooohkwwpnijonxwwt/database/query"
 --  falla porque hay filas que lo violan, y el mensaje habla del constraint y no de las filas.
 --
 --  ============================================================================
---   POR QUE `presentado` TAMBIEN PASA A `resuelto`
+--   LA PRIMERA VERSION DE ESTA MIGRACION ESTABA MAL, DE DOS FORMAS
 --  ============================================================================
 --
---  Un tramite presentado, en la cadena vieja, ya habia ido al registro. En la cadena nueva ese
---  viaje es un solo paso. Dejarlo en `presupuestado` seria decir que todavia no fue, y eso lo
---  volveria a mostrar como "esperando plata" a una gestora que ya lo resolvio.
+--  Una revision adversarial la agarro antes de aplicarla, y las dos cosas se comprobaron contra
+--  los datos reales el 27/08/2026:
 --
---  La conversion corre sin sesion, asi que `mi_rol()` da 'consola' y la maquina de estados la
---  deja pasar sin validar la transicion. Es correcto: no es una persona avanzando un tramite,
---  es un arrastre de datos.
+--   1. Mandaba `presentado` a `resuelto`. MARTINEZ esta presentado con 520.000 reservados y CERO
+--      costo real: presento y no pago. Marcarlo resuelto escribiria que pago algo que no pago.
 --
---  Y NO DISPARA MOVIMIENTOS DE PLATA: el trigger de la cuenta corriente mira que el estado pase
---  a `resuelto` VINIENDO de otro, y `presentado` no estaba en la cadena vieja como pagado, asi
---  que no habia reserva liberada. Se comprueba en el bloque de abajo.
+--   2. Decia, textual, que la conversion "NO DISPARA MOVIMIENTOS DE PLATA". Es falso: el trigger
+--      dispara al pasar a `resuelto` viniendo de cualquier otro estado, incluido `retirado`.
+--      Habria escrito una segunda reversa y un segundo pago sobre BALAGUER, que ya los tenia.
+--
+--  La conversion corre sin sesion, asi que `mi_rol()` da 'consola' y la MAQUINA DE ESTADOS la
+--  deja pasar. Pero `e_tramites_cuenta_corriente` NO mira el rol: mira `origen`, y estos tramites
+--  son de la app. Por eso hay que apagarlo a mano.
 
 -- ------------------------------------------------------------
 -- 1) Los datos
 -- ------------------------------------------------------------
 
+/*
+  ============================================================================
+   EL TRIGGER SE APAGA MIENTRAS SE CONVIERTE, Y ESTO NO ES OPCIONAL
+  ============================================================================
+
+  `e_tramites_cuenta_corriente` dispara cuando el estado pasa a 'resuelto'. Si corre durante la
+  conversion, sobre un tramite que YA estaba en `retirado`, escribe una SEGUNDA reversa_reserva y
+  un SEGUNDO pago — sobre uno que ya los tenia.
+
+  Se midio el 27/08/2026 contra la base, antes de escribir esto. BALAGUER, en `retirado`, tiene:
+
+      reserva           -600,00
+      reversa_reserva   +600,00
+      pago          -565.000,00
+
+  Con el trigger encendido, la conversion habria escrito otra reversa de +600 y otro pago de
+  -565.000. **Medio millon descontado dos veces de Paris Autos, sin un solo error en pantalla.**
+
+  Apagar el trigger es lo correcto y no un atajo: esto NO es una persona avanzando un tramite, es
+  un arrastre de datos. La plata de estos tramites ya se movio cuando correspondia.
+*/
+alter table public.tramites disable trigger e_tramites_cuenta_corriente;
+
+/*
+  ============================================================================
+   `pagado` Y `retirado` VAN A RESUELTO. `presentado` NO.
+  ============================================================================
+
+  La primera version de este plan mandaba los tres a `resuelto`, razonando que "ya habian ido al
+  registro". Mirando los datos, eso es falso para `presentado`.
+
+  MARTINEZ DIEGO ARMANDO esta en `presentado` con 520.000 reservados y CERO costo real cargado:
+  presento la documentacion y no pago. En la cadena nueva `resuelto` significa las tres cosas
+  juntas —presento, pago y retiro—, asi que marcarlo resuelto seria escribir que pago algo que no
+  pago, y ademas liberaria su reserva de 520.000 sin descontar nada.
+
+  Un tramite presentado y sin pagar todavia debe plata. Eso, en la cadena nueva, es
+  `presupuestado`. La seccional que ya tiene cargada se conserva: la va a necesitar igual.
+*/
 update public.tramites
    set estado = 'resuelto',
-       resuelto_at = coalesce(resuelto_at, retirado_at, pagado_at, presentado_at, now())
- where estado in ('presentado','pagado','retirado');
+       resuelto_at = coalesce(resuelto_at, retirado_at, pagado_at, now())
+ where estado in ('pagado','retirado');
+
+update public.tramites
+   set estado = 'presupuestado'
+ where estado = 'presentado';
 
 -- Un tramite frenado por saldo estaba, en realidad, presupuestado esperando plata. Ahora eso se
 -- deduce de la tarjeta y no se marca. El motivo escrito se conserva: es historia.
 update public.tramites
    set estado = 'presupuestado'
  where estado = 'frenado_por_saldo';
+
+alter table public.tramites enable trigger e_tramites_cuenta_corriente;
 
 -- ------------------------------------------------------------
 -- 2) Y recien ahora el check se aprieta
@@ -2009,6 +2217,12 @@ comment on column public.tramites.motivo_frenado is
 --        where estado in ('presentado','pagado','retirado','frenado_por_saldo')
 --        group by estado;
 --
+--  1b) Y cada uno fue a donde correspondia. Medido el 27/08/2026, habia 1 en `presentado` y 1 en
+--      `retirado`, asi que:
+--       select estado, count(*) from public.tramites group by estado order by estado;
+--      Esperado: `presupuestado` subio en 1 (el que estaba presentado sin pagar) y `resuelto`
+--      quedo en 1 (el que estaba retirado). Si `resuelto` quedo en 2, se convirtio de mas.
+--
 --  2) Y el total de tramites es el MISMO que antes de la migracion:
 --       select count(*) from public.tramites;
 --
@@ -2017,9 +2231,17 @@ comment on column public.tramites.motivo_frenado is
 --        where id = (select id from public.tramites limit 1);
 --     Esperado: viola tramites_estado_valido.
 --
---  4) La conversion NO movio plata:
+--  4) LA CONVERSION NO MOVIO PLATA. Es la comprobacion que importa de esta migracion:
 --       select nombre, contable, comprometido from public.v_saldos order by orden;
---     Esperado: identico a lo anotado antes de esta migracion.
+--     Esperado: IDENTICO a lo anotado antes. Si Paris Autos bajo 565.000, el trigger disparo y
+--     el `disable trigger` no funciono.
+--
+--     Y en el libro, sobre el tramite que estaba en `retirado`:
+--       select tipo, importe from public.movimientos
+--        where tramite_id = (select id from public.tramites where estado = 'resuelto'
+--                             and resuelto_at is not null order by resuelto_at limit 1)
+--        order by id;
+--     Esperado: EXACTAMENTE tres filas —reserva, reversa_reserva, pago— y no seis.
 --
 --  5) Los sellos viejos se conservan:
 --       select cliente_nombre, presentado_at, retirado_at, resuelto_at from public.tramites
