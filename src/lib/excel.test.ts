@@ -27,7 +27,7 @@ const BASE: FilaExportable = {
   dominio: null,
   tipo: "patentamiento_0km",
   subtipo: "plan_ahorro",
-  estado: "pagado",
+  estado: "resuelto",
   seccional: "San Luis 1",
   numero_pago_registro: null,
   administrativo: "Sofía",
@@ -79,7 +79,7 @@ describe("exportación a Excel", () => {
   });
 
   it("los códigos internos salen traducidos, no en crudo", () => {
-    expect(celda(BASE, "Estado")?.value).toBe("estado:pagado");
+    expect(celda(BASE, "Estado")?.value).toBe("estado:resuelto");
     expect(celda(BASE, "Tipo")?.value).toBe("tipo:patentamiento_0km");
     expect(celda(BASE, "Modalidad")?.value).toBe("modalidad:plan_ahorro");
   });

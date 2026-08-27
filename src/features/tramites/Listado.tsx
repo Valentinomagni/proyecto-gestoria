@@ -19,15 +19,28 @@ import { useBorrador } from "../../lib/borrador";
  * saber de antemano cual de los cuatro se tiene a mano, y nunca se sabe.
  */
 
+/**
+ * Los siete estados de la cadena.
+ *
+ * ERAN DIEZ. `presentado`, `pagado` y `retirado` se fundieron en `resuelto` porque eran tres
+ * botones para UN SOLO VIAJE al registro: la gestora presenta, paga y retira en la misma
+ * ventanilla. Tenerlos separados la obligaba a abrir la app tres veces para registrar algo que
+ * pasó una vez.
+ *
+ * Y `frenado_por_saldo` desapareció porque no era un estado del trámite sino una condición de la
+ * tarjeta: alguien tenía que marcarlo Y DESMARCARLO a mano, y el desmarcado se olvidaba. Ahora se
+ * deduce en la vista `v_esperando_plata`.
+ *
+ * ESTA LISTA TIENE QUE ESPEJAR `tramites_estado_valido` EN LA BASE. Si acá aparece un estado que
+ * la base ya no acepta, el filtro ofrece una opción que no devuelve nada — y peor, el botón que
+ * lo manda falla contra un check.
+ */
 export const ESTADOS: { valor: string; nombre: string }[] = [
   { valor: "recibido", nombre: "Recibido" },
   { valor: "controlado", nombre: "Controlado" },
   { valor: "entregado", nombre: "Entregado a gestoría" },
   { valor: "presupuestado", nombre: "Presupuestado" },
-  { valor: "frenado_por_saldo", nombre: "Frenado por saldo" },
-  { valor: "presentado", nombre: "Presentado" },
-  { valor: "pagado", nombre: "Pagado" },
-  { valor: "retirado", nombre: "Retirado" },
+  { valor: "resuelto", nombre: "Resuelto en el registro" },
   { valor: "devuelto", nombre: "Devuelto" },
   { valor: "anulado", nombre: "Anulado" },
 ];
@@ -246,8 +259,7 @@ export function Listado({ alAbrir }: { alAbrir: (id: string) => void }) {
 /** El color comunica estado y NADA MAS. La marca es monocroma justamente para esto. */
 export function Chip({ estado }: { estado: string }) {
   const clase =
-    estado === "frenado_por_saldo" ? "text-danger"
-    : estado === "anulado" ? "text-ink2"
+    estado === "anulado" ? "text-ink2"
     : estado === "devuelto" ? "text-done"
     : "";
   return <span className={`text-xs ${clase}`}>{nombreDeEstado(estado)}</span>;

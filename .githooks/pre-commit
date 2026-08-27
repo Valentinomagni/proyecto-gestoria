@@ -16,15 +16,20 @@ node scripts/sin-secretos.mjs || exit 1
 node scripts/migraciones-sanas.mjs || exit 1
 node scripts/colores-sanos.mjs || exit 1
 
-# FALTAN DOS, y las dos por el mismo motivo: un guardian rojo en el pre-commit bloquea todos los
-# commits, incluido el que lo arregla.
+# LOS DOS QUE CONSULTAN LA BASE. Sin SUPABASE_ACCESS_TOKEN se saltean y salen con 0, asi que en
+# un repo recien clonado no rompen el primer commit.
 #
-#   `indices`  esta en rojo por un defecto REAL —el indice del saldo inicial no excluye lo
-#              anulado— y entra aca en la misma tanda que lo arregla.
-#   `espacios` esta en rojo con 9 hallazgos que son decisiones visuales del Plan B, no arreglos
-#              mecanicos. Entra cuando el front se rehaga.
-#
-# Los dos se corren a mano mientras tanto: `npm run indices` y `npm run espacios`.
+#   `indices`  entro el 27/08/2026, cuando la migracion del saldo inicial lo puso en verde. Antes
+#              estaba en rojo por un defecto real, y meter un guardian rojo al pre-commit bloquea
+#              todos los commits, incluido el que lo arregla.
+#   `estados`  compara la lista de estados del front contra el check de la base. Existe porque el
+#              27/08/2026 la cadena cambio, las 198 pruebas quedaron en verde, y el front quedo
+#              mandando estados que la base ya rechazaba. Lo agarro un grep a mano.
+node scripts/indices-sanos.mjs || exit 1
+node scripts/estados-sanos.mjs || exit 1
+
+# FALTA UNO: `espacios` esta en rojo con 9 hallazgos que son decisiones visuales del rediseno, no
+# arreglos mecanicos. Entra cuando el front se rehaga. Mientras tanto: `npm run espacios`.
 
 # Si todavia no hay dependencias instaladas, el hook no puede correr el resto. No se falla
 # por eso: en un repo recien clonado el primer commit no deberia exigir un npm install.

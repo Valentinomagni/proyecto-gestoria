@@ -37,23 +37,29 @@ import { Chip, nombreDeEstado } from "./Listado";
  *  rechaza, o al revés.
  */
 
-/** Que sigue despues de cada estado. Espeja la maquina de estados de la base. */
+/**
+ * Que sigue despues de cada estado. Espeja la maquina de estados de la base.
+ *
+ * `presupuestado > resuelto` es UN paso porque es UN viaje al registro: la gestora presenta, paga
+ * y retira en la misma ventanilla. Antes eran tres botones para el mismo momento, y ninguno de
+ * los tres le decia nada nuevo a la oficina.
+ *
+ * SI ACA APARECIERA UN ESTADO QUE LA BASE YA NO ACEPTA, el boton se veria bien y fallaria contra
+ * un check al apretarlo. Esta lista y `tramites_estado_valido` se mueven juntas.
+ */
 const SIGUIENTE: Record<string, { estado: string; boton: string } | undefined> = {
   recibido: { estado: "controlado", boton: "Marcar como controlado" },
   controlado: { estado: "entregado", boton: "Entregar a la gestora" },
   entregado: { estado: "presupuestado", boton: "Cargar el presupuesto" },
-  presupuestado: { estado: "presentado", boton: "Marcar como presentado" },
-  frenado_por_saldo: { estado: "presentado", boton: "Marcar como presentado" },
-  presentado: { estado: "pagado", boton: "Marcar como pagado" },
-  pagado: { estado: "retirado", boton: "Marcar como retirado" },
-  retirado: { estado: "devuelto", boton: "Devolver a administración" },
+  presupuestado: { estado: "resuelto", boton: "Resolver en el registro" },
+  resuelto: { estado: "devuelto", boton: "Entregar a administración" },
 };
 
-/** Estados en los que el presupuesto ya no se toca. Ver el comentario del panel. */
-const CERRADOS = new Set(["pagado", "retirado", "devuelto", "anulado"]);
+/** Estados en los que el presupuesto ya no se toca: la reserva ya se libero. */
+const CERRADOS = new Set(["resuelto", "devuelto", "anulado"]);
 
 /** Y en estos tampoco se toca el costo real: el tramite ya termino. */
-const TERMINADOS = new Set(["retirado", "devuelto", "anulado"]);
+const TERMINADOS = new Set(["devuelto", "anulado"]);
 
 export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
   const tramite = useTramite(id);
@@ -129,22 +135,26 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
   );
 
   /**
-   * Frenar o anular. Las dos escriben el motivo EN LA MISMA operacion que el estado.
+   * Anular. Escribe el motivo EN LA MISMA operacion que el estado.
    *
    * No es un detalle de comodidad: la base tiene un `check` que exige el motivo cuando el estado
-   * es `anulado` o `frenado_por_saldo`. Si se guardaran en dos pasos, el primero fallaria — y con
-   * razon, porque entre uno y otro habria un instante con un tramite anulado sin ningun motivo.
+   * es `anulado`. Si se guardaran en dos pasos, el primero fallaria — y con razon, porque entre
+   * uno y otro habria un instante con un tramite anulado sin ningun motivo.
+   *
+   * ANTES ESTA FUNCION SERVIA PARA DOS SALIDAS, anular y frenar. Frenar dejo de existir: esperar
+   * plata se deduce de la tarjeta en `v_esperando_plata` y ya no lo marca una persona.
    */
-  const salir = useGuardar(
-    async (v: { estado: string; motivo: string }) => {
-      const parche: Database["public"]["Tables"]["tramites"]["Update"] = { estado: v.estado };
-      if (v.estado === "anulado") parche.motivo_anulacion = v.motivo.trim();
-      else parche.motivo_frenado = v.motivo.trim();
+  const anular = useGuardar(
+    async (motivo: string) => {
+      const parche: Database["public"]["Tables"]["tramites"]["Update"] = {
+        estado: "anulado",
+        motivo_anulacion: motivo.trim(),
+      };
 
       const { error } = await supabase.from("tramites").update(parche).eq("id", id);
       if (error) throw error;
     },
-    { exito: "Trámite actualizado", invalidar: ["tramite", "tramites", "saldos", "tramite_eventos"] },
+    { exito: "Trámite anulado", invalidar: ["tramite", "tramites", "saldos", "tramite_eventos"] },
   );
 
   const responder = useGuardar(
@@ -323,10 +333,8 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
 
       <Salidas
         estado={t.estado}
-        frenando={salir.isPending}
-        anulando={salir.isPending}
-        alFrenar={(motivo) => salir.mutate({ estado: "frenado_por_saldo", motivo })}
-        alAnular={(motivo) => salir.mutate({ estado: "anulado", motivo })}
+        anulando={anular.isPending}
+        alAnular={(motivo) => anular.mutate(motivo)}
       />
 
       <Notas

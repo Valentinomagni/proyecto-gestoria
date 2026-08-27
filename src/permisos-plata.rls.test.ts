@@ -285,3 +285,71 @@ describe("el historial de cambios es de solo lectura", () => {
     expect(data).toEqual([]);
   });
 });
+
+/**
+ * ============================================================================
+ *  LA CADENA DE SEIS ESTADOS, Y POR QUE ESTA PRUEBA NO EXISTIA ANTES
+ * ============================================================================
+ *
+ *  El 27/08/2026 la cadena bajó de diez estados a seis. Se aplicaron cuatro migraciones y las
+ *  154 pruebas siguieron en verde — TODAS. Ninguna miraba la máquina de estados.
+ *
+ *  Y sin embargo el front había quedado roto: seguía mandando `presentado`, un estado que la base
+ *  ya rechazaba. El botón se veía bien y fallaba al apretarlo. Nada lo agarró; lo agarró un
+ *  `grep` a mano.
+ *
+ *  Una prueba que no existe no falla nunca, y eso se parece bastante a estar en verde.
+ */
+describe("la cadena de seis estados", () => {
+  let elTramite = "";
+  let estadoDeArranque = "";
+
+  beforeAll(async () => {
+    const { data } = await gerencia
+      .from("tramites").select("id, estado").eq("cliente_nombre", NOMBRE_DE_PRUEBA)
+      .order("recibido_at").limit(1);
+    elTramite = String(data?.[0]?.id ?? "");
+    estadoDeArranque = String(data?.[0]?.estado ?? "");
+  });
+
+  it("hay un tramite con el que probar", () => {
+    expect(elTramite).not.toBe("");
+    // NO SE ESPERA UN ESTADO CONCRETO. La primera version de esta prueba daba por sentado que el
+    // tramite de prueba estaba en `recibido` y estaba en `entregado`. Lo que hay que comprobar es
+    // que NO SE MUEVA, no en cual esta parado.
+    expect(estadoDeArranque).not.toBe("resuelto");
+  });
+
+  it("no se puede saltear hasta resuelto", async () => {
+    /*
+      El boton de la pantalla es uno solo, el del paso siguiente, asi que este salto no se puede
+      hacer desde la app. Pero SI desde la consola del navegador, y por eso lo impide la base:
+      resolver sin haber presupuestado escribiria un pago sin presupuesto contra el que
+      compararlo, y liberaria una reserva que no existe.
+    */
+    const { error } = await gerencia
+      .from("tramites").update({ estado: "resuelto" }).eq("id", elTramite);
+    expect(error).not.toBeNull();
+  });
+
+  it("y los estados viejos ya no existen", async () => {
+    /*
+      El check se apreto a siete valores. Un estado de la cadena anterior tiene que ser RECHAZADO
+      por la base, no ignorado en silencio: si se ignorara, el tramite se quedaria donde estaba y
+      la pantalla diria que guardo.
+    */
+    for (const viejo of ["presentado", "pagado", "retirado", "frenado_por_saldo"]) {
+      const { error } = await gerencia
+        .from("tramites").update({ estado: viejo }).eq("id", elTramite);
+      expect(error, `el estado viejo ${viejo} deberia ser rechazado`).not.toBeNull();
+    }
+  });
+
+  it("el tramite no se movio de donde estaba", async () => {
+    // Las dos pruebas de arriba tienen que haber sido rechazadas SIN efecto. Un rechazo que igual
+    // deja la fila a medio cambiar es peor que no tener la regla.
+    const { data } = await gerencia
+      .from("tramites").select("estado").eq("id", elTramite).single();
+    expect(data?.estado).toBe(estadoDeArranque);
+  });
+});

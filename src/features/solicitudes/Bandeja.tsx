@@ -18,8 +18,15 @@ import { useSaldos, useTramites } from "../../lib/datos";
  * hoy no existe y por el que se deposita a ciegas.
  */
 export function Bandeja({ alAbrir }: { alAbrir: (id: string) => void }) {
+  /*
+    ANTES HABIA UN TERCER BLOQUE, "frenados por falta de saldo", y consultaba un estado que ya no
+    existe. Nadie marca más que un trámite espera plata: se deduce comparando lo que la tarjeta
+    tiene contra lo que tiene comprometido, y eso vive en la vista `v_esperando_plata`.
+
+    El bloque que lo muestre bien llega con el rediseño. Sacarlo ahora no pierde nada: consultaba
+    un estado que la base ya rechaza, así que siempre habría devuelto cero.
+  */
   const presupuestados = useTramites({ estado: "presupuestado" });
-  const frenados = useTramites({ estado: "frenado_por_saldo" });
   const saldos = useSaldos();
 
   if (presupuestados.isLoading || saldos.isLoading) {
@@ -31,7 +38,7 @@ export function Bandeja({ alAbrir }: { alAbrir: (id: string) => void }) {
   const deHoy = todos.filter((t) => aFechaArgentina(t.recibido_at) === hoy);
   const atrasadas = todos.filter((t) => aFechaArgentina(t.recibido_at) < hoy);
 
-  if (todos.length === 0 && (frenados.data ?? []).length === 0) {
+  if (todos.length === 0) {
     return (
       <Panel className="m-6 max-w-lg p-0 overflow-hidden">
         <EmptyState
@@ -65,16 +72,6 @@ export function Bandeja({ alAbrir }: { alAbrir: (id: string) => void }) {
       )}
 
       <Bloque titulo="De hoy" tramites={deHoy} saldos={saldos.data ?? []} alAbrir={alAbrir} />
-
-      {(frenados.data ?? []).length > 0 && (
-        <Bloque
-          titulo="Frenados por falta de saldo"
-          ayuda="No dependen de quien mira esta pantalla: dependen de que entre plata."
-          tramites={frenados.data ?? []}
-          saldos={saldos.data ?? []}
-          alAbrir={alAbrir}
-        />
-      )}
     </div>
   );
 }

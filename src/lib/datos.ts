@@ -377,8 +377,19 @@ export function useNovedades(miId: string | null): {
  * un presupuesto y quiere ver que se descontó, lo que busca es el apellido del cliente, no el
  * tipo de asiento.
  *
- * `anulado` se calcula aca y no en la base porque es una LECTURA, no una regla. La regla —que
- * un movimiento se anule una sola vez— vive en el indice unico de `corrige_movimiento_id`.
+ * ============================================================================
+ *  `anulado` LO TRAE LA BASE, Y ANTES SE CALCULABA ACA MAL
+ * ============================================================================
+ *
+ * Se calculaba mirando que otra fila de ESTA MISMA consulta lo corrigiera. Pero la consulta trae
+ * las ultimas 200: si la anulacion quedaba fuera de esa ventana, el movimiento se mostraba como
+ * vivo, CON SU BOTON DE ANULAR AL LADO, sobre algo ya anulado. Al apretarlo la base lo rechazaba
+ * con un mensaje que no explicaba nada, porque en la pantalla no habia nada que anular.
+ *
+ * Desde el 27/08/2026 `movimientos.anulado` es una columna real: la escribe `anular_movimiento`
+ * en la misma transaccion que la compensacion, y es la misma que mira el indice unico que impide
+ * dos saldos iniciales vivos por tarjeta. Una sola verdad, y no depende de cuantas filas se
+ * hayan traido.
  */
 export function useMovimientos(tarjetaId: string | null) {
   return useQuery({
@@ -390,7 +401,7 @@ export function useMovimientos(tarjetaId: string | null) {
         // El select va en UNA sola cadena literal, sin partirla con `+`: supabase-js infiere los
         // tipos leyendo ese literal, y una concatenacion lo deja en `GenericStringError` — o sea
         // que se pierde el chequeo de tipos justo en la consulta que trae plata.
-        .select("id, fecha, fecha_acreditacion, tipo, importe, concepto, observacion, corrige_movimiento_id, tramites(cliente_nombre)")
+        .select("id, fecha, fecha_acreditacion, tipo, importe, concepto, observacion, corrige_movimiento_id, anulado, tramites(cliente_nombre)")
         .eq("tarjeta_id", tarjetaId ?? "")
         .order("fecha", { ascending: false })
         .order("id", { ascending: false })
@@ -398,9 +409,6 @@ export function useMovimientos(tarjetaId: string | null) {
       if (error) throw error;
 
       const filas = data ?? [];
-      const anulados = new Set(
-        filas.map((m) => m.corrige_movimiento_id).filter((x): x is number => x !== null),
-      );
 
       return filas.map((m) => ({
         id: Number(m.id),
@@ -412,7 +420,7 @@ export function useMovimientos(tarjetaId: string | null) {
         observacion: m.observacion,
         corrige_movimiento_id: m.corrige_movimiento_id,
         cliente: m.tramites?.cliente_nombre ?? null,
-        anulado: anulados.has(Number(m.id)),
+        anulado: m.anulado,
       }));
     },
   });
