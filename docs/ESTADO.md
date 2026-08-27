@@ -17,10 +17,10 @@ la de la oficina: son dos necesidades distintas, y hoy comparten forma.
 | Qué | Cuánto | Comando |
 |---|---|---|
 | Tests, todos verdes | **154** en 20 archivos | `npx vitest run` |
-| Pruebas de permisos contra la API real | **48** en 2 archivos | `npm run test:rls` |
+| Pruebas de permisos contra la API real | **52** en 2 archivos | `npm run test:rls` |
 | Pruebas en el Chrome de verdad | **6** en 2 navegadores | `npm run e2e` |
 | Guardianes | **14** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `pruebas`, `migraciones`, `secretos`, `permisos`, `indices`, `colores`, `estados`, `espacios` |
-| Migraciones aplicadas | **34** de 34 escritas | `npx supabase migration list --linked` |
+| Migraciones aplicadas | **35** de 35 escritas | `npx supabase migration list --linked` |
 | Tablas en la base | **21**, más **6 vistas** | consulta a `pg_class` |
 | Módulos de lógica en `src/lib` | 20 | `ls src/lib/*.ts` |
 | Archivos de código | 73, **11.816 líneas** | `find src -name "*.ts*"` |
@@ -88,6 +88,30 @@ Paris Cars       contable         0,00   comprometido 128.000,00
 ```
 
 Idéntico al centavo, y el libro de BALAGUER quedó con **tres filas y no seis**.
+
+### Lo que encontró la revisión de producto, después de todo lo anterior
+
+9. **Los diecisiete mensajes de error estaban sin una sola tilde**, y `src/lib/fallas.ts:207` los
+   muestra **crudos**: lo que dice el SQL es exactamente lo que lee la gestora. Y sin tilde no es
+   voseo — "Anota" es otra persona. Los mensajes que dan una instrucción eran justo los que
+   perdían el voseo, al lado de una interfaz que dice "Cargá el primero".
+
+   La migración que lo arregla **no retipeó ninguna función**: extrajo los cuerpos con un script
+   de las migraciones que los crearon y cambió sólo las cadenas, comprobando que cada uno de los
+   17 textos apareciera antes de reemplazarlo.
+
+10. **"Resolver en el registro" pedía tres cosas y no lo decía.** El trigger valida de a una y
+    corta en la primera que falta, así que el recorrido real eran cuatro intentos y tres errores
+    rojos — parada en la ventanilla. Ahora el panel avisa de antemano, y para todos los pasos.
+
+11. **El guardián de estados no miraba el archivo donde el defecto pasó.** Leía sólo la lista del
+    filtro; el botón roto vivía en `SIGUIENTE`, dentro de `Ficha.tsx`. Ahora lee las dos listas,
+    y se probó metiéndole el defecto real en el archivo real.
+
+12. **El CHANGELOG prometía una pantalla que no existía.** La vista `v_esperando_plata` estaba
+    bien hecha y **nadie la leía**. Peor: la Bandeja había perdido su tercer bloque, así que para
+    el administrativo el saldo neto era una señal **menos**, anunciada como función nueva. Ahora
+    la lee, agrupada por tarjeta.
 
 ### Lo que queda anotado
 

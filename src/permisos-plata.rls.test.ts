@@ -365,3 +365,45 @@ describe("la cadena de seis estados", () => {
     expect(data?.estado).toBe(estadoDeArranque);
   });
 });
+
+/**
+ * ============================================================================
+ *  LA LISTA DE QUIEN ESPERA PLATA SE PUEDE LEER, Y NO SE PUEDE ESCRIBIR
+ * ============================================================================
+ *
+ *  `v_esperando_plata` reemplaza al estado `frenado_por_saldo`. Estas pruebas existen porque el
+ *  front la consulta con la MISMA forma que se prueba acá: si la vista cambiara de columnas, la
+ *  Bandeja mostraría un bloque vacío sin ningún error, y nadie se enteraría hasta que alguien
+ *  pregunte por qué no aparece un trámite que está esperando.
+ *
+ *  Hoy la vista devuelve cero filas, y eso es CORRECTO: ninguna tarjeta tiene un presupuestado
+ *  sin cubrir. Por eso las pruebas miran que la consulta ANDE y que los permisos estén bien, no
+ *  que traiga algo — una prueba que exija filas se rompería sola el día que la oficina pague todo.
+ */
+describe("la lista de quien espera plata", () => {
+  const COLUMNAS = "tramite_id, cliente_nombre, oferta_referencia, tarjeta_id, pide, falta";
+
+  it("una gestora la puede leer, con las columnas que usa la pantalla", async () => {
+    const { error } = await gestora.from("v_esperando_plata").select(COLUMNAS);
+    expect(error, `la vista no responde: ${error?.message ?? ""}`).toBeNull();
+  });
+
+  it("y la oficina tambien", async () => {
+    const { error } = await gerencia.from("v_esperando_plata").select(COLUMNAS);
+    expect(error).toBeNull();
+  });
+
+  it("sin sesion devuelve CERO FILAS, no un error", async () => {
+    // La ausencia y el rechazo son cosas distintas, y confundirlas manda a buscar un problema de
+    // permisos donde sólo falta una sesión.
+    const { data, error } = await anonimo.from("v_esperando_plata").select(COLUMNAS);
+    expect(error).toBeNull();
+    expect(data).toEqual([]);
+  });
+
+  it("y NO se puede escribir: es una vista, no una tabla", async () => {
+    const { error } = await gerencia
+      .from("v_esperando_plata").delete().eq("tramite_id", "00000000-0000-0000-0000-000000000000");
+    expect(error).not.toBeNull();
+  });
+});
