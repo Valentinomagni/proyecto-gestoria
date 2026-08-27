@@ -1,0 +1,35 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/scripts/hooks/despues-de-editar.mjs\"",
+            "timeout": 30,
+            "statusMessage": "Revisando el archivo"
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/scripts/hooks/despues-de-migracion.mjs\"",
+            "timeout": 30,
+            "statusMessage": "Comprobando que la migración no esté vacía"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/scripts/hooks/al-terminar.mjs\"",
+            "timeout": 180,
+            "statusMessage": "Los cuatro comandos, antes de dar por terminado"
+          }
+        ]
+      }
+    ]
+  }
+}
