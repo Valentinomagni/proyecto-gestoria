@@ -129,7 +129,7 @@ verdad importa:
 
 14. **Anular y revivir escribía una segunda reversa.** La rama de resolver sumaba dos tipos y la
     de anular sumaba tres, así que la primera no descontaba lo ya liberado. El comprometido de
-    Paris Autos quedaba en **−68.765,44**, y un comprometido negativo no lo detectaba nadie.
+    Paris Autos quedaba en **-68.765,44**, y un comprometido negativo no lo detectaba nadie.
 
 15. **Corregir el costo real después de resolver no se cobraba.** La guarda por sellos que esta
     misma tanda agregó tapaba también la escritura del pago. La ficha decía 665.000 y la tarjeta
