@@ -23,7 +23,10 @@
     "db:tipos": "node scripts/tipos.mjs",
     "tipos:al-dia": "node scripts/tipos.mjs --verificar",
     "migraciones": "node scripts/migraciones-sanas.mjs",
-    "permisos": "node scripts/permisos-sanos.mjs"
+    "permisos": "node scripts/permisos-sanos.mjs",
+    "indices": "node scripts/indices-sanos.mjs",
+    "colores": "node scripts/colores-sanos.mjs",
+    "espacios": "node scripts/espacios-sanos.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

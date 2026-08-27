@@ -70,6 +70,11 @@ Ocho correcciones pedidas sobre fotos de la pantalla. Todas hechas y **miradas**
 
 ### Deuda conocida y anotada
 
+- **`npm run espacios` está en rojo con 9 hallazgos**, y es a propósito. Los nueve están en
+  `Shell.tsx` (3), `DatosDelTramite.tsx` (2), `EmptyState`, `Login`, `Panel` y `Avisos`. Varios
+  son decisiones visuales —el relleno de la tarjeta, el alto del estado vacío— y esas se toman en
+  el paso de diseño del Plan B, no con un reemplazo mecánico. Se conecta al pre-commit ahí.
+  Mientras tanto el número sirve de medida: eran 9, no cientos.
 - **`npm run deadcode` está en rojo desde antes de esta tanda**: nueve dependencias sin usar y
   nueve tipos exportados que nadie importa. Esta revisión no agregó ninguno, pero tampoco los
   limpió.
