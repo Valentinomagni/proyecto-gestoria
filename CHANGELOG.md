@@ -42,6 +42,47 @@ voseo: "Anota" es otra persona. Los diecisiete ahora están acentuados, y tres q
 hacer ahora lo dicen — el de la razón social sin tarjeta termina indicando a quién avisarle,
 porque desde la ficha no se puede arreglar.
 
+### Los saldos se corrigieron, y la gestoría ya ve con cuánto cuenta — 27/08/2026
+
+**Había plata figurando como comprometida que no lo estaba.** Paris Autos mostraba 971.234,56
+reservados, y **451.234,56 de eso no correspondía a ningún presupuesto vivo**: 450.000 colgaban de
+un trámite al que le habían quitado su única línea —así que en pantalla no pedía nada— y el resto
+de otro que ni siquiera había pasado el control. Paris Cars mostraba 128.000 por lo mismo, que era
+todo su reservado.
+
+```
+Paris Autos   971.234,56 reservados  →  520.000,00
+Paris Cars       128.000,00          →           0
+```
+
+**No es plata que aparece.** Es plata que nunca estuvo comprometida y que la pantalla venía
+mostrando como gastada: el disponible que se veía era menor que el real.
+
+**La cuenta dejó de deducirse del paso que se dio y pasa a compararse contra el libro.** Antes el
+sistema decidía si mover plata según qué botón se había apretado, y cada camino nuevo necesitaba su
+propia regla — la que faltara no daba error, sólo un número mal. Ahora compara lo que el libro dice
+que está reservado y cobrado contra lo que debería estar, y escribe la diferencia. Eso arregló, con
+la misma cuenta, cuatro formas distintas de que la plata quedara mal:
+
+- Quitar la última línea de un presupuesto dejaba la reserva viva **para siempre**.
+- Anular un trámite y después revivirlo devolvía la reserva **dos veces**, y el reservado quedaba
+  en negativo.
+- Corregir el costo real después de resolver **no se cobraba**: la ficha decía un número y la
+  tarjeta otro.
+- Y la reserva nacía apenas se cargaba un importe, aunque el trámite no hubiera pasado el control.
+  Ahora la plata se compromete cuando el trámite se presupuesta, que es cuando de verdad se pide.
+
+**La gestoría ve el saldo de las tarjetas donde tiene trámites.** Hasta hoy veía las cinco en
+**$ 0,00** — no "sin datos": cero, que es un número y se lee como un hecho. Salía al registro
+creyendo que no había con qué pagar, y Paris Autos tenía ocho millones y medio.
+
+Y una tarjeta cuyos movimientos no se pueden ver ahora dice **"sin datos"** y no un importe. Un
+cero que en realidad significa "no sé" es la peor forma de equivocarse que tiene una pantalla de
+plata.
+
+**El día se cuenta con la hora de Argentina.** La base trabajaba en horario de Londres, así que
+entre las 21 y las 24 daba por acreditado un depósito que en realidad entraba al día siguiente.
+
 **El saldo inicial de una tarjeta se puede volver a cargar después de anularlo.** Antes decía que
 el dato ya había sido ingresado, y dos tarjetas quedaron sin poder arrancar. Era un defecto, y era
 el que bloqueaba todo lo demás.

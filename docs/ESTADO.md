@@ -17,10 +17,10 @@ la de la oficina: son dos necesidades distintas, y hoy comparten forma.
 | Qué | Cuánto | Comando |
 |---|---|---|
 | Tests, todos verdes | **154** en 20 archivos | `npx vitest run` |
-| Pruebas de permisos contra la API real | **52** en 2 archivos | `npm run test:rls` |
+| Pruebas de permisos contra la API real | **57** en 2 archivos | `npm run test:rls` |
 | Pruebas en el Chrome de verdad | **6** en 2 navegadores | `npm run e2e` |
 | Guardianes | **14** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `pruebas`, `migraciones`, `secretos`, `permisos`, `indices`, `colores`, `estados`, `espacios` |
-| Migraciones aplicadas | **35** de 35 escritas | `npx supabase migration list --linked` |
+| Migraciones aplicadas | **37** de 37 escritas | `npx supabase migration list --linked` |
 | Tablas en la base | **21**, más **6 vistas** | consulta a `pg_class` |
 | Módulos de lógica en `src/lib` | 20 | `ls src/lib/*.ts` |
 | Archivos de código | 73, **11.816 líneas** | `find src -name "*.ts*"` |
@@ -112,6 +112,52 @@ Idéntico al centavo, y el libro de BALAGUER quedó con **tres filas y no seis**
     bien hecha y **nadie la leía**. Peor: la Bandeja había perdido su tercer bloque, así que para
     el administrativo el saldo neto era una señal **menos**, anunciada como función nueva. Ahora
     la lee, agrupada por tarjeta.
+
+### Lo que encontraron las revisiones de contable y de seguridad
+
+Las dos, por caminos distintos, dieron con lo mismo: **una gestora veía las cinco tarjetas en
+cero.** Y contable nombró la forma que tienen en común los defectos de plata, que es lo que de
+verdad importa:
+
+> *"un `if` que decide si escribir plata mirando el estado o el sello, en vez de mirar **cuánto
+> queda comprometido y cuánto ya se cobró**. Mientras las ramas comparen situaciones en vez de
+> saldos, cada camino nuevo va a necesitar su propia guarda, y la que falte no va a dar error."*
+
+13. **Vaciar el presupuesto dejaba la reserva viva para siempre, y estaba pasando.**
+    `h_conceptos_total_presupuesto` guarda NULL cuando la suma da cero, y la rama de corrección
+    exigía `> 0`. BALAGUER quedó `presupuestado`, pidiendo NULL, con **450.000 comprometidos**.
+
+14. **Anular y revivir escribía una segunda reversa.** La rama de resolver sumaba dos tipos y la
+    de anular sumaba tres, así que la primera no descontaba lo ya liberado. El comprometido de
+    Paris Autos quedaba en **−68.765,44**, y un comprometido negativo no lo detectaba nadie.
+
+15. **Corregir el costo real después de resolver no se cobraba.** La guarda por sellos que esta
+    misma tanda agregó tapaba también la escritura del pago. La ficha decía 665.000 y la tarjeta
+    había cobrado 565.000.
+
+16. **La gestora podía apagar los movimientos de plata de su trámite**, y este agujero lo abrió
+    esta tanda: `pagado_at` estaba en la lista de campos que puede escribir desde antes, y no
+    molestaba a nadie hasta que la conciliación se apoyó justo en ese sello. `resuelto_at` **no**
+    estaba en la lista, y por eso el camino inverso estaba cerrado — la asimetría era el defecto.
+
+17. **Un movimiento podía nacer anulado.** `movimientos_insert` nombra los tipos uno por uno y no
+    miraba las dos columnas de las que ahora depende el invariante. Un `ingreso` con
+    `anulado = true` entraba, subía el contable y la pantalla lo dibujaba tachado.
+
+18. **`v_saldos` preguntaba la fecha en UTC.** A las 23:30 de Argentina la base decía 28 y era 27,
+    así que un depósito que acreditaba mañana se contaba como acreditado hoy. El front ya usaba
+    `hoyArgentina()`: durante esas tres horas no coincidían sobre qué día era.
+
+**El arreglo no son seis parches.** `conciliar_tramite` compara lo que el libro dice contra lo que
+debería decir y escribe la diferencia. Es **idempotente**, comprobado: 105 movimientos antes de
+correrla de nuevo, 105 después. Por eso cierra también los caminos que todavía nadie probó.
+
+Y corrigió los datos:
+
+```
+Paris Autos   971.234,56 comprometidos  →  520.000,00
+Paris Cars       128.000,00             →           0
+```
 
 ### Lo que queda anotado
 
