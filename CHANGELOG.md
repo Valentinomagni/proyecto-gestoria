@@ -9,6 +9,40 @@ todavía no salió.
 
 ## Sin publicar todavía — lo que está listo en la versión de prueba
 
+### La cadena se simplificó, y el saldo inicial se puede volver a cargar — 27/08/2026
+
+**El trámite pasa de diez estados a seis.** Presentar, pagar y retirar eran tres pasos separados
+para un solo viaje al registro: la gestora presenta, le liquidan, paga y retira en la misma
+ventanilla. Ahora es un paso, **Resuelto en el registro**, que pide de una vez la seccional, lo
+que salió de verdad y qué documentación retiró.
+
+Las tres preguntas que hacían los tres pasos siguen estando: fundir los estados no aflojó ningún
+control, sólo juntó el momento en que se contestan.
+
+**"Frenado por falta de saldo" dejó de ser un estado.** Alguien tenía que marcarlo, y sobre todo
+tenía que **desmarcarlo** cuando entraba plata — y eso se olvidaba, así que la pantalla decía que
+estaba detenido algo que ya podía salir. Ahora se calcula: un trámite presupuestado cuya tarjeta
+no alcanza está esperando plata, y **deja de estarlo solo** en cuanto el depósito acredita. Y se
+ve **cuánto falta depositar**, que es lo que hay que saber para pedirlo.
+
+**El saldo inicial de una tarjeta se puede volver a cargar después de anularlo.** Antes decía que
+el dato ya había sido ingresado, y dos tarjetas quedaron sin poder arrancar. Era un defecto, y era
+el que bloqueaba todo lo demás.
+
+**Una anulación ya no se puede anular.** Se podía, y el resultado era la plata de vuelta en el
+saldo mientras la pantalla mostraba el movimiento tachado: la cuenta diciendo una cosa y la
+pantalla otra. Si hay que revertir una anulación, se carga el movimiento de nuevo — queda más
+largo en el extracto y queda explicable.
+
+**Un costo real anulado ya no se cobra.** Si alguien quitaba una línea de lo que salió de verdad,
+el sistema la seguía descontando de la tarjeta igual. La mitad gemela del cálculo, la del
+presupuesto, sí la excluía: las dos mitades del mismo número no coincidían.
+
+**Y corregir un trámite ya pagado no descuenta la plata dos veces.** Si se lo mandaba para atrás
+para arreglar un importe y se lo volvía a cerrar, el sistema devolvía la reserva otra vez y
+cobraba el pago otra vez. Sin ningún aviso, sobre la cifra que la gestoría usa para decidir si
+puede pagar en el día.
+
 ### Lo que cambió en la segunda revisión — 24/08/2026
 
 **El presupuesto es un solo número.** Antes había dos: la suma de los conceptos y, aparte, un

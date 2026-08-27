@@ -1,15 +1,14 @@
 # Estado del proyecto
 
-Contado de nuevo el **20/08/2026**, después de la primera prueba real con los tres usuarios. Los números salen de correr los comandos, no de
-recordar.
+Contado de nuevo el **27/08/2026**, después de aplicar la cadena de seis estados. Los números
+salen de correr los comandos, no de recordar.
 
-**Dónde estamos:** etapa 0 terminada y **etapa 1 con el circuito entero funcionando de punta a
-punta**, caminado en el navegador con plata de verdad en la base: cargar el saldo, dar de alta un
-trámite, controlarlo con el checklist, entregarlo a una gestora, presupuestarlo, presentarlo y
-pagarlo. Los cinco saldos cierran en cada paso.
+**Dónde estamos:** el circuito entero funciona de punta a punta y la cadena bajó de diez estados a
+seis. La base ya no acepta los estados viejos, el front habla el vocabulario nuevo, y ahora hay un
+guardián que compara las dos listas para que no vuelvan a separarse.
 
-**Lo que falta para que la vea la dueña:** el despliegue en Cloudflare, que **depende de vos** y
-son tres campos en un panel (abajo, con los valores exactos).
+**Lo que sigue:** el rediseño de las dos pantallas. La de gestoría tiene que dejar de parecerse a
+la de la oficina: son dos necesidades distintas, y hoy comparten forma.
 
 ---
 
@@ -18,12 +17,14 @@ son tres campos en un panel (abajo, con los valores exactos).
 | Qué | Cuánto | Comando |
 |---|---|---|
 | Tests, todos verdes | **154** en 20 archivos | `npx vitest run` |
-| Pruebas de permisos contra la API real | **44** en 2 archivos | `npm run test:rls` |
-| Guardianes | **10** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `pruebas`, `migraciones`, `secretos`, `permisos` |
-| Migraciones aplicadas | **30** de 30 escritas | `npx supabase migration list --linked` |
-| Tablas en la base | **21**, más **5 vistas** | consulta a `pg_class` |
+| Pruebas de permisos contra la API real | **48** en 2 archivos | `npm run test:rls` |
+| Pruebas en el Chrome de verdad | **6** en 2 navegadores | `npm run e2e` |
+| Guardianes | **14** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `pruebas`, `migraciones`, `secretos`, `permisos`, `indices`, `colores`, `estados`, `espacios` |
+| Migraciones aplicadas | **34** de 34 escritas | `npx supabase migration list --linked` |
+| Tablas en la base | **21**, más **6 vistas** | consulta a `pg_class` |
 | Módulos de lógica en `src/lib` | 20 | `ls src/lib/*.ts` |
-| Archivos de código | 73 | `find src -name "*.ts*"` |
+| Archivos de código | 73, **11.816 líneas** | `find src -name "*.ts*"` |
+| `CLAUDE.md` | **116 líneas**, más 4 skills | `wc -l CLAUDE.md` |
 | Peso de arranque | **95,36 kB** + 53,77 de Supabase + 11,72 de Query | `npm run build` |
 | Sentry, en pedazo aparte | 148,56 kB, **no bloquea el primer dibujo** | idem |
 | Excel, en pedazo aparte | 19,69 kB, **se carga recién al apretar el botón** | idem |
@@ -31,6 +32,74 @@ son tres campos en un panel (abajo, con los valores exactos).
 | Cuentas creadas | 4, con roles asignados | verificado entrando con cada una |
 
 ---
+
+## La cadena de seis estados — 27/08/2026
+
+Cuatro migraciones contra la base viva. Antes de escribir cada una se leyó la función que estaba
+corriendo, porque `create or replace function` reemplaza el cuerpo entero y lo que no se vuelva a
+escribir desaparece sin que nadie avise.
+
+### Lo que encontró la revisión adversarial, ANTES de aplicar
+
+Cinco defectos en el plan, todos verificados a mano contra el código vigente y los datos reales:
+
+1. **La rama de anulación del trigger de la cuenta corriente desaparecía.** La función viva tiene
+   cuatro bloques y la reescritura tenía tres. Anular un trámite presupuestado habría dejado la
+   reserva viva **para siempre**, sin error y sin forma de arreglarlo desde la app.
+2. **La conversión de los trámites viejos habría disparado el trigger.** BALAGUER ya tenía su
+   reserva liberada y su pago escrito: se habría descontado **565.000 dos veces** de Paris Autos.
+3. **`tramites_update_gestora` nombra los estados uno por uno** y `resuelto` no estaba. La gestora
+   habría apretado el botón y no habría pasado nada — un update de cero filas no devuelve error.
+4. **`b_conceptos_no_despues_de_pagado` tampoco lo nombraba**, así que el presupuesto de un
+   trámite resuelto volvía a ser editable sobre una reserva ya liberada.
+5. **El alta de preexistentes perdía su filtro por estado**: uno ya pagado habría reservado plata
+   que el banco ya descontó.
+
+Y una sexta que apareció mirando los datos: **MARTINEZ estaba `presentado` con 520.000 reservados
+y cero costo real** — presentó y no pagó. El plan lo mandaba a `resuelto`, que ahora significa
+presentó-pagó-y-retiró. Fue a `presupuestado`.
+
+### Lo que apareció comparando contra las funciones vivas
+
+6. **El costo real no excluía las líneas anuladas.** `where momento = 'real'` a secas: una línea
+   que alguien quitaba se seguía cobrando. La rama gemela, la del presupuesto, sí la excluía.
+7. **Ir para atrás y volver a resolver escribía la plata dos veces.** Gerencia puede mandar un
+   trámite para atrás —es lo que se hace cuando el costo real está mal—, y al volver a cerrarlo se
+   escribía una segunda reversa y un segundo pago. Ahora la rama mira también los sellos, que
+   nadie limpia.
+
+### Y lo que apareció después de aplicar
+
+8. **El front había quedado roto y nada lo agarró.** Seguía mandando `presentado`, un estado que
+   la base ya rechazaba. Las 154 pruebas y las 44 del arnés quedaron **todas en verde**: ninguna
+   miraba la máquina de estados. Lo encontró un `grep` a mano.
+
+   De ahí salieron dos cosas: cuatro pruebas nuevas en el arnés, y el guardián `npm run estados`,
+   que compara la lista del front contra el `check` de la base y falla si no coinciden.
+
+### La comprobación que importaba
+
+La conversión **no movió plata**. Medido antes y después:
+
+```
+Paris Autos SA   contable 9.435.000,00   comprometido 971.234,56
+Paris Cars       contable         0,00   comprometido 128.000,00
+13 trámites, 44 movimientos
+```
+
+Idéntico al centavo, y el libro de BALAGUER quedó con **tres filas y no seis**.
+
+### Lo que queda anotado
+
+- **`npm run espacios` está en rojo**, con 9 hallazgos. Son decisiones visuales del rediseño, no
+  arreglos mecánicos: entra al pre-commit cuando el front se rehaga.
+- **`npm run formato:check` está en rojo**, con 92 archivos. El grueso es conversión de finales de
+  línea CRLF a LF, no formato de verdad: el repo está mezclado. Necesita un `.gitattributes` con
+  `* text=auto eol=lf` antes de aplicarlo, o el diff se vuelve ilegible.
+- **Paris Cars tiene 128.000 comprometidos por un trámite en `recibido`.** La reserva se escribe
+  cuando cambia el importe pedido, sin mirar el estado, así que un trámite que ni empezó puede
+  tener plata comprometida. La vista de "esperando plata" no lo muestra porque sólo mira los
+  presupuestados: la tarjeta dice que debe 128.000 y la lista de quién espera está vacía.
 
 ## La segunda revisión — 24/08/2026
 
