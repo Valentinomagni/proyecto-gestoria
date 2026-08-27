@@ -407,3 +407,94 @@ describe("la lista de quien espera plata", () => {
     expect(error).not.toBeNull();
   });
 });
+
+/**
+ * ============================================================================
+ *  LA GESTORA VE EL SALDO DE LA TARJETA CON LA QUE VA A PAGAR
+ * ============================================================================
+ *
+ *  ESTA PRUEBA EXISTE POR UN DEFECTO QUE ESTUVO VIVO Y NO LO AGARRÓ NADA. El 27/08/2026 toda
+ *  gestora veía las cinco tarjetas en `$ 0,00` — no "sin datos", CERO, que es un número y se lee
+ *  como un hecho. Paris Autos tenía 8.463.765,44 disponibles.
+ *
+ *  La causa: `v_saldos` es `security_invoker`, suma `movimientos`, y la policy de `movimientos`
+ *  exigía una fila en `tarjetas_debito`, que está vacía. Entonces `contable` y `comprometido`
+ *  daban 0 por `coalesce`, y `v_esperando_plata` comparaba `0 < 0`: nunca traía nada.
+ *
+ *  ============================================================================
+ *   POR QUE LA PRUEBA VIEJA NO LO AGARRÓ, QUE ES LA PARTE QUE ENSEÑA
+ *  ============================================================================
+ *
+ *  Había una prueba de que la gestora podía LEER la vista, y pasaba: `error === null`. Leer sin
+ *  error y leer algo son cosas distintas, y una vista vacía no da error.
+ *
+ *  Por eso esta mira NÚMEROS, no ausencia de error.
+ */
+describe("la gestora ve el saldo de la tarjeta donde tiene tramites", () => {
+  let laTarjeta = "";
+
+  beforeAll(async () => {
+    // La tarjeta de un tramite vivo suyo. Si no hubiera ninguno, la prueba de abajo lo dice.
+    const { data } = await gestora
+      .from("tramites").select("tarjeta_id")
+      .not("tarjeta_id", "is", null)
+      .not("estado", "in", "(devuelto,anulado)")
+      .limit(1);
+    laTarjeta = String(data?.[0]?.tarjeta_id ?? "");
+  });
+
+  it("hay una tarjeta con la que probar", () => {
+    expect(laTarjeta, "la gestora de prueba necesita un tramite vivo con tarjeta").not.toBe("");
+  });
+
+  it("y VE SUS MOVIMIENTOS, no cero", async () => {
+    const { data, error } = await gestora
+      .from("v_saldos").select("nombre, contable, comprometido, movimientos_visibles")
+      .eq("tarjeta_id", laTarjeta).single();
+
+    expect(error).toBeNull();
+    expect(
+      Number(data?.movimientos_visibles ?? 0),
+      "la gestora ve la tarjeta de su tramite con CERO movimientos: es el defecto del 27/08/2026",
+    ).toBeGreaterThan(0);
+  });
+
+  it("una tarjeta donde no tiene nada dice `sin datos`, y no un importe", async () => {
+    /*
+      La diferencia entre las dos filas es lo que importa: la vista no puede distinguir sola una
+      tarjeta vacía de una que no se ve, y por eso devuelve `movimientos_visibles`. Si esta
+      prueba dejara de encontrar una tarjeta sin movimientos visibles, querría decir que la
+      gestora las ve todas — que es lo contrario del permiso mínimo.
+    */
+    const { data } = await gestora
+      .from("v_saldos").select("nombre, movimientos_visibles");
+    const sinDatos = (data ?? []).filter((s) => Number(s.movimientos_visibles) === 0);
+    expect(sinDatos.length, "la gestora ve TODAS las tarjetas, y no deberia").toBeGreaterThan(0);
+  });
+
+  it("la oficina las ve todas", async () => {
+    const { data } = await gerencia
+      .from("v_saldos").select("nombre, movimientos_visibles");
+    const conDatos = (data ?? []).filter((s) => Number(s.movimientos_visibles) > 0);
+    expect(conDatos.length).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * Los sellos no los escribe una gestora.
+ *
+ * `pagado_at` estaba en la lista de campos que podía tocar, y no molestaba a nadie hasta que la
+ * conciliación se apoyó en ese sello para no liberar dos veces la reserva. Escribirlo a mano
+ * apagaba para siempre los movimientos de plata de ese trámite, sin un error en pantalla.
+ */
+describe("los sellos de la cadena no los escribe una gestora", () => {
+  it("no puede escribir pagado_at", async () => {
+    const { data } = await gestora.from("tramites").select("id").limit(1);
+    const id = String(data?.[0]?.id ?? "");
+    expect(id).not.toBe("");
+
+    const { error } = await gestora
+      .from("tramites").update({ pagado_at: new Date().toISOString() }).eq("id", id);
+    expect(error, "una gestora pudo escribir pagado_at").not.toBeNull();
+  });
+});

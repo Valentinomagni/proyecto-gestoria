@@ -38,6 +38,22 @@ export interface Saldo {
   contable: number;
   en_transito: number;
   comprometido: number;
+  /**
+   * ============================================================================
+   *  CERO MOVIMIENTOS VISIBLES NO ES CERO PESOS
+   * ============================================================================
+   *
+   * La vista hace `left join` y `coalesce(...,0)`, asi que una tarjeta cuyos movimientos NO SE
+   * PUEDEN LEER sale con los mismos ceros que una que de verdad esta vacia. Sin este numero, la
+   * pantalla no tiene con que distinguirlas.
+   *
+   * Y la diferencia importa: el 27/08/2026 toda gestora veia las cinco tarjetas en `$ 0,00`
+   * —no "sin datos", CERO, que es un numero y se lee como un hecho— y concluia que no podia
+   * salir a pagar. Paris Autos tenia ocho millones y medio.
+   *
+   * Cuando esto da 0, la pantalla dice "sin datos". Nunca un importe.
+   */
+  movimientos_visibles: number;
 }
 
 export interface Tramite {
@@ -284,6 +300,7 @@ export function useSaldos() {
         contable: aNumero(s.contable),
         en_transito: aNumero(s.en_transito),
         comprometido: aNumero(s.comprometido),
+        movimientos_visibles: aNumero(s.movimientos_visibles),
       }));
     },
   });

@@ -88,7 +88,7 @@ function Bloque({
   titulo: string;
   ayuda?: string;
   tramites: { id: string; cliente_nombre: string; oferta_referencia: string | null; tarjeta_id: string | null; deposito_solicitado: number | null }[];
-  saldos: { tarjeta_id: string; nombre: string; contable: number; comprometido: number }[];
+  saldos: { tarjeta_id: string; nombre: string; contable: number; comprometido: number; movimientos_visibles: number }[];
   alAbrir: (id: string) => void;
   alerta?: boolean;
 }) {
@@ -121,7 +121,16 @@ function Bloque({
           //  Con un pedido chico se ve como un redondeo raro. Con veinte pedidos de un millon,
           //  la pantalla que decide si se manda plata muestra veinte millones de menos, y la
           //  respuesta es frenar tramites que si tenian con que pagarse.
-          const disponible = s ? s.contable - s.comprometido : null;
+          /*
+            SIN MOVIMIENTOS VISIBLES NO SE MUESTRA UN IMPORTE, SE DICE QUE NO SE VE.
+
+            El 27/08/2026 toda gestora leía acá "Queda disponible: $ 0,00" en las cinco
+            tarjetas, en gris neutro, porque 0 no es menor que 0. Paris Autos tenía ocho
+            millones y medio. Un cero es un número y se lee como un hecho: la gestora concluía
+            que no podía salir a pagar, y lo descubría en el registro.
+          */
+          const seVe = s !== undefined && s.movimientos_visibles > 0;
+          const disponible = seVe ? s.contable - s.comprometido : null;
           const pedido = t.deposito_solicitado ?? 0;
           return (
             <button
@@ -138,10 +147,12 @@ function Bloque({
               </div>
               <div className="text-right">
                 <p className="text-base tnum">{formatear(aCentavos(pedido))}</p>
-                {disponible !== null && (
+                {disponible !== null ? (
                   <p className={`text-2xs tnum ${disponible < 0 ? "text-danger" : "text-ink2"}`}>
                     Queda disponible: {formatear(aCentavos(disponible))}
                   </p>
+                ) : (
+                  <p className="text-2xs text-ink2">Saldo sin datos</p>
                 )}
               </div>
             </button>

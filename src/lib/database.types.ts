@@ -1255,6 +1255,7 @@ export type Database = {
           comprometido: number | null
           contable: number | null
           en_transito: number | null
+          movimientos_visibles: number | null
           nombre: string | null
           orden: number | null
           tarjeta_id: string | null
@@ -1441,10 +1442,15 @@ export type Database = {
         Args: { p_id: number; p_motivo: string }
         Returns: number
       }
+      conciliar_tramite: {
+        Args: { p_motivo?: string; p_tramite: string }
+        Returns: undefined
+      }
       es_contable: { Args: never; Returns: boolean }
       es_gerencia: { Args: never; Returns: boolean }
       es_gestora: { Args: never; Returns: boolean }
       es_oficina: { Args: never; Returns: boolean }
+      hoy_argentina: { Args: never; Returns: string }
       mi_gestora_id: { Args: never; Returns: string }
       mi_rol: { Args: never; Returns: string }
       nombre_de: { Args: { persona: string }; Returns: string }
@@ -1458,6 +1464,10 @@ export type Database = {
       opero_esta_tarjeta: { Args: { p_tarjeta: string }; Returns: boolean }
       orden_estado: { Args: { p: string }; Returns: number }
       puede_ver_cobros: { Args: never; Returns: boolean }
+      tengo_tramite_en_esta_tarjeta: {
+        Args: { p_tarjeta: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

@@ -92,6 +92,24 @@ export function Tarjeta() {
         </select>
       </div>
 
+      {/*
+        LAS CUATRO CIFRAS SÓLO SE MUESTRAN SI SE PUEDEN LEER LOS MOVIMIENTOS.
+
+        La vista hace `left join` y `coalesce(...,0)`, así que una tarjeta cuyos movimientos no se
+        ven sale con los mismos ceros que una vacía. El 27/08/2026 toda gestora leía las cinco
+        tarjetas en `$ 0,00` mientras Paris Autos tenía ocho millones y medio.
+
+        Un cero es un número y se lee como un hecho. "Sin datos" no.
+      */}
+      {saldo.movimientos_visibles === 0 ? (
+        <Panel>
+          <p className="text-sm">No podés ver los movimientos de esta tarjeta.</p>
+          <p className="text-xs text-ink2 mt-1">
+            No quiere decir que esté en cero: quiere decir que no hay datos para mostrarte. Vas a
+            ver el saldo de las tarjetas donde tengas trámites.
+          </p>
+        </Panel>
+      ) : (
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Cifra
           rotulo="Saldo día de hoy"
@@ -117,6 +135,7 @@ export function Tarjeta() {
           alerta={diferencia < 0}
         />
       </div>
+      )}
 
       <Operaciones
         movimientos={movimientos.data ?? []}
