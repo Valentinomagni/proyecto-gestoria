@@ -1,0 +1,45 @@
+# ============================================================================
+#  TODOS LOS ARCHIVOS DE TEXTO SE GUARDAN CON FINAL DE LINEA LF
+# ============================================================================
+#
+#  Medido el 27/08/2026: el repo tenia 39 archivos con CRLF y 74 con LF, mezclados sin criterio.
+#  El proyecto se edita en Windows, donde el editor pone CRLF, y se construye en Linux —GitHub
+#  Actions y Cloudflare Pages—, donde todo lo demas usa LF.
+#
+#  ============================================================================
+#   POR QUE HACE FALTA ANTES DE FORMATEAR, Y NO DESPUES
+#  ============================================================================
+#
+#  `npm run formato:check` marcaba 93 de 128 archivos. Casi todo ese ruido NO era formato: era la
+#  conversion de finales de linea. Aplicar el formateador sin esto habria producido un diff donde
+#  cada archivo aparece cambiado ENTERO, y ahi se pierde lo unico que sirve de un diff — poder
+#  mirar que cambio de verdad.
+#
+#  Peor todavia: `git blame` sobre un archivo reescrito entero deja de decir quien escribio cada
+#  linea y por que, y en este proyecto el porque de cada linea es la mitad del valor.
+#
+#  ============================================================================
+#   QUE HACE `text=auto eol=lf`
+#  ============================================================================
+#
+#  `text=auto` deja que git decida que es texto y que es binario, mirando el contenido.
+#  `eol=lf` normaliza a LF AL GUARDAR en el repositorio.
+#
+#  En Windows el archivo en disco puede seguir teniendo CRLF si el editor lo prefiere; lo que se
+#  vuelve uniforme es lo que queda guardado, que es lo que ven el formateador y el que revisa.
+# ============================================================================
+
+* text=auto eol=lf
+
+# Lo que NO es texto y no hay que tocar: si git se equivocara y le "normalizara" los finales de
+# linea a una imagen o a una fuente, la deja corrupta y el sintoma aparece lejos de la causa.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+*.xlsx binary
