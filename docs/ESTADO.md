@@ -3,12 +3,21 @@
 Contado de nuevo el **27/08/2026**, después de aplicar la cadena de seis estados. Los números
 salen de correr los comandos, no de recordar.
 
-**Dónde estamos:** el circuito entero funciona de punta a punta y la cadena bajó de diez estados a
-seis. La base ya no acepta los estados viejos, el front habla el vocabulario nuevo, y ahora hay un
-guardián que compara las dos listas para que no vuelvan a separarse.
+**Dónde estamos: el Plan A está cerrado.** El circuito entero funciona de punta a punta, la cadena
+bajó de diez estados a seis, los saldos están corregidos, y el andamio que hace cumplir las reglas
+—hooks, guardianes, Playwright, formateador— corre solo en cada commit.
 
-**Lo que sigue:** el rediseño de las dos pantallas. La de gestoría tiene que dejar de parecerse a
-la de la oficina: son dos necesidades distintas, y hoy comparten forma.
+Entrando con las tres cuentas reales, cada una ve lo que le toca: gerencia y administración las 13
+trámites y las cinco tarjetas; la gestora sólo sus 8 trámites, y el saldo únicamente de las
+tarjetas donde tiene trabajo.
+
+**Lo único que queda en rojo a propósito** es `npm run espacios`, con 9 hallazgos que son
+decisiones visuales del rediseño y no arreglos mecánicos.
+
+**Lo que sigue es el Plan B:** el rediseño de las dos pantallas. La de gestoría tiene que dejar de
+parecerse a la de la oficina —son dos necesidades distintas y hoy comparten forma—, encender el
+router (`@tanstack/react-router` está instalado y **apagado**, así que el botón "atrás" no funciona
+y ninguna URL se puede compartir), y traer la paleta teal de la Tarjeta Habitualista.
 
 ---
 
@@ -19,11 +28,11 @@ la de la oficina: son dos necesidades distintas, y hoy comparten forma.
 | Tests, todos verdes | **154** en 20 archivos | `npx vitest run` |
 | Pruebas de permisos contra la API real | **57** en 2 archivos | `npm run test:rls` |
 | Pruebas en el Chrome de verdad | **6** en 2 navegadores | `npm run e2e` |
-| Guardianes | **14** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `pruebas`, `migraciones`, `secretos`, `permisos`, `indices`, `colores`, `estados`, `espacios` |
-| Migraciones aplicadas | **37** de 37 escritas | `npx supabase migration list --linked` |
+| Guardianes | **15** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `pruebas`, `migraciones`, `secretos`, `permisos`, `indices`, `colores`, `estados`, `formato`, `espacios` |
+| Migraciones aplicadas | **38** de 38 escritas | `npx supabase migration list --linked` |
 | Tablas en la base | **21**, más **6 vistas** | consulta a `pg_class` |
 | Módulos de lógica en `src/lib` | 20 | `ls src/lib/*.ts` |
-| Archivos de código | 73, **11.816 líneas** | `find src -name "*.ts*"` |
+| Archivos de código | 73, **12.884 líneas** | `find src -name "*.ts*"` |
 | `CLAUDE.md` | **116 líneas**, más 4 skills | `wc -l CLAUDE.md` |
 | Peso de arranque | **95,36 kB** + 53,77 de Supabase + 11,72 de Query | `npm run build` |
 | Sentry, en pedazo aparte | 148,56 kB, **no bloquea el primer dibujo** | idem |
@@ -159,17 +168,42 @@ Paris Autos   971.234,56 comprometidos  →  520.000,00
 Paris Cars       128.000,00             →           0
 ```
 
+### Lo que apareció entrando con las tres cuentas de verdad
+
+19. **Pedidos de fondos mostraba un pedido de $ 0,00.** BALAGUER estaba `presupuestado` con cero
+    líneas vivas: alguien le anuló la única que tenía. La cadena exige una línea para **entrar** a
+    presupuestado y no impedía **vaciarlo después** — la regla vigilaba la puerta y dejaba la
+    ventana abierta, que es la misma forma que ya había mordido tres veces con los índices únicos.
+
+    Ahora la base lo bloquea, con el mensaje que dice qué hacer: cargar la línea nueva antes de
+    quitar la vieja. Se eligió bloquear y no mandar el trámite para atrás solo, porque un estado
+    que cambia sin que nadie lo pida es lo que hacía insoportable a `frenado_por_saldo`.
+
+    Se probó **con control**: quitar una de tres entra, quitar la última se rechaza.
+
+### Y la última tarea del Plan A: el formateador
+
+`npm run formato:check` marcaba 93 de 128 archivos, y por eso estaba diferido. Con el
+`.gitattributes` puesto —39 archivos estaban en CRLF y 74 en LF— el ruido desapareció, y ahí se
+pudo mirar qué cambiaba de verdad. Dos cosas lo hacían mal negocio y se excluyeron:
+
+- **La prosa.** Reflowear los planes y el spec rompe cortes de línea puestos a mano y deja el
+  `git blame` inservible justo donde el porqué de cada párrafo es el valor.
+- **`database.types.ts`, que es generado.** Cada `npm run db:tipos` habría dejado el repo sin
+  formato de nuevo, y un guardián que se pone rojo solo después de un comando normal se apaga.
+
+Con eso afuera el costo real es **+654 líneas sobre 11.800, un 5,5%**, y se aceptó: el formato deja
+de ser una decisión. Comprobado que **no tocó un solo comentario**.
+
 ### Lo que queda anotado
 
 - **`npm run espacios` está en rojo**, con 9 hallazgos. Son decisiones visuales del rediseño, no
-  arreglos mecánicos: entra al pre-commit cuando el front se rehaga.
-- **`npm run formato:check` está en rojo**, con 92 archivos. El grueso es conversión de finales de
-  línea CRLF a LF, no formato de verdad: el repo está mezclado. Necesita un `.gitattributes` con
-  `* text=auto eol=lf` antes de aplicarlo, o el diff se vuelve ilegible.
-- **Paris Cars tiene 128.000 comprometidos por un trámite en `recibido`.** La reserva se escribe
-  cuando cambia el importe pedido, sin mirar el estado, así que un trámite que ni empezó puede
-  tener plata comprometida. La vista de "esperando plata" no lo muestra porque sólo mira los
-  presupuestados: la tarjeta dice que debe 128.000 y la lista de quién espera está vacía.
+  arreglos mecánicos: entra al pre-commit cuando el front se rehaga. **Es lo único del Plan A que
+  sigue en rojo, y está así a propósito.**
+- **`tarjetas_debito` está vacía.** Hoy no hace falta —la gestora ve el saldo por sus trámites—,
+  pero si alguna vez tiene que ver una tarjeta donde no trabaja, se carga ahí.
+- **Sigue habiendo una sola base de Supabase.** Eso cambia antes de que haya saldos reales, y es
+  del Plan C.
 
 ## La segunda revisión — 24/08/2026
 

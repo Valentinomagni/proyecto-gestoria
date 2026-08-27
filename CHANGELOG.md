@@ -83,6 +83,11 @@ plata.
 **El día se cuenta con la hora de Argentina.** La base trabajaba en horario de Londres, así que
 entre las 21 y las 24 daba por acreditado un depósito que en realidad entraba al día siguiente.
 
+**Y ya no aparece un pedido de fondos de $ 0,00.** Un trámite al que le habían quitado su única
+línea de presupuesto seguía figurando como presupuestado y pidiendo cero. Ahora no se puede quitar
+la última línea: si el presupuesto está mal, se carga la línea nueva primero y después se saca la
+vieja — así el total y la reserva se ajustan solos por la diferencia.
+
 **El saldo inicial de una tarjeta se puede volver a cargar después de anularlo.** Antes decía que
 el dato ya había sido ingresado, y dos tarjetas quedaron sin poder arrancar. Era un defecto, y era
 el que bloqueaba todo lo demás.
