@@ -96,5 +96,4 @@ export const BOTON_SUAVE =
  * El texto queda chico —es una accion secundaria y no tiene que competir con el importe— pero la
  * zona que se toca no.
  */
-export const ACCION_CHICA =
-  "inline-flex min-h-11 items-center px-2 text-2xs text-ink2 underline";
+export const ACCION_CHICA = "inline-flex min-h-11 items-center px-2 text-2xs text-ink2 underline";

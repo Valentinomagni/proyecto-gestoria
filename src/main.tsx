@@ -27,7 +27,9 @@ const cliente = new QueryClient({
  * Se abre con ?sistema en la direccion.
  */
 const SistemaVisual = import.meta.env.DEV
-  ? lazy(() => import("./features/sistema/SistemaVisual").then((m) => ({ default: m.SistemaVisual })))
+  ? lazy(() =>
+      import("./features/sistema/SistemaVisual").then((m) => ({ default: m.SistemaVisual })),
+    )
   : null;
 
 const verSistema =

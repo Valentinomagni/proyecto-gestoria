@@ -19,9 +19,19 @@ import { CAMPOS, camposPara, nombreDeCampo } from "./campos-del-tramite";
  * porque el recálculo pasa por ahí con el `auth.uid()` de la gestora.
  */
 const PERMITIDOS_A_LA_GESTORA = [
-  "deposito_solicitado", "seccional", "numero_pago_registro", "observaciones_gestora",
-  "documentacion_retirada", "dominio", "estado", "presentado_at", "pagado_at", "retirado_at",
-  "presupuestado_at", "actualizado_at", "actualizado_por",
+  "deposito_solicitado",
+  "seccional",
+  "numero_pago_registro",
+  "observaciones_gestora",
+  "documentacion_retirada",
+  "dominio",
+  "estado",
+  "presentado_at",
+  "pagado_at",
+  "retirado_at",
+  "presupuestado_at",
+  "actualizado_at",
+  "actualizado_por",
 ];
 
 describe("la pantalla no le ofrece a la gestora nada que la base le rechace", () => {
@@ -54,8 +64,9 @@ describe("la oficina puede cambiar quien hace el tramite", () => {
   });
 
   it("y contable tiene exactamente lo mismo que gerencia", () => {
-    expect(camposPara("contable").map((c) => c.columna))
-      .toEqual(camposPara("gerencia").map((c) => c.columna));
+    expect(camposPara("contable").map((c) => c.columna)).toEqual(
+      camposPara("gerencia").map((c) => c.columna),
+    );
   });
 });
 

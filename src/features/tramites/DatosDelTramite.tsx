@@ -29,7 +29,12 @@ import { camposPara, type CambiosDeDatos, type CampoEditable } from "./campos-de
  *  corrección, no cinco.
  */
 export function DatosDelTramite({
-  tramite, rol, gestoras, administrativos, alGuardar, guardando,
+  tramite,
+  rol,
+  gestoras,
+  administrativos,
+  alGuardar,
+  guardando,
 }: {
   tramite: Record<string, unknown>;
   rol: Rol;
@@ -117,7 +122,9 @@ export function DatosDelTramite({
                     {gestoras
                       .filter((g) => g.activa || g.id === tramite["gestora_id"])
                       .map((g) => (
-                        <option key={g.id} value={g.id}>{g.nombre}</option>
+                        <option key={g.id} value={g.id}>
+                          {g.nombre}
+                        </option>
                       ))}
                   </select>
                 ) : c.como === "modalidad" ? (
@@ -142,7 +149,9 @@ export function DatosDelTramite({
                       className={CAMPO}
                     />
                     <datalist id="administrativos-conocidos">
-                      {administrativos.map((a) => <option key={a} value={a} />)}
+                      {administrativos.map((a) => (
+                        <option key={a} value={a} />
+                      ))}
                     </datalist>
                   </>
                 ) : (
@@ -162,7 +171,10 @@ export function DatosDelTramite({
             </button>
             <button
               type="button"
-              onClick={() => { setCampos({}); setEditando(false); }}
+              onClick={() => {
+                setCampos({});
+                setEditando(false);
+              }}
               className={BOTON_SUAVE}
             >
               Dejarlo como está
@@ -199,26 +211,57 @@ const LECTURA: {
   tnum?: boolean;
   mostrar: (t: Record<string, unknown>, g: { id: string; nombre: string }[]) => string;
 }[] = [
-  { columna: "oferta_referencia", nombre: "Referencia de la oferta", tnum: true,
-    mostrar: (t) => texto(t["oferta_referencia"]) },
-  { columna: "cliente_cuenta", nombre: "Cuenta personal", tnum: true,
-    mostrar: (t) => texto(t["cliente_cuenta"]) },
+  {
+    columna: "oferta_referencia",
+    nombre: "Referencia de la oferta",
+    tnum: true,
+    mostrar: (t) => texto(t["oferta_referencia"]),
+  },
+  {
+    columna: "cliente_cuenta",
+    nombre: "Cuenta personal",
+    tnum: true,
+    mostrar: (t) => texto(t["cliente_cuenta"]),
+  },
   { columna: "vehiculo", nombre: "Vehículo", mostrar: (t) => texto(t["vehiculo"]) },
   { columna: "dominio", nombre: "Dominio", mostrar: (t) => texto(t["dominio"]) },
-  { columna: "subtipo", nombre: "Modalidad",
-    mostrar: (t) => t["subtipo"] === "plan_ahorro" ? "Plan de ahorro"
-      : t["subtipo"] === "venta_directa" ? "Venta directa 0km" : "—" },
-  { columna: "gestora_id", nombre: "Gestora",
-    mostrar: (t, g) => g.find((x) => x.id === t["gestora_id"])?.nombre ?? "—" },
-  { columna: "administrativo", nombre: "Administrativo a cargo",
-    mostrar: (t) => texto(t["administrativo"]) },
+  {
+    columna: "subtipo",
+    nombre: "Modalidad",
+    mostrar: (t) =>
+      t["subtipo"] === "plan_ahorro"
+        ? "Plan de ahorro"
+        : t["subtipo"] === "venta_directa"
+          ? "Venta directa 0km"
+          : "—",
+  },
+  {
+    columna: "gestora_id",
+    nombre: "Gestora",
+    mostrar: (t, g) => g.find((x) => x.id === t["gestora_id"])?.nombre ?? "—",
+  },
+  {
+    columna: "administrativo",
+    nombre: "Administrativo a cargo",
+    mostrar: (t) => texto(t["administrativo"]),
+  },
   { columna: "seccional", nombre: "Seccional", mostrar: (t) => texto(t["seccional"]) },
-  { columna: "numero_pago_registro", nombre: "N° de pago", tnum: true,
-    mostrar: (t) => texto(t["numero_pago_registro"]) },
-  { columna: "documentacion_retirada", nombre: "Documentación retirada",
-    mostrar: (t) => texto(t["documentacion_retirada"]) },
-  { columna: "observaciones_gestora", nombre: "Observaciones de gestoría",
-    mostrar: (t) => texto(t["observaciones_gestora"]) },
+  {
+    columna: "numero_pago_registro",
+    nombre: "N° de pago",
+    tnum: true,
+    mostrar: (t) => texto(t["numero_pago_registro"]),
+  },
+  {
+    columna: "documentacion_retirada",
+    nombre: "Documentación retirada",
+    mostrar: (t) => texto(t["documentacion_retirada"]),
+  },
+  {
+    columna: "observaciones_gestora",
+    nombre: "Observaciones de gestoría",
+    mostrar: (t) => texto(t["observaciones_gestora"]),
+  },
 ];
 
 /** Una raya y no una celda vacía: una celda vacía no distingue "no hay dato" de "no cargó". */

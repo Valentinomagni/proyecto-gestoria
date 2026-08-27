@@ -26,14 +26,21 @@ import { nombreDeCampo } from "./campos-del-tramite";
  *  mañana queda registrada por defecto. El olvido cae del lado seguro.
  */
 export function CambiosDelTramite({
-  cambios, cargando, gestoras,
+  cambios,
+  cargando,
+  gestoras,
 }: {
   cambios: CambioDelTramite[];
   cargando: boolean;
   /** Para traducir el id de la gestora a su nombre. Ver `legible`. */
   gestoras: { id: string; nombre: string }[];
 }) {
-  if (cargando) return <Panel><SkeletonLineas cantidad={2} /></Panel>;
+  if (cargando)
+    return (
+      <Panel>
+        <SkeletonLineas cantidad={2} />
+      </Panel>
+    );
 
   // Sin cambios no se dibuja nada. Un panel vacío que dice "no hay cambios" ocupa lugar en la
   // pantalla del teléfono para no decir nada: la mayoría de los trámites nunca se corrigen.
@@ -76,7 +83,8 @@ function describir(c: CambioDelTramite, gestoras: { id: string; nombre: string }
     // Filas viejas, de cuando el total se escribía a mano. Se siguen mostrando: el historial
     // no se recorta porque haya cambiado el mecanismo.
     const antes = c.antes === null ? null : formatear(aCentavos(Number(c.antes)));
-    const despues = c.despues === null ? "sin presupuesto" : formatear(aCentavos(Number(c.despues)));
+    const despues =
+      c.despues === null ? "sin presupuesto" : formatear(aCentavos(Number(c.despues)));
     return antes === null ? `Presupuesto: ${despues}` : `Presupuesto: de ${antes} a ${despues}`;
   }
 
@@ -96,7 +104,8 @@ function describir(c: CambioDelTramite, gestoras: { id: string; nombre: string }
   */
   if (c.campo === "deposito_solicitado") {
     const antes = c.antes === null ? "sin presupuesto" : formatear(aCentavos(Number(c.antes)));
-    const despues = c.despues === null ? "sin presupuesto" : formatear(aCentavos(Number(c.despues)));
+    const despues =
+      c.despues === null ? "sin presupuesto" : formatear(aCentavos(Number(c.despues)));
     return `Total del presupuesto: de ${antes} a ${despues}`;
   }
 
@@ -132,8 +141,11 @@ function legible(
   if (valor === null || valor === "") return "vacío";
   if (campo === "gestora_id") return gestoras.find((g) => g.id === valor)?.nombre ?? valor;
   if (campo === "subtipo") {
-    return valor === "plan_ahorro" ? "Plan de ahorro"
-      : valor === "venta_directa" ? "Venta directa 0km" : valor;
+    return valor === "plan_ahorro"
+      ? "Plan de ahorro"
+      : valor === "venta_directa"
+        ? "Venta directa 0km"
+        : valor;
   }
   return valor;
 }

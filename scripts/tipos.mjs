@@ -59,8 +59,16 @@ try {
   // por el entrecomillado. Esto no tiene ninguno de los dos problemas.
   salida = execFileSync(
     execPath,
-    ["node_modules/supabase/dist/supabase.js", "gen", "types", "typescript",
-     "--project-id", REF, "--schema", "public"],
+    [
+      "node_modules/supabase/dist/supabase.js",
+      "gen",
+      "types",
+      "typescript",
+      "--project-id",
+      REF,
+      "--schema",
+      "public",
+    ],
     { encoding: "utf8", maxBuffer: 32 * 1024 * 1024 },
   );
 } catch (e) {

@@ -8,26 +8,31 @@ import { parsearAsunto } from "./asunto";
 
 describe("tipo de trámite", () => {
   it("reconoce un patentamiento", () => {
-    expect(parsearAsunto("PATENTAMIENTO CITROEN C3 T200 FEEL PK (108198) VICENCIO LUNA").tipo)
-      .toBe("patentamiento_0km");
+    expect(parsearAsunto("PATENTAMIENTO CITROEN C3 T200 FEEL PK (108198) VICENCIO LUNA").tipo).toBe(
+      "patentamiento_0km",
+    );
   });
 
   it("tolera el error de tipeo de la planilla", () => {
     // "PATENTAMIENNTO" con dos enes existe de verdad en la fila 6858.
-    expect(parsearAsunto("PATENTAMIENNTO PLAN DE AHORRO. C. 105235 DOMINGUEZ CELESTE").tipo)
-      .toBe("patentamiento_0km");
+    expect(parsearAsunto("PATENTAMIENNTO PLAN DE AHORRO. C. 105235 DOMINGUEZ CELESTE").tipo).toBe(
+      "patentamiento_0km",
+    );
   });
 
   it("distingue la transferencia AL concesionario, que es la que sale gratis a tiempo", () => {
-    expect(parsearAsunto("TRANSFERENCIA CHEVROLET CRUZE A PARÍS AUTOS").tipo)
-      .toBe("transferencia_al_concesionario");
-    expect(parsearAsunto("TRANSFERENCIA A PARIS 208 ALLURE 1.6 N 5P").tipo)
-      .toBe("transferencia_al_concesionario");
+    expect(parsearAsunto("TRANSFERENCIA CHEVROLET CRUZE A PARÍS AUTOS").tipo).toBe(
+      "transferencia_al_concesionario",
+    );
+    expect(parsearAsunto("TRANSFERENCIA A PARIS 208 ALLURE 1.6 N 5P").tipo).toBe(
+      "transferencia_al_concesionario",
+    );
   });
 
   it("una transferencia comun es a cliente", () => {
-    expect(parsearAsunto("TRANSFERENCIA 108297 MARTINEZ NELLY FABIANA REF 4100879").tipo)
-      .toBe("transferencia_a_cliente");
+    expect(parsearAsunto("TRANSFERENCIA 108297 MARTINEZ NELLY FABIANA REF 4100879").tipo).toBe(
+      "transferencia_a_cliente",
+    );
   });
 
   it("lo que no reconoce queda en null, no adivina", () => {
@@ -46,17 +51,29 @@ describe("plan de ahorro", () => {
 
 describe("cuenta personal", () => {
   it("las tres formas que conviven en la planilla", () => {
-    expect(parsearAsunto("PATENTAMIENTO PLAN DE AHORRO- C.74344 MUÑOZ ELIZABETH").cuenta).toBe("74344");
-    expect(parsearAsunto("PATENTAMIENNTO PLAN DE AHORRO. C. 105235 DOMINGUEZ").cuenta).toBe("105235");
-    expect(parsearAsunto("PATENTAMIENTO PLAN DE AHORRO- C.103188 SYS RENTACAR").cuenta).toBe("103188");
+    expect(parsearAsunto("PATENTAMIENTO PLAN DE AHORRO- C.74344 MUÑOZ ELIZABETH").cuenta).toBe(
+      "74344",
+    );
+    expect(parsearAsunto("PATENTAMIENNTO PLAN DE AHORRO. C. 105235 DOMINGUEZ").cuenta).toBe(
+      "105235",
+    );
+    expect(parsearAsunto("PATENTAMIENTO PLAN DE AHORRO- C.103188 SYS RENTACAR").cuenta).toBe(
+      "103188",
+    );
   });
 });
 
 describe("referencia de la oferta", () => {
   it("las tres formas de escribirla, que conviven en la misma planilla", () => {
-    expect(parsearAsunto("PATENTAMIENTO C3 (34913) BALAGUER JUAN ANTONIO (REF. 4097473)").referencia).toBe("4097473");
-    expect(parsearAsunto("PATENTAMIENTO OCHOA CARLA ref 4093504 cl 79196").referencia).toBe("4093504");
-    expect(parsearAsunto("PATENTAMIENTO RAMIREZ MATIAS (107818) REF4064625").referencia).toBe("4064625");
+    expect(
+      parsearAsunto("PATENTAMIENTO C3 (34913) BALAGUER JUAN ANTONIO (REF. 4097473)").referencia,
+    ).toBe("4097473");
+    expect(parsearAsunto("PATENTAMIENTO OCHOA CARLA ref 4093504 cl 79196").referencia).toBe(
+      "4093504",
+    );
+    expect(parsearAsunto("PATENTAMIENTO RAMIREZ MATIAS (107818) REF4064625").referencia).toBe(
+      "4064625",
+    );
   });
 
   it("si NO hay REF, el número entre paréntesis es la CUENTA y no la referencia", () => {
@@ -126,8 +143,9 @@ describe("la modalidad tiene dos valores y son de patentamiento", () => {
   });
 
   it("y sigue reconociendo el plan de ahorro", () => {
-    expect(parsearAsunto("PATENTAMIENTO PLAN DE AHORRO- C.74344 MUNOZ ELIZABETH").subtipo)
-      .toBe("plan_ahorro");
+    expect(parsearAsunto("PATENTAMIENTO PLAN DE AHORRO- C.74344 MUNOZ ELIZABETH").subtipo).toBe(
+      "plan_ahorro",
+    );
   });
 
   it("NO adivina la modalidad cuando el asunto no la dice", () => {

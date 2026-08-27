@@ -6,7 +6,11 @@ import { supabase } from "../../lib/supabase";
 import { BOTON, CAMPO } from "../../lib/campos";
 import { useBorrador } from "../../lib/borrador";
 import {
-  useAdministrativos, useGestoras, useGuardar, useRazonesSociales, useSucursales,
+  useAdministrativos,
+  useGestoras,
+  useGuardar,
+  useRazonesSociales,
+  useSucursales,
 } from "../../lib/datos";
 
 /**
@@ -57,9 +61,21 @@ interface Alta {
 }
 
 const VACIO: Alta = {
-  asunto: "", cliente: "", cuenta: "", vehiculo: "", referencia: "", dominio: "",
-  tipo: "", subtipo: "", razonId: "", sucursalId: "", gestoraId: "", administrativo: "",
-  medioPago: "tarjeta_habitualista", canal: "presencial", observaciones: "",
+  asunto: "",
+  cliente: "",
+  cuenta: "",
+  vehiculo: "",
+  referencia: "",
+  dominio: "",
+  tipo: "",
+  subtipo: "",
+  razonId: "",
+  sucursalId: "",
+  gestoraId: "",
+  administrativo: "",
+  medioPago: "tarjeta_habitualista",
+  canal: "presencial",
+  observaciones: "",
 };
 
 export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
@@ -142,8 +158,7 @@ export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
     guardar.mutate(undefined, { onSuccess: alGuardar });
   }
 
-  const listo =
-    f.cliente.trim() !== "" && f.tipo !== "" && f.razonId !== "" && f.sucursalId !== "";
+  const listo = f.cliente.trim() !== "" && f.tipo !== "" && f.razonId !== "" && f.sucursalId !== "";
 
   return (
     <form onSubmit={enviar} className="mx-auto flex max-w-2xl flex-col gap-4 p-6">
@@ -253,7 +268,11 @@ export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
               className={CAMPO}
             >
               <option value="">Elegí</option>
-              {razones.data?.map((r) => <option key={r.id} value={r.id}>{r.nombre}</option>)}
+              {razones.data?.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.nombre}
+                </option>
+              ))}
             </select>
           </Campo>
           <Campo etiqueta="Sucursal" obligatorio>
@@ -264,7 +283,11 @@ export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
               className={CAMPO}
             >
               <option value="">Elegí</option>
-              {sucursales.data?.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+              {sucursales.data?.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.nombre}
+                </option>
+              ))}
             </select>
           </Campo>
         </div>
@@ -284,9 +307,13 @@ export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
               className={CAMPO}
             >
               <option value="">Todavía no se sabe</option>
-              {gestoras.data?.filter((g) => g.activa).map((g) => (
-                <option key={g.id} value={g.id}>{g.nombre}</option>
-              ))}
+              {gestoras.data
+                ?.filter((g) => g.activa)
+                .map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.nombre}
+                  </option>
+                ))}
             </select>
           </Campo>
 
@@ -303,7 +330,9 @@ export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
               className={CAMPO}
             />
             <datalist id="administrativos-ya-usados">
-              {administrativos.data?.map((a) => <option key={a} value={a} />)}
+              {administrativos.data?.map((a) => (
+                <option key={a} value={a} />
+              ))}
             </datalist>
           </Campo>
         </div>
@@ -357,7 +386,10 @@ export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
 }
 
 function Campo({
-  etiqueta, ayuda, obligatorio = false, children,
+  etiqueta,
+  ayuda,
+  obligatorio = false,
+  children,
 }: {
   etiqueta: string;
   ayuda?: string;

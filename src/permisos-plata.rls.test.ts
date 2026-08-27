@@ -1,7 +1,13 @@
 import { type SupabaseClient } from "@supabase/supabase-js";
 import { beforeAll, describe, expect, it } from "vitest";
 import { aCentavos } from "./lib/plata";
-import { comoUsuario, env, ponerLinea, sinSesion, NOMBRE_DE_PRUEBA } from "./pruebas/arnes-de-permisos";
+import {
+  comoUsuario,
+  env,
+  ponerLinea,
+  sinSesion,
+  NOMBRE_DE_PRUEBA,
+} from "./pruebas/arnes-de-permisos";
 
 /**
  * ============================================================================
@@ -45,12 +51,18 @@ describe("el total del presupuesto es la suma, y no se escribe a mano", () => {
 
   beforeAll(async () => {
     const { data } = await gerencia
-      .from("tramites").select("id").eq("cliente_nombre", NOMBRE_DE_PRUEBA)
-      .order("recibido_at").limit(1);
+      .from("tramites")
+      .select("id")
+      .eq("cliente_nombre", NOMBRE_DE_PRUEBA)
+      .order("recibido_at")
+      .limit(1);
     elTramite = String(data?.[0]?.id ?? "");
 
     const { data: c } = await gerencia
-      .from("conceptos").select("id").eq("nombre", "Sellados").single();
+      .from("conceptos")
+      .select("id")
+      .eq("nombre", "Sellados")
+      .single();
     sellados = String(c?.id ?? "");
   });
 
@@ -73,14 +85,18 @@ describe("el total del presupuesto es la suma, y no se escribe a mano", () => {
       `b_tramites_total_derivado`, que mira una marca de transacción que sólo deja el recálculo.
     */
     const { error } = await gestora
-      .from("tramites").update({ deposito_solicitado: 99999999 }).eq("id", elTramite);
+      .from("tramites")
+      .update({ deposito_solicitado: 99999999 })
+      .eq("id", elTramite);
     expect(error).not.toBeNull();
     expect(error?.message ?? "").toContain("suma de sus conceptos");
   });
 
   it("ni gerencia, que es quien mas permisos tiene", async () => {
     const { error } = await gerencia
-      .from("tramites").update({ deposito_solicitado: 99999999 }).eq("id", elTramite);
+      .from("tramites")
+      .update({ deposito_solicitado: 99999999 })
+      .eq("id", elTramite);
     expect(error).not.toBeNull();
   });
 
@@ -92,7 +108,10 @@ describe("el total del presupuesto es la suma, y no se escribe a mano", () => {
       línea de presupuesto se podía guardar. El `db push` había dicho "Finished".
     */
     const { data: antes } = await gerencia
-      .from("tramites").select("deposito_solicitado").eq("id", elTramite).single();
+      .from("tramites")
+      .select("deposito_solicitado")
+      .eq("id", elTramite)
+      .single();
 
     // `ponerLinea` y no `upsert`: el índice único es parcial y PostgREST no lo puede inferir.
     // Está explicado en el helper, con el código de error.
@@ -100,10 +119,14 @@ describe("el total del presupuesto es la suma, y no se escribe a mano", () => {
     expect(falla, "la gestora no pudo cargar el concepto").toBeNull();
 
     const { data: despues } = await gerencia
-      .from("tramites").select("deposito_solicitado").eq("id", elTramite).single();
+      .from("tramites")
+      .select("deposito_solicitado")
+      .eq("id", elTramite)
+      .single();
 
-    const subio = aCentavos(despues?.deposito_solicitado as string | number)
-      - aCentavos((antes?.deposito_solicitado ?? 0) as string | number);
+    const subio =
+      aCentavos(despues?.deposito_solicitado as string | number) -
+      aCentavos((antes?.deposito_solicitado ?? 0) as string | number);
     expect(subio).toBe(77700);
   });
 
@@ -117,9 +140,13 @@ describe("el total del presupuesto es la suma, y no se escribe a mano", () => {
    */
   async function lineaViva(): Promise<number> {
     const { data } = await gerencia
-      .from("tramite_conceptos").select("id")
-      .eq("tramite_id", elTramite).eq("concepto_id", sellados)
-      .eq("momento", "presupuesto").eq("anulada", false).limit(1);
+      .from("tramite_conceptos")
+      .select("id")
+      .eq("tramite_id", elTramite)
+      .eq("concepto_id", sellados)
+      .eq("momento", "presupuesto")
+      .eq("anulada", false)
+      .limit(1);
     return Number(data?.[0]?.id ?? 0);
   }
 
@@ -128,7 +155,9 @@ describe("el total del presupuesto es la suma, y no se escribe a mano", () => {
     expect(id, "hace falta la linea viva de la prueba anterior").toBeGreaterThan(0);
 
     const { error } = await gestora
-      .from("tramite_conceptos").update({ anulada: true }).eq("id", id);
+      .from("tramite_conceptos")
+      .update({ anulada: true })
+      .eq("id", id);
     expect(error).not.toBeNull();
   });
 
@@ -137,7 +166,10 @@ describe("el total del presupuesto es la suma, y no se escribe a mano", () => {
     expect(id, "hace falta la linea viva de la prueba anterior").toBeGreaterThan(0);
 
     const { data: antes } = await gerencia
-      .from("tramites").select("deposito_solicitado").eq("id", elTramite).single();
+      .from("tramites")
+      .select("deposito_solicitado")
+      .eq("id", elTramite)
+      .single();
 
     const { error } = await gestora
       .from("tramite_conceptos")
@@ -146,10 +178,14 @@ describe("el total del presupuesto es la suma, y no se escribe a mano", () => {
     expect(error).toBeNull();
 
     const { data: despues } = await gerencia
-      .from("tramites").select("deposito_solicitado").eq("id", elTramite).single();
+      .from("tramites")
+      .select("deposito_solicitado")
+      .eq("id", elTramite)
+      .single();
 
-    const bajo = aCentavos((antes?.deposito_solicitado ?? 0) as string | number)
-      - aCentavos((despues?.deposito_solicitado ?? 0) as string | number);
+    const bajo =
+      aCentavos((antes?.deposito_solicitado ?? 0) as string | number) -
+      aCentavos((despues?.deposito_solicitado ?? 0) as string | number);
     expect(bajo).toBe(77700);
   });
 });
@@ -160,12 +196,18 @@ describe("un movimiento cargado mal se anula, y solo desde la oficina", () => {
 
   beforeAll(async () => {
     const { data: i } = await gerencia
-      .from("movimientos").select("id").eq("tipo", "ingreso")
-      .order("id", { ascending: false }).limit(1);
+      .from("movimientos")
+      .select("id")
+      .eq("tipo", "ingreso")
+      .order("id", { ascending: false })
+      .limit(1);
     unIngreso = Number(i?.[0]?.id ?? 0);
 
     const { data: r } = await gerencia
-      .from("movimientos").select("id").eq("tipo", "reserva").limit(1);
+      .from("movimientos")
+      .select("id")
+      .eq("tipo", "reserva")
+      .limit(1);
     unaReserva = Number(r?.[0]?.id ?? 0);
   });
 
@@ -176,14 +218,16 @@ describe("un movimiento cargado mal se anula, y solo desde la oficina", () => {
 
   it("una gestora no puede anular nada", async () => {
     const { error } = await gestora.rpc("anular_movimiento", {
-      p_id: unIngreso, p_motivo: "no deberia poder",
+      p_id: unIngreso,
+      p_motivo: "no deberia poder",
     });
     expect(error).not.toBeNull();
   });
 
   it("sin loguearse tampoco: la funcion no esta concedida a anon", async () => {
     const { error } = await anonimo.rpc("anular_movimiento", {
-      p_id: unIngreso, p_motivo: "menos todavia",
+      p_id: unIngreso,
+      p_motivo: "menos todavia",
     });
     expect(error).not.toBeNull();
   });
@@ -204,7 +248,8 @@ describe("un movimiento cargado mal se anula, y solo desde la oficina", () => {
       presupuesto, que es lo que la pantalla ahora permite.
     */
     const { error } = await gerencia.rpc("anular_movimiento", {
-      p_id: unaReserva, p_motivo: "probando",
+      p_id: unaReserva,
+      p_motivo: "probando",
     });
     expect(error).not.toBeNull();
     expect(error?.message ?? "").toContain("lo generó un trámite");
@@ -221,35 +266,55 @@ describe("un movimiento cargado mal se anula, y solo desde la oficina", () => {
       cierre.
     */
     const { data: tarjeta } = await gerencia
-      .from("tarjetas_habitualista").select("id").limit(1).single();
+      .from("tarjetas_habitualista")
+      .select("id")
+      .limit(1)
+      .single();
 
     const antes = await gerencia
-      .from("v_saldos").select("contable").eq("tarjeta_id", tarjeta?.id ?? "").single();
+      .from("v_saldos")
+      .select("contable")
+      .eq("tarjeta_id", tarjeta?.id ?? "")
+      .single();
 
-    const { data: nuevo, error: eIns } = await gerencia.from("movimientos").insert({
-      tarjeta_id: tarjeta?.id, tipo: "ingreso", importe: 1,
-      concepto: "PRUEBA DEL ARNES DE PERMISOS",
-    }).select("id").single();
+    const { data: nuevo, error: eIns } = await gerencia
+      .from("movimientos")
+      .insert({
+        tarjeta_id: tarjeta?.id,
+        tipo: "ingreso",
+        importe: 1,
+        concepto: "PRUEBA DEL ARNES DE PERMISOS",
+      })
+      .select("id")
+      .single();
     expect(eIns, "gerencia tendria que poder cargar un ingreso").toBeNull();
 
     const { error } = await gerencia.rpc("anular_movimiento", {
-      p_id: Number(nuevo?.id), p_motivo: "prueba automatica del arnes de permisos",
+      p_id: Number(nuevo?.id),
+      p_motivo: "prueba automatica del arnes de permisos",
     });
     expect(error, "gerencia tendria que poder anular un ingreso").toBeNull();
 
     const despues = await gerencia
-      .from("v_saldos").select("contable").eq("tarjeta_id", tarjeta?.id ?? "").single();
-    expect(aCentavos(despues.data?.contable as string | number))
-      .toBe(aCentavos(antes.data?.contable as string | number));
+      .from("v_saldos")
+      .select("contable")
+      .eq("tarjeta_id", tarjeta?.id ?? "")
+      .single();
+    expect(aCentavos(despues.data?.contable as string | number)).toBe(
+      aCentavos(antes.data?.contable as string | number),
+    );
 
     // Y el original NO se borró: sigue estando, que es toda la diferencia con un delete.
     const { data: sigue } = await gerencia
-      .from("movimientos").select("id").eq("id", Number(nuevo?.id));
+      .from("movimientos")
+      .select("id")
+      .eq("id", Number(nuevo?.id));
     expect(sigue).toHaveLength(1);
 
     // Anularlo dos veces lo restaría dos veces: el saldo quedaría peor que antes de corregirlo.
     const { error: dos } = await gerencia.rpc("anular_movimiento", {
-      p_id: Number(nuevo?.id), p_motivo: "otra vez",
+      p_id: Number(nuevo?.id),
+      p_motivo: "otra vez",
     });
     expect(dos).not.toBeNull();
   });
@@ -264,7 +329,10 @@ describe("el historial de cambios es de solo lectura", () => {
     await gerencia.from("tramite_cambios").update({ antes: "pisado" }).eq("id", fila.id);
 
     const { data: sigue } = await gerencia
-      .from("tramite_cambios").select("antes").eq("id", fila.id).single();
+      .from("tramite_cambios")
+      .select("antes")
+      .eq("id", fila.id)
+      .single();
     expect(sigue?.antes).toBe(fila.antes);
   });
 
@@ -308,8 +376,11 @@ describe("la cadena de seis estados", () => {
 
   beforeAll(async () => {
     const { data } = await gerencia
-      .from("tramites").select("id, estado").eq("cliente_nombre", NOMBRE_DE_PRUEBA)
-      .order("recibido_at").limit(1);
+      .from("tramites")
+      .select("id, estado")
+      .eq("cliente_nombre", NOMBRE_DE_PRUEBA)
+      .order("recibido_at")
+      .limit(1);
     elTramite = String(data?.[0]?.id ?? "");
     estadoDeArranque = String(data?.[0]?.estado ?? "");
   });
@@ -330,7 +401,9 @@ describe("la cadena de seis estados", () => {
       compararlo, y liberaria una reserva que no existe.
     */
     const { error } = await gerencia
-      .from("tramites").update({ estado: "resuelto" }).eq("id", elTramite);
+      .from("tramites")
+      .update({ estado: "resuelto" })
+      .eq("id", elTramite);
     expect(error).not.toBeNull();
   });
 
@@ -347,7 +420,9 @@ describe("la cadena de seis estados", () => {
     const rechazos = await Promise.all(
       VIEJOS.map(async (viejo) => {
         const { error } = await gerencia
-          .from("tramites").update({ estado: viejo }).eq("id", elTramite);
+          .from("tramites")
+          .update({ estado: viejo })
+          .eq("id", elTramite);
         return { viejo, error };
       }),
     );
@@ -360,8 +435,7 @@ describe("la cadena de seis estados", () => {
   it("el tramite no se movio de donde estaba", async () => {
     // Las dos pruebas de arriba tienen que haber sido rechazadas SIN efecto. Un rechazo que igual
     // deja la fila a medio cambiar es peor que no tener la regla.
-    const { data } = await gerencia
-      .from("tramites").select("estado").eq("id", elTramite).single();
+    const { data } = await gerencia.from("tramites").select("estado").eq("id", elTramite).single();
     expect(data?.estado).toBe(estadoDeArranque);
   });
 });
@@ -403,7 +477,9 @@ describe("la lista de quien espera plata", () => {
 
   it("y NO se puede escribir: es una vista, no una tabla", async () => {
     const { error } = await gerencia
-      .from("v_esperando_plata").delete().eq("tramite_id", "00000000-0000-0000-0000-000000000000");
+      .from("v_esperando_plata")
+      .delete()
+      .eq("tramite_id", "00000000-0000-0000-0000-000000000000");
     expect(error).not.toBeNull();
   });
 });
@@ -436,7 +512,8 @@ describe("la gestora ve el saldo de la tarjeta donde tiene tramites", () => {
   beforeAll(async () => {
     // La tarjeta de un tramite vivo suyo. Si no hubiera ninguno, la prueba de abajo lo dice.
     const { data } = await gestora
-      .from("tramites").select("tarjeta_id")
+      .from("tramites")
+      .select("tarjeta_id")
       .not("tarjeta_id", "is", null)
       .not("estado", "in", "(devuelto,anulado)")
       .limit(1);
@@ -449,8 +526,10 @@ describe("la gestora ve el saldo de la tarjeta donde tiene tramites", () => {
 
   it("y VE SUS MOVIMIENTOS, no cero", async () => {
     const { data, error } = await gestora
-      .from("v_saldos").select("nombre, contable, comprometido, movimientos_visibles")
-      .eq("tarjeta_id", laTarjeta).single();
+      .from("v_saldos")
+      .select("nombre, contable, comprometido, movimientos_visibles")
+      .eq("tarjeta_id", laTarjeta)
+      .single();
 
     expect(error).toBeNull();
     expect(
@@ -466,15 +545,13 @@ describe("la gestora ve el saldo de la tarjeta donde tiene tramites", () => {
       prueba dejara de encontrar una tarjeta sin movimientos visibles, querría decir que la
       gestora las ve todas — que es lo contrario del permiso mínimo.
     */
-    const { data } = await gestora
-      .from("v_saldos").select("nombre, movimientos_visibles");
+    const { data } = await gestora.from("v_saldos").select("nombre, movimientos_visibles");
     const sinDatos = (data ?? []).filter((s) => Number(s.movimientos_visibles) === 0);
     expect(sinDatos.length, "la gestora ve TODAS las tarjetas, y no deberia").toBeGreaterThan(0);
   });
 
   it("la oficina las ve todas", async () => {
-    const { data } = await gerencia
-      .from("v_saldos").select("nombre, movimientos_visibles");
+    const { data } = await gerencia.from("v_saldos").select("nombre, movimientos_visibles");
     const conDatos = (data ?? []).filter((s) => Number(s.movimientos_visibles) > 0);
     expect(conDatos.length).toBeGreaterThan(0);
   });
@@ -494,7 +571,9 @@ describe("los sellos de la cadena no los escribe una gestora", () => {
     expect(id).not.toBe("");
 
     const { error } = await gestora
-      .from("tramites").update({ pagado_at: new Date().toISOString() }).eq("id", id);
+      .from("tramites")
+      .update({ pagado_at: new Date().toISOString() })
+      .eq("id", id);
     expect(error, "una gestora pudo escribir pagado_at").not.toBeNull();
   });
 });

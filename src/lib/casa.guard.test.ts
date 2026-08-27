@@ -103,12 +103,18 @@ describe("guardian de las reglas de la casa", () => {
   it("cero emojis, ni en la interfaz ni en los comentarios", () => {
     // Aca NO se saltean los comentarios: la regla es cero emojis en todo el proyecto.
     const hallazgos = recorrer((l) => [...l].some(esEmoji), false);
-    expect(hallazgos, `Emoji encontrado. Los iconos salen de lucide-react:\n${hallazgos.join("\n")}`).toEqual([]);
+    expect(
+      hallazgos,
+      `Emoji encontrado. Los iconos salen de lucide-react:\n${hallazgos.join("\n")}`,
+    ).toEqual([]);
   });
 
   it("ningun hexadecimal de color escrito a mano", () => {
     const hallazgos = recorrer((l) => HEX.test(l));
-    expect(hallazgos, `Color a mano. Todo sale de los tokens de src/index.css:\n${hallazgos.join("\n")}`).toEqual([]);
+    expect(
+      hallazgos,
+      `Color a mano. Todo sale de los tokens de src/index.css:\n${hallazgos.join("\n")}`,
+    ).toEqual([]);
   });
 
   it("los iconos salen solo de lucide-react", () => {

@@ -75,20 +75,14 @@ export function Login() {
               </p>
             )}
 
-            <button
-              type="submit"
-              disabled={entrando}
-              className={`mt-1 ${BOTON_ANCHO}`}
-            >
+            <button type="submit" disabled={entrando} className={`mt-1 ${BOTON_ANCHO}`}>
               <LogIn aria-hidden="true" size={16} />
               {entrando ? "Entrando" : "Entrar"}
             </button>
           </form>
         </Panel>
 
-        <p className="text-2xs text-side-ink2">
-          Las cuentas las crea quien administra el sistema.
-        </p>
+        <p className="text-2xs text-side-ink2">Las cuentas las crea quien administra el sistema.</p>
       </div>
     </div>
   );

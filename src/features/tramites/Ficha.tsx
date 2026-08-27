@@ -6,9 +6,19 @@ import { BOTON } from "../../lib/campos";
 import { formatearFechaHora } from "../../lib/fechas";
 import type { Database } from "../../lib/database.types";
 import {
-  useAdministrativos, useCambios, useConceptos, useConceptosDelTramite, useCorregirConcepto,
-  useEventosDelTramite, useGestoras, useGuardar, useNotasDelTramite, useQuitarConcepto,
-  useRequisitos, useRequisitosDelTramite, useTramite,
+  useAdministrativos,
+  useCambios,
+  useConceptos,
+  useConceptosDelTramite,
+  useCorregirConcepto,
+  useEventosDelTramite,
+  useGestoras,
+  useGuardar,
+  useNotasDelTramite,
+  useQuitarConcepto,
+  useRequisitos,
+  useRequisitosDelTramite,
+  useTramite,
 } from "../../lib/datos";
 import { useSesion } from "../../lib/sesion";
 import { CambiosDelTramite } from "./CambiosDelTramite";
@@ -47,10 +57,7 @@ import { Chip, nombreDeEstado } from "./Listado";
  * SI ACA APARECIERA UN ESTADO QUE LA BASE YA NO ACEPTA, el boton se veria bien y fallaria contra
  * un check al apretarlo. Esta lista y `tramites_estado_valido` se mueven juntas.
  */
-const SIGUIENTE: Record<
-  string,
-  { estado: string; boton: string; pide?: string } | undefined
-> = {
+const SIGUIENTE: Record<string, { estado: string; boton: string; pide?: string } | undefined> = {
   recibido: {
     estado: "controlado",
     boton: "Marcar como controlado",
@@ -151,13 +158,23 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
   const agregarLinea = useGuardar(
     async (v: { conceptoId: string; momento: string; importe: number }) => {
       const { error } = await supabase.from("tramite_conceptos").insert({
-        tramite_id: id, concepto_id: v.conceptoId, momento: v.momento, importe: v.importe,
+        tramite_id: id,
+        concepto_id: v.conceptoId,
+        momento: v.momento,
+        importe: v.importe,
       });
       if (error) throw error;
     },
     {
       exito: "Concepto agregado",
-      invalidar: ["tramite_conceptos", "tramite", "tramites", "saldos", "movimientos", "tramite_cambios"],
+      invalidar: [
+        "tramite_conceptos",
+        "tramite",
+        "tramites",
+        "saldos",
+        "movimientos",
+        "tramite_cambios",
+      ],
     },
   );
 
@@ -186,10 +203,12 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
 
   const responder = useGuardar(
     async (v: { requisitoId: string; respuesta: string }) => {
-      const { error } = await supabase.from("tramite_requisitos").upsert(
-        { tramite_id: id, requisito_id: v.requisitoId, respuesta: v.respuesta },
-        { onConflict: "tramite_id,requisito_id" },
-      );
+      const { error } = await supabase
+        .from("tramite_requisitos")
+        .upsert(
+          { tramite_id: id, requisito_id: v.requisitoId, respuesta: v.respuesta },
+          { onConflict: "tramite_id,requisito_id" },
+        );
       if (error) throw error;
     },
     { exito: "Respuesta guardada", invalidar: ["tramite_requisitos"] },
@@ -198,7 +217,9 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
   const responderTodo = useGuardar(
     async () => {
       const filas = (requisitos.data ?? []).map((r) => ({
-        tramite_id: id, requisito_id: r.id, respuesta: "si",
+        tramite_id: id,
+        requisito_id: r.id,
+        respuesta: "si",
       }));
       const { error } = await supabase.from("tramite_requisitos").upsert(filas, {
         onConflict: "tramite_id,requisito_id",
@@ -217,7 +238,8 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
     async (texto: string) => {
       const { data: sesion } = await supabase.auth.getUser();
       const autor = sesion.user?.id;
-      if (autor === undefined) throw new Error("regla_tramite: Se cerró la sesión. Entrá de nuevo.");
+      if (autor === undefined)
+        throw new Error("regla_tramite: Se cerró la sesión. Entrá de nuevo.");
       const { error } = await supabase
         .from("tramite_notas")
         .insert({ tramite_id: id, texto: texto.trim(), autor });
@@ -239,7 +261,11 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4 p-6">
-      <button type="button" onClick={alVolver} className="flex min-h-11 w-fit items-center gap-2 text-sm text-ink2">
+      <button
+        type="button"
+        onClick={alVolver}
+        className="flex min-h-11 w-fit items-center gap-2 text-sm text-ink2"
+      >
         <ArrowLeft aria-hidden="true" size={14} /> Volver al listado
       </button>
 
@@ -348,7 +374,8 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
         conceptos={conceptos.data ?? []}
         editable={!CERRADOS.has(t.estado)}
         alAgregar={(conceptoId, importe) =>
-          agregarLinea.mutate({ conceptoId, momento: "presupuesto", importe })}
+          agregarLinea.mutate({ conceptoId, momento: "presupuesto", importe })
+        }
         alCorregir={(idLinea, importe) => corregirConcepto.mutate({ id: idLinea, importe })}
         alQuitar={(idLinea, motivo) => quitarConcepto.mutate({ id: idLinea, motivo })}
         guardando={guardandoLinea}
@@ -362,7 +389,8 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
         conceptos={conceptos.data ?? []}
         editable={!TERMINADOS.has(t.estado)}
         alAgregar={(conceptoId, importe) =>
-          agregarLinea.mutate({ conceptoId, momento: "real", importe })}
+          agregarLinea.mutate({ conceptoId, momento: "real", importe })
+        }
         alCorregir={(idLinea, importe) => corregirConcepto.mutate({ id: idLinea, importe })}
         alQuitar={(idLinea, motivo) => quitarConcepto.mutate({ id: idLinea, motivo })}
         guardando={guardandoLinea}

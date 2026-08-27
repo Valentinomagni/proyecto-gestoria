@@ -43,7 +43,11 @@ const OFICINA: Rol[] = ["contable", "gerencia"];
 const TODAS: Rol[] = ["gestora", "contable", "gerencia"];
 
 export const MENU: {
-  id: Pantalla; nombre: string; corto: string; icono: typeof Wallet; roles: Rol[];
+  id: Pantalla;
+  nombre: string;
+  corto: string;
+  icono: typeof Wallet;
+  roles: Rol[];
 }[] = [
   /*
     ============================================================================
@@ -67,11 +71,11 @@ export const MENU: {
     solo lugar, de qué necesita cada persona. Cuando eso vive en cinco archivos, nadie puede
     contestar "¿qué ve una gestora?" sin leerlos todos.
   */
-  { id: "bandeja",  nombre: "Pedidos de fondos", corto: "Pedidos",  icono: HandCoins,  roles: TODAS },
-  { id: "tarjeta",  nombre: "Tarjeta",           corto: "Tarjeta",  icono: Wallet,     roles: TODAS },
-  { id: "tramites", nombre: "Trámites",          corto: "Trámites", icono: LayoutList, roles: TODAS },
-  { id: "alta",     nombre: "Cargar trámite",    corto: "Cargar",   icono: FilePlus,   roles: OFICINA },
-  { id: "admin",    nombre: "Administración",    corto: "Ajustes",  icono: Settings,   roles: OFICINA },
+  { id: "bandeja", nombre: "Pedidos de fondos", corto: "Pedidos", icono: HandCoins, roles: TODAS },
+  { id: "tarjeta", nombre: "Tarjeta", corto: "Tarjeta", icono: Wallet, roles: TODAS },
+  { id: "tramites", nombre: "Trámites", corto: "Trámites", icono: LayoutList, roles: TODAS },
+  { id: "alta", nombre: "Cargar trámite", corto: "Cargar", icono: FilePlus, roles: OFICINA },
+  { id: "admin", nombre: "Administración", corto: "Ajustes", icono: Settings, roles: OFICINA },
 ];
 
 /**

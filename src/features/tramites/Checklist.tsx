@@ -62,7 +62,10 @@ export interface Requisito {
 }
 
 export function Checklist({
-  requisitos, respuestas, alResponder, alResponderTodo,
+  requisitos,
+  respuestas,
+  alResponder,
+  alResponderTodo,
 }: {
   requisitos: Requisito[];
   respuestas: Record<string, { respuesta: string; nota: string | null }>;
@@ -80,9 +83,8 @@ export function Checklist({
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-ink2">
-        Antes de pasar a gestoría hay que contestar el checklist del legajo. Se exige
-        contestado, no que todo esté: una falta registrada sirve, una casilla tildada en falso
-        no.
+        Antes de pasar a gestoría hay que contestar el checklist del legajo. Se exige contestado, no
+        que todo esté: una falta registrada sirve, una casilla tildada en falso no.
       </p>
 
       <div className="flex flex-col">

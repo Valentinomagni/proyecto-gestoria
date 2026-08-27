@@ -86,7 +86,11 @@ const plata = (v: number | null): CellObject =>
     : { value: aPesos(aCentavos(v)), type: Number, format: FORMATO_PLATA };
 
 const COLUMNAS: Columna[] = [
-  { titulo: "Fecha", ancho: 12, celda: (f) => ({ value: aFechaDeExcel(f.recibido_at), type: Date, format: FORMATO_FECHA }) },
+  {
+    titulo: "Fecha",
+    ancho: 12,
+    celda: (f) => ({ value: aFechaDeExcel(f.recibido_at), type: Date, format: FORMATO_FECHA }),
+  },
   { titulo: "Cliente", ancho: 30, celda: (f) => texto(f.cliente_nombre) },
   { titulo: "Cuenta personal", ancho: 16, celda: (f) => texto(f.cliente_cuenta) },
   { titulo: "Referencia de oferta", ancho: 20, celda: (f) => texto(f.oferta_referencia) },
@@ -107,10 +111,7 @@ const COLUMNAS: Columna[] = [
  * Devuelve cuántas filas escribió: quien llama muestra ese número. "Se bajaron 43 trámites" es
  * verificable de un vistazo contra lo que hay en pantalla; "Listo" no dice si salieron todos.
  */
-export async function bajarTramites(
-  filas: FilaExportable[],
-  nombres: Nombres,
-): Promise<number> {
+export async function bajarTramites(filas: FilaExportable[], nombres: Nombres): Promise<number> {
   const encabezado: CellObject[] = COLUMNAS.map((c) => ({
     value: c.titulo,
     type: String,

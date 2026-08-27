@@ -29,7 +29,8 @@ import { join } from "node:path";
 /** 1, 2, 3, 4, 6, 8 -> 4, 8, 12, 16, 24 y 32 pixeles. Mas `0`, `px`, `auto` y `full`. */
 const PERMITIDOS = new Set(["0", "px", "1", "2", "3", "4", "6", "8", "auto", "full"]);
 
-const CLASE = /\b(?:gap|gap-x|gap-y|p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|space-x|space-y)-([\w.[\]-]+)/g;
+const CLASE =
+  /\b(?:gap|gap-x|gap-y|p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|space-x|space-y)-([\w.[\]-]+)/g;
 
 function archivos(dir) {
   return readdirSync(dir).flatMap((n) => {
@@ -71,5 +72,7 @@ for (const [a, n] of [...porArchivo].toSorted((x, y) => y[1] - x[1]).slice(0, 10
   console.error(`    ${String(n).padStart(3)}  ${a}`);
 }
 
-console.error("\n  Usa 1, 2, 3, 4, 6 u 8. Un valor arbitrario necesita un comentario que lo explique.\n");
+console.error(
+  "\n  Usa 1, 2, 3, 4, 6 u 8. Un valor arbitrario necesita un comentario que lo explique.\n",
+);
 process.exit(1);

@@ -127,7 +127,9 @@ for (const lista of LISTAS) {
     .filter((v) => v !== undefined);
 
   if (valores.length === 0) {
-    console.error(`\n  La constante ${lista.constante} de ${lista.archivo} quedo vacia, o cambio de forma.\n`);
+    console.error(
+      `\n  La constante ${lista.constante} de ${lista.archivo} quedo vacia, o cambio de forma.\n`,
+    );
     process.exit(1);
   }
 

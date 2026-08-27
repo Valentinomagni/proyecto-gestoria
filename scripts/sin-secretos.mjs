@@ -35,7 +35,10 @@ const PATRONES = [
   // desactiva a la semana, y con el se va la proteccion contra el secreto que si importaba.
   // Lo que de verdad hay que atrapar —tokens de Supabase, de GitHub, claves privadas— tiene
   // patrones propios y no depende de esta linea.
-  { nombre: "contrasena escrita a mano", re: /\b(password|contrasena|contraseña|passwd)\s*[:=]\s*["'][^"'\s]{8,}["']/i },
+  {
+    nombre: "contrasena escrita a mano",
+    re: /\b(password|contrasena|contraseña|passwd)\s*[:=]\s*["'][^"'\s]{8,}["']/i,
+  },
   { nombre: "token de Sentry", re: /\bsntrys_[A-Za-z0-9_]{20,}/ },
 ];
 
@@ -55,14 +58,20 @@ function archivosPreparados() {
   const salida = execFileSync("git", ["diff", "--cached", "--name-only", "--diff-filter=ACM"], {
     encoding: "utf8",
   });
-  return salida.split("\n").map((l) => l.trim()).filter(Boolean);
+  return salida
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
 }
 
 function contenidoPreparado(archivo) {
   // Se lee la version PREPARADA, no la del disco. Si alguien edita el archivo despues de
   // hacer `git add`, lo que va a entrar al historial es la preparada, y es la que importa.
   try {
-    return execFileSync("git", ["show", `:${archivo}`], { encoding: "utf8", maxBuffer: 32 * 1024 * 1024 });
+    return execFileSync("git", ["show", `:${archivo}`], {
+      encoding: "utf8",
+      maxBuffer: 32 * 1024 * 1024,
+    });
   } catch {
     return "";
   }

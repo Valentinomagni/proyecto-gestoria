@@ -55,7 +55,11 @@ export interface Movimiento {
 const A_MANO = new Set(["ingreso", "saldo_inicial", "ajuste"]);
 
 export function Operaciones({
-  movimientos, cargando, puedeAnular, alAnular, anulando,
+  movimientos,
+  cargando,
+  puedeAnular,
+  alAnular,
+  anulando,
 }: {
   movimientos: Movimiento[];
   cargando: boolean;
@@ -66,7 +70,12 @@ export function Operaciones({
   const [anulandoId, setAnulandoId] = useState<number | null>(null);
   const [motivo, setMotivo] = useState("");
 
-  if (cargando) return <Panel><SkeletonLineas cantidad={4} /></Panel>;
+  if (cargando)
+    return (
+      <Panel>
+        <SkeletonLineas cantidad={4} />
+      </Panel>
+    );
 
   return (
     <Panel>
@@ -115,7 +124,10 @@ export function Operaciones({
                       {A_MANO.has(m.tipo) && !m.anulado && m.corrige_movimiento_id === null && (
                         <button
                           type="button"
-                          onClick={() => { setAnulandoId(m.id); setMotivo(""); }}
+                          onClick={() => {
+                            setAnulandoId(m.id);
+                            setMotivo("");
+                          }}
                           className={ACCION_CHICA}
                         >
                           Anular
@@ -152,16 +164,15 @@ export function Operaciones({
             <button
               type="button"
               disabled={motivo.trim() === "" || anulando}
-              onClick={() => { alAnular(anulandoId, motivo.trim()); setAnulandoId(null); }}
+              onClick={() => {
+                alAnular(anulandoId, motivo.trim());
+                setAnulandoId(null);
+              }}
               className={BOTON_SUAVE}
             >
               {anulando ? "Anulando" : "Anular el movimiento"}
             </button>
-            <button
-              type="button"
-              onClick={() => setAnulandoId(null)}
-              className="text-sm text-ink2"
-            >
+            <button type="button" onClick={() => setAnulandoId(null)} className="text-sm text-ink2">
               Dejarlo como está
             </button>
           </div>
@@ -200,6 +211,7 @@ const NOMBRE_DEL_TIPO: Record<string, string> = {
 
 /** Qué dice la fila. El apellido al lado, porque es con lo que se busca. */
 function describir(m: Movimiento): string {
-  if (m.cliente !== null) return `${NOMBRE_DEL_TIPO[m.tipo] ?? m.concepto ?? m.tipo} — ${m.cliente}`;
+  if (m.cliente !== null)
+    return `${NOMBRE_DEL_TIPO[m.tipo] ?? m.concepto ?? m.tipo} — ${m.cliente}`;
   return m.concepto ?? m.tipo;
 }

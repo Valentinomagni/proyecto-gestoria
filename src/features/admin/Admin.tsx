@@ -12,7 +12,12 @@ import { clasificarFalla } from "../../lib/fallas";
 import { BOTON, BOTON_SUAVE, CAMPO, CAMPO_SUELTO } from "../../lib/campos";
 import { nombreDeRol, type Rol } from "../../lib/roles";
 import {
-  useCalendario, useGestoras, useGuardar, useRazonesSociales, useSaldos, useTarjetas,
+  useCalendario,
+  useGestoras,
+  useGuardar,
+  useRazonesSociales,
+  useSaldos,
+  useTarjetas,
 } from "../../lib/datos";
 import { useQuery } from "@tanstack/react-query";
 
@@ -113,8 +118,8 @@ function Respaldo() {
       <h2 className="text-lg">Respaldo</h2>
       <p className="text-xs text-ink2">
         Baja un archivo con todo lo que hay en la base. La lista de tablas no se mantiene a mano:
-        sale del esquema real, así que una tabla nueva entra sola. No incluye las cuentas de
-        acceso, que viven en otro lado: sirve para recuperar datos, no para rehacer el sistema.
+        sale del esquema real, así que una tabla nueva entra sola. No incluye las cuentas de acceso,
+        que viven en otro lado: sirve para recuperar datos, no para rehacer el sistema.
       </p>
       <button type="button" disabled={bajando} onClick={() => void bajar()} className={BOTON_SUAVE}>
         <HardDriveDownload aria-hidden="true" size={14} />
@@ -173,18 +178,24 @@ function CargarDinero() {
     <Panel className="flex flex-col gap-3">
       <h2 className="text-lg">Cargar dinero</h2>
       <p className="text-xs text-ink2">
-        Un depósito ordenado hoy acredita mañana. Hasta entonces figura como en tránsito y no
-        como disponible: si contara hoy, alguien podría mandar a presentar contra plata que
-        todavía no está.
+        Un depósito ordenado hoy acredita mañana. Hasta entonces figura como en tránsito y no como
+        disponible: si contara hoy, alguien podría mandar a presentar contra plata que todavía no
+        está.
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="flex flex-col gap-1">
           <span className="text-xs text-ink2">Tarjeta</span>
-          <select value={tarjetaId} onChange={(e) => setTarjetaId(e.target.value)} className={CAMPO}>
+          <select
+            value={tarjetaId}
+            onChange={(e) => setTarjetaId(e.target.value)}
+            className={CAMPO}
+          >
             <option value="">Elegí</option>
             {saldos.data?.map((s) => (
-              <option key={s.tarjeta_id} value={s.tarjeta_id}>{s.nombre}</option>
+              <option key={s.tarjeta_id} value={s.tarjeta_id}>
+                {s.nombre}
+              </option>
             ))}
           </select>
         </label>
@@ -236,7 +247,11 @@ function CargarDinero() {
 
       <label className="flex flex-col gap-1">
         <span className="text-xs text-ink2">Observación</span>
-        <input value={observacion} onChange={(e) => setObservacion(e.target.value)} className={CAMPO} />
+        <input
+          value={observacion}
+          onChange={(e) => setObservacion(e.target.value)}
+          className={CAMPO}
+        />
       </label>
 
       <button
@@ -261,7 +276,9 @@ function Usuarios() {
     queryKey: ["perfiles"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("perfiles").select("id, email, nombre, rol, activo, gestora_id").order("email");
+        .from("perfiles")
+        .select("id, email, nombre, rol, activo, gestora_id")
+        .order("email");
       if (error) throw error;
       return data;
     },
@@ -278,7 +295,12 @@ function Usuarios() {
     { exito: "Usuario actualizado", invalidar: ["perfiles"] },
   );
 
-  if (perfiles.isLoading) return <Panel><SkeletonLineas cantidad={4} /></Panel>;
+  if (perfiles.isLoading)
+    return (
+      <Panel>
+        <SkeletonLineas cantidad={4} />
+      </Panel>
+    );
 
   return (
     <Panel className="flex flex-col gap-3">
@@ -294,7 +316,8 @@ function Usuarios() {
           perfil={p}
           gestoras={gestoras.data ?? []}
           alGuardar={(rol, activo, gestoraId) =>
-            guardar.mutate({ id: p.id, rol, activo, gestoraId })}
+            guardar.mutate({ id: p.id, rol, activo, gestoraId })
+          }
         />
       ))}
     </Panel>
@@ -302,7 +325,9 @@ function Usuarios() {
 }
 
 function FilaUsuario({
-  perfil, gestoras, alGuardar,
+  perfil,
+  gestoras,
+  alGuardar,
 }: {
   perfil: { id: string; email: string; rol: string; activo: boolean; gestora_id: string | null };
   gestoras: { id: string; nombre: string }[];
@@ -330,9 +355,17 @@ function FilaUsuario({
       </select>
 
       {rol === "gestora" && (
-        <select value={gestoraId} onChange={(e) => setGestoraId(e.target.value)} className={CAMPO_SUELTO}>
+        <select
+          value={gestoraId}
+          onChange={(e) => setGestoraId(e.target.value)}
+          className={CAMPO_SUELTO}
+        >
           <option value="">Qué gestora</option>
-          {gestoras.map((g) => <option key={g.id} value={g.id}>{g.nombre}</option>)}
+          {gestoras.map((g) => (
+            <option key={g.id} value={g.id}>
+              {g.nombre}
+            </option>
+          ))}
         </select>
       )}
 
@@ -364,7 +397,9 @@ function RazonesYTarjetas() {
   const guardar = useGuardar(
     async (v: { id: string; tarjetaId: string | null }) => {
       const { error } = await supabase
-        .from("razones_sociales").update({ tarjeta_id: v.tarjetaId }).eq("id", v.id);
+        .from("razones_sociales")
+        .update({ tarjeta_id: v.tarjetaId })
+        .eq("id", v.id);
       if (error) throw error;
     },
     { exito: "Razón social actualizada", invalidar: ["razones_sociales", "saldos"] },
@@ -374,9 +409,8 @@ function RazonesYTarjetas() {
     <Panel className="flex flex-col gap-2">
       <h2 className="text-lg">Razones sociales y tarjetas</h2>
       <p className="text-xs text-ink2">
-        Con qué Tarjeta Habitualista paga cada una. Es editable: si una pasa a pagar con la de
-        otra, se cambia acá. Los trámites que ya movieron plata se quedan con la tarjeta que
-        tenían.
+        Con qué Tarjeta Habitualista paga cada una. Es editable: si una pasa a pagar con la de otra,
+        se cambia acá. Los trámites que ya movieron plata se quedan con la tarjeta que tenían.
       </p>
 
       {razones.data?.map((r) => (
@@ -388,11 +422,14 @@ function RazonesYTarjetas() {
             className={CAMPO_SUELTO}
           >
             <option value="">Sin tarjeta</option>
-            {tarjetas.data?.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+            {tarjetas.data?.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.nombre}
+              </option>
+            ))}
           </select>
         </div>
       ))}
     </Panel>
   );
 }
-

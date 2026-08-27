@@ -185,5 +185,3 @@ function esHabil(d: Date, feriados: ReadonlySet<string>): boolean {
 function aISO(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
-
-

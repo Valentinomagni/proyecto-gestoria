@@ -23,7 +23,10 @@ describe("orden de las ramas", () => {
 
 describe("permisos", () => {
   it("42501 no ofrece reintentar, porque reintentar no va a cambiar nada", () => {
-    const f = clasificarFalla({ code: "42501", message: "new row violates row-level security" }, true);
+    const f = clasificarFalla(
+      { code: "42501", message: "new row violates row-level security" },
+      true,
+    );
     expect(f.tipo).toBe("sin-permiso");
     expect(f.accion).toBe("ninguna");
     expect(f.explicacion).not.toContain("row-level");
@@ -45,7 +48,11 @@ describe("la base cambió y el navegador tiene código viejo", () => {
 describe("índices únicos, cada uno con su explicación", () => {
   it("dos patentamientos del mismo dominio", () => {
     const f = clasificarFalla(
-      { code: "23505", message: 'duplicate key value violates unique constraint "tramites_patentamiento_unico_idx"' },
+      {
+        code: "23505",
+        message:
+          'duplicate key value violates unique constraint "tramites_patentamiento_unico_idx"',
+      },
       true,
     );
     expect(f.tipo).toBe("duplicado");
@@ -57,7 +64,11 @@ describe("índices únicos, cada uno con su explicación", () => {
     // Apretó guardar dos veces. El índice hizo su trabajo: el saldo no se debitó dos veces.
     // Decirle "error" sería mentirle: para ella salió bien.
     const f = clasificarFalla(
-      { code: "23505", message: 'duplicate key value violates unique constraint "movimientos_una_reserva_por_tramite"' },
+      {
+        code: "23505",
+        message:
+          'duplicate key value violates unique constraint "movimientos_una_reserva_por_tramite"',
+      },
       true,
     );
     expect(f.tipo).toBe("ya-estaba");
@@ -77,7 +88,10 @@ describe("reglas del circuito", () => {
     // El trigger marca sus mensajes para que sobrevivan a la regla de "nunca el mensaje crudo".
     // Sin la marca, el motivo escrito para una persona se perdería junto con el volcado.
     const f = clasificarFalla(
-      { code: "P0001", message: "regla_tramite: Para pasar a presupuestado hace falta el monto aproximado" },
+      {
+        code: "P0001",
+        message: "regla_tramite: Para pasar a presupuestado hace falta el monto aproximado",
+      },
       true,
     );
     expect(f.tipo).toBe("regla-del-circuito");

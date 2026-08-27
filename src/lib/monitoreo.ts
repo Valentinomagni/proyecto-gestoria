@@ -80,7 +80,9 @@ export function iniciarMonitoreo(): void {
         const mensaje =
           (typeof original === "object" && original !== null && "message" in original
             ? String((original as { message: unknown }).message)
-            : "") || evento.message || "";
+            : "") ||
+          evento.message ||
+          "";
 
         if (RUIDO.some((r) => r.test(mensaje))) return null;
 

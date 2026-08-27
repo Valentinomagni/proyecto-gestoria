@@ -5,7 +5,11 @@ import { supabase } from "./supabase";
 import { clasificarFalla } from "./fallas";
 import { recordado, recordar } from "./recordar";
 import {
-  CLAVE_VISTO, contarSinVer, hastaDondeMarcar, sumarNovedad, type Novedad,
+  CLAVE_VISTO,
+  contarSinVer,
+  hastaDondeMarcar,
+  sumarNovedad,
+  type Novedad,
 } from "./novedades";
 
 /**
@@ -16,11 +20,33 @@ import {
  * copiadas a mano en el Tablero, pero con datos.
  */
 
-export interface RazonSocial { id: string; nombre: string; tarjeta_id: string | null; orden: number }
-export interface Sucursal { id: string; nombre: string; gestionada_por: string }
-export interface Gestora { id: string; nombre: string; perfil_id: string | null; activa: boolean }
-export interface Concepto { id: string; nombre: string; orden: number }
-export interface Tarjeta { id: string; nombre: string; orden: number }
+export interface RazonSocial {
+  id: string;
+  nombre: string;
+  tarjeta_id: string | null;
+  orden: number;
+}
+export interface Sucursal {
+  id: string;
+  nombre: string;
+  gestionada_por: string;
+}
+export interface Gestora {
+  id: string;
+  nombre: string;
+  perfil_id: string | null;
+  activa: boolean;
+}
+export interface Concepto {
+  id: string;
+  nombre: string;
+  orden: number;
+}
+export interface Tarjeta {
+  id: string;
+  nombre: string;
+  orden: number;
+}
 export interface Requisito {
   id: string;
   nombre: string;
@@ -111,8 +137,10 @@ export function useRazonesSociales() {
     ...CATALOGO,
     queryFn: async (): Promise<RazonSocial[]> => {
       const { data, error } = await supabase
-        .from("razones_sociales").select("id, nombre, tarjeta_id, orden")
-        .eq("activa", true).order("orden");
+        .from("razones_sociales")
+        .select("id, nombre, tarjeta_id, orden")
+        .eq("activa", true)
+        .order("orden");
       if (error) throw error;
       return data;
     },
@@ -125,7 +153,10 @@ export function useSucursales() {
     ...CATALOGO,
     queryFn: async (): Promise<Sucursal[]> => {
       const { data, error } = await supabase
-        .from("sucursales").select("id, nombre, gestionada_por").eq("activa", true).order("nombre");
+        .from("sucursales")
+        .select("id, nombre, gestionada_por")
+        .eq("activa", true)
+        .order("nombre");
       if (error) throw error;
       return data;
     },
@@ -138,7 +169,9 @@ export function useGestoras() {
     ...CATALOGO,
     queryFn: async (): Promise<Gestora[]> => {
       const { data, error } = await supabase
-        .from("gestoras").select("id, nombre, perfil_id, activa").order("nombre");
+        .from("gestoras")
+        .select("id, nombre, perfil_id, activa")
+        .order("nombre");
       if (error) throw error;
       return data;
     },
@@ -151,7 +184,10 @@ export function useConceptos() {
     ...CATALOGO,
     queryFn: async (): Promise<Concepto[]> => {
       const { data, error } = await supabase
-        .from("conceptos").select("id, nombre, orden").eq("activo", true).order("orden");
+        .from("conceptos")
+        .select("id, nombre, orden")
+        .eq("activo", true)
+        .order("orden");
       if (error) throw error;
       return data;
     },
@@ -164,7 +200,10 @@ export function useTarjetas() {
     ...CATALOGO,
     queryFn: async (): Promise<Tarjeta[]> => {
       const { data, error } = await supabase
-        .from("tarjetas_habitualista").select("id, nombre, orden").eq("activa", true).order("orden");
+        .from("tarjetas_habitualista")
+        .select("id, nombre, orden")
+        .eq("activa", true)
+        .order("orden");
       if (error) throw error;
       return data;
     },
@@ -211,8 +250,11 @@ export function useRequisitos(tipo: string | null) {
       const { data, error } = await supabase
         // `tipo` decide COMO se contesta: un papel del legajo se contesta Esta / Falta / No
         // corresponde, y un hecho de la operacion —hay accesorios, hay usado— se contesta Si o No.
-        .from("requisitos").select("id, nombre, aplica_a, orden, tipo")
-        .eq("activo", true).in("aplica_a", [tipo ?? "", "todos"]).order("orden");
+        .from("requisitos")
+        .select("id, nombre, aplica_a, orden, tipo")
+        .eq("activo", true)
+        .in("aplica_a", [tipo ?? "", "todos"])
+        .order("orden");
       if (error) throw error;
       return data;
     },
@@ -248,7 +290,11 @@ export function useCalendario() {
     queryFn: async (): Promise<{ feriados: ReadonlySet<string>; cubreHasta: string | null }> => {
       const [dias, parametro] = await Promise.all([
         supabase.from("feriados").select("fecha").order("fecha"),
-        supabase.from("parametros").select("valor").eq("clave", "calendario_cubre_hasta").maybeSingle(),
+        supabase
+          .from("parametros")
+          .select("valor")
+          .eq("clave", "calendario_cubre_hasta")
+          .maybeSingle(),
       ]);
       if (dias.error) throw dias.error;
       if (parametro.error) throw parametro.error;
@@ -418,7 +464,11 @@ export function useNovedades(miId: string | null): {
         { event: "INSERT", schema: "public", table: "tramite_eventos" },
         (msg) => {
           const e = msg.new as {
-            id: number; tramite_id: string; estado_hasta: string; at: string; por?: string | null;
+            id: number;
+            tramite_id: string;
+            estado_hasta: string;
+            at: string;
+            por?: string | null;
           };
           // Los cambios propios no se avisan: quien lo movió ya sabe que lo movió.
           if (e.por === miId) return;
@@ -480,7 +530,9 @@ export function useMovimientos(tarjetaId: string | null) {
         // El select va en UNA sola cadena literal, sin partirla con `+`: supabase-js infiere los
         // tipos leyendo ese literal, y una concatenacion lo deja en `GenericStringError` — o sea
         // que se pierde el chequeo de tipos justo en la consulta que trae plata.
-        .select("id, fecha, fecha_acreditacion, tipo, importe, concepto, observacion, corrige_movimiento_id, anulado, tramites(cliente_nombre)")
+        .select(
+          "id, fecha, fecha_acreditacion, tipo, importe, concepto, observacion, corrige_movimiento_id, anulado, tramites(cliente_nombre)",
+        )
         .eq("tarjeta_id", tarjetaId ?? "")
         .order("fecha", { ascending: false })
         .order("id", { ascending: false })
@@ -536,7 +588,11 @@ export function useTramites(filtros: { estado?: string; buscar?: string } = {}) 
   return useQuery({
     queryKey: ["tramites", filtros],
     queryFn: async (): Promise<Tramite[]> => {
-      let q = supabase.from("tramites").select("*").order("recibido_at", { ascending: false }).limit(300);
+      let q = supabase
+        .from("tramites")
+        .select("*")
+        .order("recibido_at", { ascending: false })
+        .limit(300);
       if (filtros.estado) q = q.eq("estado", filtros.estado);
       if (filtros.buscar && filtros.buscar.trim() !== "") {
         const b = `%${filtros.buscar.trim()}%`;
@@ -549,7 +605,8 @@ export function useTramites(filtros: { estado?: string; buscar?: string } = {}) 
       if (error) throw error;
       return (data ?? []).map((t) =>
         Object.assign(t, {
-          deposito_solicitado: t.deposito_solicitado === null ? null : aNumero(t.deposito_solicitado),
+          deposito_solicitado:
+            t.deposito_solicitado === null ? null : aNumero(t.deposito_solicitado),
         }),
       ) as Tramite[];
     },
@@ -561,10 +618,15 @@ export function useTramite(id: string | null) {
     queryKey: ["tramite", id],
     enabled: id !== null,
     queryFn: async (): Promise<Tramite> => {
-      const { data, error } = await supabase.from("tramites").select("*").eq("id", id ?? "").single();
+      const { data, error } = await supabase
+        .from("tramites")
+        .select("*")
+        .eq("id", id ?? "")
+        .single();
       if (error) throw error;
       return Object.assign(data, {
-        deposito_solicitado: data.deposito_solicitado === null ? null : aNumero(data.deposito_solicitado),
+        deposito_solicitado:
+          data.deposito_solicitado === null ? null : aNumero(data.deposito_solicitado),
       }) as Tramite;
     },
   });
@@ -595,7 +657,12 @@ export function useConceptosDelTramite(tramiteId: string | null) {
 
 /** Las claves que se invalidan cuando cambia una linea: el total y la reserva se mueven solos. */
 const AL_TOCAR_EL_PRESUPUESTO = [
-  "tramite_conceptos", "tramite", "tramites", "saldos", "movimientos", "tramite_cambios",
+  "tramite_conceptos",
+  "tramite",
+  "tramites",
+  "saldos",
+  "movimientos",
+  "tramite_cambios",
 ];
 
 /**
@@ -685,8 +752,9 @@ export function useNotasDelTramite(tramiteId: string | null) {
       // columna de una vista no sea nula, aunque en la tabla de abajo sea `not null`. Se
       // normaliza acá, en el borde, y la pantalla recibe la forma que espera.
       return (data ?? [])
-        .filter((n): n is typeof n & { id: number; texto: string } =>
-          n.id !== null && n.texto !== null)
+        .filter(
+          (n): n is typeof n & { id: number; texto: string } => n.id !== null && n.texto !== null,
+        )
         .map((n) => ({
           id: n.id,
           texto: n.texto,
@@ -738,11 +806,14 @@ export function useCambios(tramiteId: string | null) {
         .order("id", { ascending: false });
       if (error) throw error;
 
-      const ids = [...new Set((data ?? []).map((c) => c.quien).filter((q): q is string => q !== null))];
+      const ids = [
+        ...new Set((data ?? []).map((c) => c.quien).filter((q): q is string => q !== null)),
+      ];
       const nombres = new Map<string, string>();
       if (ids.length > 0) {
         const { data: gente } = await supabase.rpc("nombres_de", { personas: ids });
-        for (const p of (gente ?? []) as { id: string; nombre: string }[]) nombres.set(p.id, p.nombre);
+        for (const p of (gente ?? []) as { id: string; nombre: string }[])
+          nombres.set(p.id, p.nombre);
       }
 
       return (data ?? []).map((c) => ({

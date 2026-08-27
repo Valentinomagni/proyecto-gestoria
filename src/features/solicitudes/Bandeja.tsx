@@ -83,12 +83,29 @@ export function Bandeja({ alAbrir }: { alAbrir: (id: string) => void }) {
 }
 
 function Bloque({
-  titulo, ayuda, tramites, saldos, alAbrir, alerta = false,
+  titulo,
+  ayuda,
+  tramites,
+  saldos,
+  alAbrir,
+  alerta = false,
 }: {
   titulo: string;
   ayuda?: string;
-  tramites: { id: string; cliente_nombre: string; oferta_referencia: string | null; tarjeta_id: string | null; deposito_solicitado: number | null }[];
-  saldos: { tarjeta_id: string; nombre: string; contable: number; comprometido: number; movimientos_visibles: number }[];
+  tramites: {
+    id: string;
+    cliente_nombre: string;
+    oferta_referencia: string | null;
+    tarjeta_id: string | null;
+    deposito_solicitado: number | null;
+  }[];
+  saldos: {
+    tarjeta_id: string;
+    nombre: string;
+    contable: number;
+    comprometido: number;
+    movimientos_visibles: number;
+  }[];
   alAbrir: (id: string) => void;
   alerta?: boolean;
 }) {
@@ -195,9 +212,18 @@ function Bloque({
  *  el dia que exista esa tabla los presupuestos se cargan tarde y redondeados.
  */
 function EsperandoPlata({
-  filas, saldos, alAbrir,
+  filas,
+  saldos,
+  alAbrir,
 }: {
-  filas: { tramite_id: string; cliente_nombre: string; oferta_referencia: string | null; tarjeta_id: string; pide: number; falta: number }[];
+  filas: {
+    tramite_id: string;
+    cliente_nombre: string;
+    oferta_referencia: string | null;
+    tarjeta_id: string;
+    pide: number;
+    falta: number;
+  }[];
   saldos: { tarjeta_id: string; nombre: string }[];
   alAbrir: (id: string) => void;
 }) {
@@ -216,8 +242,8 @@ function EsperandoPlata({
     <Panel className="border-warn">
       <h2 className="text-lg">Esperando plata</h2>
       <p className="text-xs text-ink2 mt-1 mb-2">
-        No dependen de quien mira esta pantalla: dependen de que entre plata. En cuanto el
-        depósito acredita, salen de acá solos.
+        No dependen de quien mira esta pantalla: dependen de que entre plata. En cuanto el depósito
+        acredita, salen de acá solos.
       </p>
 
       <div className="flex flex-col gap-4">

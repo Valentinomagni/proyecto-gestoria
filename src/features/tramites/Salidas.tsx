@@ -50,7 +50,9 @@ import { BOTON_SUAVE, CAMPO } from "../../lib/campos";
  *  Anular algo que ya terminó reescribiría una historia que ya pasó.
  */
 export function Salidas({
-  estado, alAnular, anulando,
+  estado,
+  alAnular,
+  anulando,
 }: {
   estado: string;
   alAnular: (motivo: string) => void;

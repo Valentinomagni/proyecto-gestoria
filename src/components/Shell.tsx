@@ -26,7 +26,11 @@ import { Panel } from "./Panel";
  * que el sistema está roto.
  */
 export function Shell({
-  children, pantalla, alNavegar, novedades, alAbrirTramite,
+  children,
+  pantalla,
+  alNavegar,
+  novedades,
+  alAbrirTramite,
 }: {
   children: ReactNode;
   pantalla: Pantalla;

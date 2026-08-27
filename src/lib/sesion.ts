@@ -54,9 +54,7 @@ export function useSesion(): Sesion {
       if (!vivo) return;
       // Si el rol que llega no es uno de los conocidos, se trata como sin_asignar. Es el default
       // seguro: ante la duda, ningun permiso.
-      setPerfil(
-        data ? { ...data, rol: esRolValido(data.rol) ? data.rol : "sin_asignar" } : null,
-      );
+      setPerfil(data ? { ...data, rol: esRolValido(data.rol) ? data.rol : "sin_asignar" } : null);
       setCargando(false);
     }
 

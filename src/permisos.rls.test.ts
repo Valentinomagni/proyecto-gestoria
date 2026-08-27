@@ -1,7 +1,13 @@
 import { type SupabaseClient } from "@supabase/supabase-js";
 import { beforeAll, describe, expect, it } from "vitest";
 import { aCentavos } from "./lib/plata";
-import { comoUsuario, env, ponerLinea, sinSesion, NOMBRE_DE_PRUEBA } from "./pruebas/arnes-de-permisos";
+import {
+  comoUsuario,
+  env,
+  ponerLinea,
+  sinSesion,
+  NOMBRE_DE_PRUEBA,
+} from "./pruebas/arnes-de-permisos";
 
 /**
  * ============================================================================
@@ -139,23 +145,34 @@ describe("nadie se auto-promueve", () => {
     // Es la otra mitad del cambio: identicos quiere decir que contable tambien administra.
     const correo = env["PRUEBA_GESTORA"] ?? "";
     const { data: antes } = await contable
-      .from("perfiles").select("activo").eq("email", correo).single();
+      .from("perfiles")
+      .select("activo")
+      .eq("email", correo)
+      .single();
     const original = antes?.activo;
     expect(original).toBeDefined();
 
     const { error } = await contable
-      .from("perfiles").update({ activo: !original }).eq("email", correo);
+      .from("perfiles")
+      .update({ activo: !original })
+      .eq("email", correo);
     expect(error).toBeNull();
 
     const { data: medio } = await contable
-      .from("perfiles").select("activo").eq("email", correo).single();
+      .from("perfiles")
+      .select("activo")
+      .eq("email", correo)
+      .single();
     expect(medio?.activo).toBe(!original);
 
     // Se restaura el valor REAL, no uno escrito a mano: asi fue como este arnes dejo una vez
     // desactivada a una gestora que trabajaba.
     await contable.from("perfiles").update({ activo: original }).eq("email", correo);
     const { data: final } = await contable
-      .from("perfiles").select("activo").eq("email", correo).single();
+      .from("perfiles")
+      .select("activo")
+      .eq("email", correo)
+      .single();
     expect(final?.activo).toBe(original);
   });
 
@@ -180,7 +197,11 @@ describe("nadie se auto-promueve", () => {
 
     await gestora.from("perfiles").update({ activo: !original }).eq("id", miId);
 
-    const { data: despues } = await gestora.from("perfiles").select("activo").eq("id", miId).single();
+    const { data: despues } = await gestora
+      .from("perfiles")
+      .select("activo")
+      .eq("id", miId)
+      .single();
     if (despues?.activo !== original) {
       await gerencia.from("perfiles").update({ activo: original }).eq("id", miId);
     }
@@ -206,7 +227,11 @@ describe("nadie se auto-promueve", () => {
     const { error } = await gestora.from("perfiles").update({ nombre: "Prueba" }).eq("id", miId);
     expect(error).toBeNull();
 
-    const { data: despues } = await gestora.from("perfiles").select("nombre").eq("id", miId).single();
+    const { data: despues } = await gestora
+      .from("perfiles")
+      .select("nombre")
+      .eq("id", miId)
+      .single();
     expect(despues?.nombre).toBe("Prueba");
 
     await gestora.from("perfiles").update({ nombre: original }).eq("id", miId);
@@ -222,24 +247,37 @@ describe("gerencia si puede administrar", () => {
     */
     const correo = env["PRUEBA_GESTORA"] ?? "";
     const { data: antes } = await gerencia
-      .from("perfiles").select("activo").eq("email", correo).single();
+      .from("perfiles")
+      .select("activo")
+      .eq("email", correo)
+      .single();
     const original = antes?.activo;
     expect(original).toBeDefined();
 
     const { error: e1 } = await gerencia
-      .from("perfiles").update({ activo: !original }).eq("email", correo);
+      .from("perfiles")
+      .update({ activo: !original })
+      .eq("email", correo);
     expect(e1).toBeNull();
 
     const { data: medio } = await gerencia
-      .from("perfiles").select("activo").eq("email", correo).single();
+      .from("perfiles")
+      .select("activo")
+      .eq("email", correo)
+      .single();
     expect(medio?.activo).toBe(!original);
 
     const { error: e2 } = await gerencia
-      .from("perfiles").update({ activo: original }).eq("email", correo);
+      .from("perfiles")
+      .update({ activo: original })
+      .eq("email", correo);
     expect(e2).toBeNull();
 
     const { data: final } = await gerencia
-      .from("perfiles").select("activo").eq("email", correo).single();
+      .from("perfiles")
+      .select("activo")
+      .eq("email", correo)
+      .single();
     expect(final?.activo).toBe(original);
   });
 });
@@ -305,7 +343,9 @@ describe("una gestora no llega al margen por ningun camino", () => {
   it("PRIMERO: el dato existe de verdad y gerencia lo ve", async () => {
     // Sin esto, todo lo de abajo podria estar pasando por vacio.
     const { data, error } = await gerencia
-      .from("cobros").select("monto_cobrado").eq("tramite_id", tramiteId);
+      .from("cobros")
+      .select("monto_cobrado")
+      .eq("tramite_id", tramiteId);
     expect(error).toBeNull();
     expect(data).toHaveLength(1);
     expect(aCentavos(data?.[0]?.monto_cobrado as string | number)).toBe(99999999);
@@ -375,13 +415,18 @@ describe("una gestora no llega al margen por ningun camino", () => {
     await gestora.from("cobros").update({ monto_cobrado: 1 }).eq("tramite_id", tramiteId);
 
     const { data } = await gerencia
-      .from("cobros").select("monto_cobrado").eq("tramite_id", tramiteId).single();
+      .from("cobros")
+      .select("monto_cobrado")
+      .eq("tramite_id", tramiteId)
+      .single();
     expect(aCentavos(data?.monto_cobrado as string | number)).toBe(99999999);
   });
 
   it("y contable SI lo ve, porque si no el margen no lo controla nadie", async () => {
     const { data, error } = await contable
-      .from("cobros").select("monto_cobrado").eq("tramite_id", tramiteId);
+      .from("cobros")
+      .select("monto_cobrado")
+      .eq("tramite_id", tramiteId);
     expect(error).toBeNull();
     expect(data).toHaveLength(1);
   });
@@ -450,7 +495,10 @@ describe("el libro mayor solo se inserta", () => {
     if (!m) throw new Error("sin movimiento con el que probar");
 
     const { error } = await gestora.from("movimientos").insert({
-      tarjeta_id: m.tarjeta, tipo: "ingreso", importe: 1000, concepto: "no deberia entrar",
+      tarjeta_id: m.tarjeta,
+      tipo: "ingreso",
+      importe: 1000,
+      concepto: "no deberia entrar",
     });
     expect(error).not.toBeNull();
   });
@@ -466,7 +514,10 @@ describe("el libro mayor solo se inserta", () => {
     if (!m) throw new Error("sin movimiento con el que probar");
 
     const { error } = await gerencia.from("movimientos").insert({
-      tarjeta_id: m.tarjeta, tipo: "pago", importe: -1000, concepto: "a mano, no deberia entrar",
+      tarjeta_id: m.tarjeta,
+      tipo: "pago",
+      importe: -1000,
+      concepto: "a mano, no deberia entrar",
     });
     expect(error).not.toBeNull();
   });
@@ -495,7 +546,10 @@ describe("una gestora ve el tramite desde que se lo asignan", () => {
 
     const { data: sesion } = await gestora.auth.getUser();
     const { data: perfil } = await gestora
-      .from("perfiles").select("gestora_id").eq("id", sesion.user?.id ?? "").single();
+      .from("perfiles")
+      .select("gestora_id")
+      .eq("id", sesion.user?.id ?? "")
+      .single();
     const gestoraId = perfil?.gestora_id;
     if (!gestoraId) throw new Error("La cuenta de prueba no esta vinculada a ninguna gestora");
 
@@ -514,8 +568,11 @@ describe("una gestora ve el tramite desde que se lo asignan", () => {
     // maybeSingle devuelve null en vez de la primera, y entonces el arnes crea otra mas — que
     // es exactamente como se llegaron a acumular las que habia.
     const { data: existentes } = await gerencia
-      .from("tramites").select("id").eq("cliente_nombre", NOMBRE_DE_PRUEBA)
-      .order("recibido_at").limit(1);
+      .from("tramites")
+      .select("id")
+      .eq("cliente_nombre", NOMBRE_DE_PRUEBA)
+      .order("recibido_at")
+      .limit(1);
 
     if (existentes && existentes.length > 0) {
       creado = String(existentes[0]?.id);
@@ -548,8 +605,7 @@ describe("una gestora ve el tramite desde que se lo asignan", () => {
 
   it("y la gestora asignada lo ve ENSEGUIDA, todavia en recibido", async () => {
     // Es el defecto que impedia simular la cadena: antes lo veia recien dos pasos despues.
-    const { data, error } = await gestora
-      .from("tramites").select("id, estado").eq("id", creado);
+    const { data, error } = await gestora.from("tramites").select("id, estado").eq("id", creado);
     expect(error).toBeNull();
     expect(data).toHaveLength(1);
     // Lo que importa es que lo VEA, en el estado que sea. Antes no lo veia hasta `entregado`,
@@ -592,14 +648,22 @@ describe("una gestora ve el tramite desde que se lo asignan", () => {
       que alguien pregunte por que ese tramite no avanza.
     */
     const { data: baja } = await gerencia
-      .from("gestoras").select("id, activa").eq("activa", false).limit(1).maybeSingle();
+      .from("gestoras")
+      .select("id, activa")
+      .eq("activa", false)
+      .limit(1)
+      .maybeSingle();
 
     // Si no hay ninguna dada de baja, se da de baja una a proposito y se restaura al final.
     let id = baja?.id as string | undefined;
     let habiaQueDarDeBaja = false;
     if (id === undefined) {
       const { data: alguna } = await gerencia
-        .from("gestoras").select("id").eq("activa", true).limit(1).single();
+        .from("gestoras")
+        .select("id")
+        .eq("activa", true)
+        .limit(1)
+        .single();
       id = String(alguna?.id);
       await gerencia.from("gestoras").update({ activa: false }).eq("id", id);
       habiaQueDarDeBaja = true;

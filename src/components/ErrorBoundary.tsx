@@ -64,22 +64,14 @@ export class ErrorBoundary extends Component<Props, Estado> {
           <p className="text-sm text-ink2 mb-4">{falla.explicacion}</p>
 
           {falla.accion === "actualizar" && (
-            <button
-              type="button"
-              onClick={this.actualizar}
-              className={BOTON}
-            >
+            <button type="button" onClick={this.actualizar} className={BOTON}>
               <RefreshCw aria-hidden="true" size={16} />
               Actualizar
             </button>
           )}
 
           {falla.accion === "reintentar" && (
-            <button
-              type="button"
-              onClick={this.reintentar}
-              className={BOTON}
-            >
+            <button type="button" onClick={this.reintentar} className={BOTON}>
               <RotateCcw aria-hidden="true" size={16} />
               Probar de nuevo
             </button>

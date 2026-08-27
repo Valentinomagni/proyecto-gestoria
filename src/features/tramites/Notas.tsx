@@ -5,7 +5,6 @@ import { SkeletonLineas } from "../../components/Skeleton";
 import { formatearFechaHora } from "../../lib/fechas";
 import { BOTON_SUAVE, CAMPO } from "../../lib/campos";
 
-
 /**
  * ============================================================================
  *  LAS NOTAS DEL TRAMITE. Es la "intercomunicacion" del objetivo, y NO es un chat.
@@ -28,7 +27,10 @@ import { BOTON_SUAVE, CAMPO } from "../../lib/campos";
  *  escribe. Si algo quedo mal dicho, se escribe otra abajo.
  */
 export function Notas({
-  notas, cargando, alAgregar, guardando,
+  notas,
+  cargando,
+  alAgregar,
+  guardando,
 }: {
   notas: { id: number; texto: string; creado_at: string | null; autor_nombre: string | null }[];
   cargando: boolean;
@@ -42,8 +44,8 @@ export function Notas({
     <Panel className="flex flex-col gap-3">
       <h2 className="text-lg">Notas</h2>
       <p className="text-xs text-ink2">
-        Lo que hoy se explica por WhatsApp y después nadie encuentra. Queda con tu nombre y no
-        se puede editar ni borrar: por eso sirve de respaldo.
+        Lo que hoy se explica por WhatsApp y después nadie encuentra. Queda con tu nombre y no se
+        puede editar ni borrar: por eso sirve de respaldo.
       </p>
 
       <label className="flex flex-col gap-2">

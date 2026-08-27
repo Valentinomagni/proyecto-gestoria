@@ -21,7 +21,9 @@ describe("mensajeDeLogin", () => {
 
   it("demasiados intentos aclara que NO hay que cambiar la contraseña", () => {
     // Sin esa aclaración, la reacción natural es blanquear la clave, que no arregla nada.
-    const m = mensajeDeLogin({ message: "For security purposes, you can only request this after 30 seconds" });
+    const m = mensajeDeLogin({
+      message: "For security purposes, you can only request this after 30 seconds",
+    });
     expect(m).toContain("no hace falta cambiar la contraseña");
   });
 

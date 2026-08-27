@@ -90,8 +90,9 @@ describe("aFechaDeExcel", () => {
   });
 
   it("el mediodia es el dia obvio", () => {
-    expect(aFechaDeExcel("2026-08-18T12:00:00.000Z").toISOString())
-      .toBe("2026-08-18T00:00:00.000Z");
+    expect(aFechaDeExcel("2026-08-18T12:00:00.000Z").toISOString()).toBe(
+      "2026-08-18T00:00:00.000Z",
+    );
   });
 });
 
@@ -138,7 +139,8 @@ describe("cuando acredita un deposito", () => {
   });
 
   it("y si el lunes es feriado, el martes", () => {
-    expect(proximoDiaHabil(new Set(["2026-08-24"]), new Date("2026-08-21T15:00:00Z")))
-      .toBe("2026-08-25");
+    expect(proximoDiaHabil(new Set(["2026-08-24"]), new Date("2026-08-21T15:00:00Z"))).toBe(
+      "2026-08-25",
+    );
   });
 });

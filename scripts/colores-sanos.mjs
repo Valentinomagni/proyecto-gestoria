@@ -24,9 +24,28 @@ import { join } from "node:path";
 
 /** Las familias de color que trae Tailwind y que este proyecto NO usa: usa sus tokens. */
 const FAMILIAS = [
-  "slate", "gray", "zinc", "neutral", "stone", "red", "orange", "amber", "yellow",
-  "lime", "green", "emerald", "teal", "cyan", "sky", "blue", "indigo", "violet",
-  "purple", "fuchsia", "pink", "rose",
+  "slate",
+  "gray",
+  "zinc",
+  "neutral",
+  "stone",
+  "red",
+  "orange",
+  "amber",
+  "yellow",
+  "lime",
+  "green",
+  "emerald",
+  "teal",
+  "cyan",
+  "sky",
+  "blue",
+  "indigo",
+  "violet",
+  "purple",
+  "fuchsia",
+  "pink",
+  "rose",
 ];
 
 /*
@@ -109,15 +128,14 @@ for (const p of archivos("src")) {
   // Los tests y los guardianes no se revisan: ahi un color literal ES el dato que se prueba.
   if (p.includes(".test.") || p.includes(".guard.")) continue;
 
-  sinComentarios(readFileSync(p, "utf8"))
-    .forEach((linea, i) => {
-      for (const m of linea.matchAll(CLASE_DE_TAILWIND)) {
-        malos.push(`  ${p}:${i + 1}  ${m[0]}   -> usa un token: text-ink, bg-surface, text-danger`);
-      }
-      for (const m of linea.matchAll(COLOR_A_MANO)) {
-        malos.push(`  ${p}:${i + 1}  ${m[0]}   -> el color va en src/index.css, no acá`);
-      }
-    });
+  sinComentarios(readFileSync(p, "utf8")).forEach((linea, i) => {
+    for (const m of linea.matchAll(CLASE_DE_TAILWIND)) {
+      malos.push(`  ${p}:${i + 1}  ${m[0]}   -> usa un token: text-ink, bg-surface, text-danger`);
+    }
+    for (const m of linea.matchAll(COLOR_A_MANO)) {
+      malos.push(`  ${p}:${i + 1}  ${m[0]}   -> el color va en src/index.css, no acá`);
+    }
+  });
 }
 
 if (malos.length === 0) {

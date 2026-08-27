@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { armarRespaldo, contarFilas, estaCompleto, tablasDelEsquema, type Respaldo } from "./respaldo";
+import {
+  armarRespaldo,
+  contarFilas,
+  estaCompleto,
+  tablasDelEsquema,
+  type Respaldo,
+} from "./respaldo";
 
 /**
  * R46 — el respaldo incluye toda tabla nueva sin que nadie se acuerde de agregarla.
@@ -58,12 +64,11 @@ describe("un respaldo con errores no está completo", () => {
 });
 
 /** Un lector de mentira: un texto en vez de filas significa que esa tabla falla. */
-const leer = (porTabla: Record<string, unknown[] | string>) =>
-  async (tabla: string) => {
-    const v = porTabla[tabla];
-    if (typeof v === "string") return { data: null, error: { message: v } };
-    return { data: v ?? [], error: null };
-  };
+const leer = (porTabla: Record<string, unknown[] | string>) => async (tabla: string) => {
+  const v = porTabla[tabla];
+  if (typeof v === "string") return { data: null, error: { message: v } };
+  return { data: v ?? [], error: null };
+};
 
 describe("armarRespaldo", () => {
   /*

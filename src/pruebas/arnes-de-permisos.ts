@@ -88,19 +88,27 @@ export async function ponerLinea(
   // Se busca la línea VIVA, no cualquiera: puede haber varias anuladas de corridas anteriores, y
   // revivirlas todas chocaría contra el mismo índice parcial.
   const { data: viva } = await cliente
-    .from("tramite_conceptos").select("id")
-    .eq("tramite_id", tramiteId).eq("concepto_id", conceptoId)
-    .eq("momento", "presupuesto").eq("anulada", false)
+    .from("tramite_conceptos")
+    .select("id")
+    .eq("tramite_id", tramiteId)
+    .eq("concepto_id", conceptoId)
+    .eq("momento", "presupuesto")
+    .eq("anulada", false)
     .limit(1);
 
   if (viva && viva.length > 0) {
     const { error } = await cliente
-      .from("tramite_conceptos").update({ importe }).eq("id", viva[0]?.id ?? 0);
+      .from("tramite_conceptos")
+      .update({ importe })
+      .eq("id", viva[0]?.id ?? 0);
     return error?.message ?? null;
   }
 
   const { error } = await cliente.from("tramite_conceptos").insert({
-    tramite_id: tramiteId, concepto_id: conceptoId, momento: "presupuesto", importe,
+    tramite_id: tramiteId,
+    concepto_id: conceptoId,
+    momento: "presupuesto",
+    importe,
   });
   return error?.message ?? null;
 }

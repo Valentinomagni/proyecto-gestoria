@@ -53,7 +53,9 @@ function useAvisos() {
     queryFn: async (): Promise<Aviso[]> => {
       const { data, error } = await supabase
         .from("avisos")
-        .select("id, texto, contexto, creado_at, atendido_at, resolucion, perfiles!avisos_quien_fkey(email)")
+        .select(
+          "id, texto, contexto, creado_at, atendido_at, resolucion, perfiles!avisos_quien_fkey(email)",
+        )
         .order("creado_at", { ascending: false })
         .limit(100);
       if (error) throw error;
@@ -82,7 +84,8 @@ export function Avisos() {
     async (v: { id: number; resolucion: string }) => {
       const { data: sesion } = await supabase.auth.getUser();
       const quien = sesion.user?.id;
-      if (quien === undefined) throw new Error("regla_tramite: Se cerró la sesión. Entrá de nuevo.");
+      if (quien === undefined)
+        throw new Error("regla_tramite: Se cerró la sesión. Entrá de nuevo.");
 
       // Los tres datos juntos: la base tiene un check que exige la fecha y el responsable a la
       // vez, igual que en los plazos. Media atención no existe.
@@ -99,7 +102,12 @@ export function Avisos() {
     { exito: "Aviso atendido", invalidar: ["avisos"] },
   );
 
-  if (avisos.isLoading) return <Panel><SkeletonLineas cantidad={3} /></Panel>;
+  if (avisos.isLoading)
+    return (
+      <Panel>
+        <SkeletonLineas cantidad={3} />
+      </Panel>
+    );
 
   const pendientes = (avisos.data ?? []).filter((a) => a.atendido_at === null);
   const atendidos = (avisos.data ?? []).filter((a) => a.atendido_at !== null);
@@ -112,7 +120,9 @@ export function Avisos() {
         <p className="text-sm text-ink2">No hay avisos sin atender.</p>
       ) : (
         <p className="text-xs text-warn">
-          {pendientes.length === 1 ? "Hay 1 aviso sin atender." : `Hay ${pendientes.length} avisos sin atender.`}{" "}
+          {pendientes.length === 1
+            ? "Hay 1 aviso sin atender."
+            : `Hay ${pendientes.length} avisos sin atender.`}{" "}
           Con defectos abiertos no entran funciones nuevas: es la regla de la casa.
         </p>
       )}
@@ -128,10 +138,14 @@ export function Avisos() {
       {atendidos.length > 0 && (
         <details className="mt-2">
           <summary className="cursor-pointer text-xs text-ink2">
-            {atendidos.length === 1 ? "Ver el que ya se atendió" : `Ver los ${atendidos.length} ya atendidos`}
+            {atendidos.length === 1
+              ? "Ver el que ya se atendió"
+              : `Ver los ${atendidos.length} ya atendidos`}
           </summary>
           <div className="mt-2 flex flex-col">
-            {atendidos.map((a) => <UnAviso key={a.id} aviso={a} alAtender={null} />)}
+            {atendidos.map((a) => (
+              <UnAviso key={a.id} aviso={a} alAtender={null} />
+            ))}
           </div>
         </details>
       )}
@@ -140,7 +154,8 @@ export function Avisos() {
 }
 
 function UnAviso({
-  aviso, alAtender,
+  aviso,
+  alAtender,
 }: {
   aviso: Aviso;
   alAtender: ((resolucion: string) => void) | null;

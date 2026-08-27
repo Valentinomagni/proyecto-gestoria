@@ -65,7 +65,9 @@ export function tablasDelEsquema(tipos: { public: { Tables: Record<string, unkno
  * un arreglo vacio en su lugar. Un arreglo vacio se lee como "esa tabla no tenia filas", que es
  * mentira, y es exactamente como un respaldo incompleto pasa por completo.
  */
-export type LeerTabla = (tabla: string) => Promise<{ data: unknown[] | null; error: { message: string } | null }>;
+export type LeerTabla = (
+  tabla: string,
+) => Promise<{ data: unknown[] | null; error: { message: string } | null }>;
 
 export async function armarRespaldo(
   leer: LeerTabla,

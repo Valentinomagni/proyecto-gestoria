@@ -18,7 +18,10 @@ import { revisarCobertura } from "./plazos";
 
 const AÑO_COMPLETO = new Set(
   // Dieciséis días de un año cualquiera. No importa cuáles: importa cuántos.
-  Array.from({ length: 16 }, (_, i) => `2026-${String((i % 12) + 1).padStart(2, "0")}-${String(i + 1).padStart(2, "0")}`),
+  Array.from(
+    { length: 16 },
+    (_, i) => `2026-${String((i % 12) + 1).padStart(2, "0")}-${String(i + 1).padStart(2, "0")}`,
+  ),
 );
 
 describe("el aviso de cobertura", () => {

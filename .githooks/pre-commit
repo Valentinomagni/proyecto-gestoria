@@ -38,6 +38,12 @@ node scripts/estados-sanos.mjs || exit 1
 npx tsc --noEmit || exit 1
 npx oxlint || exit 1
 
+# EL FORMATO, desde el 27/08/2026. Entro cuando dejo de ser ruido: antes marcaba 93 de 128
+# archivos y casi todo era conversion de finales de linea, no formato. Con el .gitattributes
+# puesto y la prosa excluida, marca 0 — y un guardian que empieza en verde es el unico que se
+# puede exigir sin que alguien lo termine salteando con --no-verify.
+npx oxfmt --check . || exit 1
+
 CAMBIOS=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.tsx?$' || true)
 if [ -n "$CAMBIOS" ]; then
   npx vitest related --run $CAMBIOS || exit 1

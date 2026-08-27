@@ -15,7 +15,10 @@ import type { Novedad } from "../lib/novedades";
  * leen. Marcarlas al cerrar haría que el número siga ahí mientras se está mirando la lista.
  */
 export function Novedades({
-  lista, sinVer, alAbrirPanel, alAbrirTramite,
+  lista,
+  sinVer,
+  alAbrirPanel,
+  alAbrirTramite,
 }: {
   lista: Novedad[];
   sinVer: number;
@@ -44,8 +47,8 @@ export function Novedades({
           <h2 className="text-sm">Novedades</h2>
           {lista.length === 0 ? (
             <p className="text-2xs text-ink2">
-              Nada nuevo desde que entraste. Acá van a aparecer los trámites que muevan los
-              demás, sin que tengas que recargar.
+              Nada nuevo desde que entraste. Acá van a aparecer los trámites que muevan los demás,
+              sin que tengas que recargar.
             </p>
           ) : (
             lista.map((n) => (

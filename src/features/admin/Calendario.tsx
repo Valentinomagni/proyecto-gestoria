@@ -63,7 +63,9 @@ function usePlazosTodos() {
     queryFn: async (): Promise<FilaPlazo[]> => {
       const { data, error } = await supabase
         .from("plazos")
-        .select("id, clave, nombre, dias, habiles, consecuencia, norma, fuente, verificado_el, verificado_por")
+        .select(
+          "id, clave, nombre, dias, habiles, consecuencia, norma, fuente, verificado_el, verificado_por",
+        )
         .eq("activo", true)
         .order("clave");
       if (error) throw error;
@@ -88,7 +90,12 @@ function Plazos() {
     { exito: "Plazo confirmado", invalidar: ["plazos_todos", "plazos_usables"] },
   );
 
-  if (plazos.isLoading) return <Panel><SkeletonLineas cantidad={4} /></Panel>;
+  if (plazos.isLoading)
+    return (
+      <Panel>
+        <SkeletonLineas cantidad={4} />
+      </Panel>
+    );
 
   const sinConfirmar = (plazos.data ?? []).filter((p) => p.verificado_el === null).length;
 
@@ -97,8 +104,8 @@ function Plazos() {
       <h2 className="text-lg">Plazos</h2>
       <p className="text-xs text-ink2">
         Un plazo sin confirmar NO produce ningún vencimiento en la ficha del trámite. Es a
-        propósito: un sistema que avisa un vencimiento equivocado es peor que uno que no avisa
-        nada, porque el primero se deja de mirar.
+        propósito: un sistema que avisa un vencimiento equivocado es peor que uno que no avisa nada,
+        porque el primero se deja de mirar.
       </p>
       {sinConfirmar > 0 && (
         <p className="text-xs text-warn">
@@ -111,13 +118,23 @@ function Plazos() {
       )}
 
       {plazos.data?.map((p) => (
-        <UnPlazo key={p.id} plazo={p} alConfirmar={(quien) => confirmar.mutate({ id: p.id, quien })} />
+        <UnPlazo
+          key={p.id}
+          plazo={p}
+          alConfirmar={(quien) => confirmar.mutate({ id: p.id, quien })}
+        />
       ))}
     </Panel>
   );
 }
 
-function UnPlazo({ plazo, alConfirmar }: { plazo: FilaPlazo; alConfirmar: (quien: string) => void }) {
+function UnPlazo({
+  plazo,
+  alConfirmar,
+}: {
+  plazo: FilaPlazo;
+  alConfirmar: (quien: string) => void;
+}) {
   const [quien, setQuien] = useState("");
   const confirmado = plazo.verificado_el !== null;
 
@@ -133,7 +150,9 @@ function UnPlazo({ plazo, alConfirmar }: { plazo: FilaPlazo; alConfirmar: (quien
       <p className={`text-2xs ${confirmado ? "text-ink2" : "text-warn"}`}>{plazo.consecuencia}</p>
 
       {plazo.norma !== null && <p className="text-2xs text-ink2">{plazo.norma}</p>}
-      {plazo.fuente !== null && <p className="text-2xs text-ink2">De dónde salió: {plazo.fuente}</p>}
+      {plazo.fuente !== null && (
+        <p className="text-2xs text-ink2">De dónde salió: {plazo.fuente}</p>
+      )}
 
       {confirmado ? (
         <p className="flex items-center gap-1 text-2xs text-done">
@@ -204,10 +223,10 @@ function Feriados() {
     <Panel className="flex flex-col gap-3">
       <h2 className="text-lg">Feriados</h2>
       <p className="text-xs text-ink2">
-        Los feriados no se calculan: se cargan. Los trasladables se mueven por decreto y los
-        puentes turísticos se fijan cada año en el Boletín Oficial, así que una fórmula estaría
-        bien tres años y mal el cuarto — y el año que esté mal nadie lo notaría hasta que un
-        trámite venza tarde.
+        Los feriados no se calculan: se cargan. Los trasladables se mueven por decreto y los puentes
+        turísticos se fijan cada año en el Boletín Oficial, así que una fórmula estaría bien tres
+        años y mal el cuarto — y el año que esté mal nadie lo notaría hasta que un trámite venza
+        tarde.
       </p>
 
       <div className="flex flex-wrap items-end gap-2">

@@ -46,9 +46,10 @@ const PROHIBIDO: { patron: RegExp; motivo: string }[] = [
     // El guardian viejo no lo vio porque vigilaba la ARITMETICA (`* 100`, `.toFixed`) y esto
     // no es aritmetica: es leer mal lo que escribio una persona. La conversion mas peligrosa
     // no era la que hacia cuentas, era la que entraba el numero.
-    patron: /\b(importe|monto|saldo|costo|total|precio|arancel|deposito)\w*\s*[:=]\s*[^;]*\bNumber\s*\(/i,
+    patron:
+      /\b(importe|monto|saldo|costo|total|precio|arancel|deposito)\w*\s*[:=]\s*[^;]*\bNumber\s*\(/i,
     motivo:
-      "leer un importe escrito por una persona con Number(): Number(\"600.000\") vale 600. " +
+      'leer un importe escrito por una persona con Number(): Number("600.000") vale 600. ' +
       "Va parsear() o pesosDesdeTexto()",
   },
   {

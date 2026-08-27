@@ -45,7 +45,11 @@ import { Panel } from "./Panel";
  *  Los problemas aparecen en cualquier lado, y sobre todo en el peor momento — que es cuando
  *  nadie va a ponerse a buscar dónde estaba el botón.
  */
-export function Avisar({ pantalla, rol, tramiteId }: {
+export function Avisar({
+  pantalla,
+  rol,
+  tramiteId,
+}: {
   pantalla: string;
   rol: string;
   tramiteId: string | null;
@@ -59,7 +63,8 @@ export function Avisar({ pantalla, rol, tramiteId }: {
     try {
       const { data: sesion } = await supabase.auth.getUser();
       const quien = sesion.user?.id;
-      if (quien === undefined) throw new Error("regla_tramite: Se cerró la sesión. Entrá de nuevo.");
+      if (quien === undefined)
+        throw new Error("regla_tramite: Se cerró la sesión. Entrá de nuevo.");
 
       const { error } = await supabase.from("avisos").insert({
         // Vacío se guarda como vacío, no como cadena en blanco: es la diferencia entre

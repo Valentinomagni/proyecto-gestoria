@@ -39,7 +39,8 @@ const PROHIBIDO: { patron: RegExp; motivo: string }[] = [
     // El `(?<![\w:-])` es lo que distingue `text-sm` de `sm:text-sm`, y no es un detalle: la
     // primera version del patron marcaba `text-base sm:text-sm`, que es JUSTO la forma
     // correcta. Un guardian que marca lo correcto se desactiva a la semana.
-    patron: /<input(?![^>]*type="(checkbox|radio)")[^>]*className="[^"]*(?<![\w:-])text-(2xs|xs|sm)\b/,
+    patron:
+      /<input(?![^>]*type="(checkbox|radio)")[^>]*className="[^"]*(?<![\w:-])text-(2xs|xs|sm)\b/,
     motivo:
       "un campo de texto de menos de 16 px: Safari en iPhone hace zoom solo al tocarlo. " +
       "Va text-base, o text-base sm:text-sm",

@@ -144,6 +144,8 @@ if (malos.length === 0) {
 
 console.error("\n  Hay indices unicos parciales que NO excluyen lo anulado:\n");
 console.error(malos.join("\n\n"));
-console.error("\n  Consecuencia: lo anulado sigue ocupando el lugar y no se puede volver a cargar.");
+console.error(
+  "\n  Consecuencia: lo anulado sigue ocupando el lugar y no se puede volver a cargar.",
+);
 console.error("  Ya paso dos veces. Agregale la condicion al WHERE del indice.\n");
 process.exit(1);

@@ -87,7 +87,9 @@ export function Tarjeta() {
           className={CAMPO_SUELTO}
         >
           {saldos.data?.map((s) => (
-            <option key={s.tarjeta_id} value={s.tarjeta_id}>{s.nombre}</option>
+            <option key={s.tarjeta_id} value={s.tarjeta_id}>
+              {s.nombre}
+            </option>
           ))}
         </select>
       </div>
@@ -110,31 +112,31 @@ export function Tarjeta() {
           </p>
         </Panel>
       ) : (
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Cifra
-          rotulo="Saldo día de hoy"
-          valor={saldo.contable}
-          ayuda="Lo acreditado. Tiene que coincidir con el sitio."
-        />
-        <Cifra
-          rotulo="Depósito pendiente de acreditación"
-          valor={saldo.en_transito}
-          ayuda="Ordenado, acredita mañana. Todavía no se puede gastar."
-          apagado
-        />
-        <Cifra
-          rotulo="Saldo reservado"
-          valor={saldo.comprometido}
-          ayuda="Presupuestos cargados y sin pagar."
-        />
-        <Cifra
-          rotulo="Diferencia"
-          valor={diferencia}
-          ayuda="Saldo de hoy menos lo reservado. Con esto se decide si se presenta."
-          destacado
-          alerta={diferencia < 0}
-        />
-      </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Cifra
+            rotulo="Saldo día de hoy"
+            valor={saldo.contable}
+            ayuda="Lo acreditado. Tiene que coincidir con el sitio."
+          />
+          <Cifra
+            rotulo="Depósito pendiente de acreditación"
+            valor={saldo.en_transito}
+            ayuda="Ordenado, acredita mañana. Todavía no se puede gastar."
+            apagado
+          />
+          <Cifra
+            rotulo="Saldo reservado"
+            valor={saldo.comprometido}
+            ayuda="Presupuestos cargados y sin pagar."
+          />
+          <Cifra
+            rotulo="Diferencia"
+            valor={diferencia}
+            ayuda="Saldo de hoy menos lo reservado. Con esto se decide si se presenta."
+            destacado
+            alerta={diferencia < 0}
+          />
+        </div>
       )}
 
       <Operaciones
@@ -149,10 +151,19 @@ export function Tarjeta() {
 }
 
 function Cifra({
-  rotulo, valor, ayuda, destacado = false, apagado = false, alerta = false,
+  rotulo,
+  valor,
+  ayuda,
+  destacado = false,
+  apagado = false,
+  alerta = false,
 }: {
-  rotulo: string; valor: number; ayuda: string;
-  destacado?: boolean; apagado?: boolean; alerta?: boolean;
+  rotulo: string;
+  valor: number;
+  ayuda: string;
+  destacado?: boolean;
+  apagado?: boolean;
+  alerta?: boolean;
 }) {
   return (
     <Panel>

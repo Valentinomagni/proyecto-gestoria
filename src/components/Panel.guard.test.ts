@@ -104,14 +104,20 @@ describe("guardian de Panel", () => {
 
   it("los dos patrones distinguen lo bueno de lo malo", () => {
     // Existe porque un guardian que marca codigo correcto se desactiva a la semana.
-    expect(SOMBRA_INVALIDA.test('style={{ boxShadow: "var(--ring-sh),var(--shadow)" }}')).toBe(false);
+    expect(SOMBRA_INVALIDA.test('style={{ boxShadow: "var(--ring-sh),var(--shadow)" }}')).toBe(
+      false,
+    );
     expect(SOMBRA_INVALIDA.test('style={{ boxShadow: "var(--ring),var(--shadow)" }}')).toBe(true);
-    expect(TARJETA_A_MANO.test('<div className="bg-surface border border-line rounded-xl">')).toBe(true);
+    expect(TARJETA_A_MANO.test('<div className="bg-surface border border-line rounded-xl">')).toBe(
+      true,
+    );
     expect(TARJETA_A_MANO.test('<div className="bg-surface2 p-4">')).toBe(false);
     // `border-line` sin `bg-surface` es un separador, no una tarjeta.
     expect(TARJETA_A_MANO.test('<div className="border-t border-line">')).toBe(false);
     // Un comentario que ENSENIA la trampa no es una violacion; una linea de codigo si.
-    expect(esComentario(" * Escribir `box-shadow: var(--ring), var(--shadow)` esta mal")).toBe(true);
+    expect(esComentario(" * Escribir `box-shadow: var(--ring), var(--shadow)` esta mal")).toBe(
+      true,
+    );
     expect(esComentario('  style={{ boxShadow: "var(--ring),var(--shadow)" }}')).toBe(false);
   });
 });

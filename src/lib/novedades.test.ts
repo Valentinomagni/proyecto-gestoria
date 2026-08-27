@@ -89,7 +89,8 @@ describe("la misma novedad no se cuenta dos veces", () => {
 
   it("y hay un tope, porque una campana con doscientas lineas no se lee", () => {
     let lista: ReturnType<typeof sumarNovedad> = [];
-    for (let i = 1; i <= 60; i++) lista = sumarNovedad(lista, N(i, `2026-08-20T10:00:${String(i).padStart(2, "0")}.000Z`), 50);
+    for (let i = 1; i <= 60; i++)
+      lista = sumarNovedad(lista, N(i, `2026-08-20T10:00:${String(i).padStart(2, "0")}.000Z`), 50);
     expect(lista).toHaveLength(50);
     expect(lista[0]?.id).toBe(60);
   });

@@ -4,7 +4,6 @@ import {
   esRolValido,
   estaHabilitado,
   nombreDeRol,
-
   puedeMoverSaldo,
   puedeVerCobros,
 } from "./roles";

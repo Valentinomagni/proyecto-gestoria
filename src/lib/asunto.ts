@@ -46,9 +46,32 @@ const REFERENCIA = /\bREF\.?\s?(\d{4,10})\b/i;
  * limpiarlas quedaba solo "DE". El cliente real, MUÑOZ ELIZABETH, no se miraba nunca.
  */
 const PALABRAS_QUE_NO_SON_NOMBRE = new Set([
-  "PATENTAMIENTO", "PATENTAMIENNTO", "TRANSFERENCIA", "PLAN", "DE", "AHORRO", "UNIDAD",
-  "REF", "PARIS", "PARÍS", "AUTOS", "CARS", "MOTOR", "TRAC", "DORAL", "CHEVROLET",
-  "CITROEN", "PEUGEOT", "VOLKSWAGEN", "FIAT", "RENAULT", "A", "AL", "EL", "LA", "Y",
+  "PATENTAMIENTO",
+  "PATENTAMIENNTO",
+  "TRANSFERENCIA",
+  "PLAN",
+  "DE",
+  "AHORRO",
+  "UNIDAD",
+  "REF",
+  "PARIS",
+  "PARÍS",
+  "AUTOS",
+  "CARS",
+  "MOTOR",
+  "TRAC",
+  "DORAL",
+  "CHEVROLET",
+  "CITROEN",
+  "PEUGEOT",
+  "VOLKSWAGEN",
+  "FIAT",
+  "RENAULT",
+  "A",
+  "AL",
+  "EL",
+  "LA",
+  "Y",
 ]);
 
 /** Una palabra que puede ser parte de un nombre: mayusculas, sin digitos, dos letras o mas. */
@@ -134,8 +157,9 @@ export function parsearAsunto(asunto: string): AsuntoParseado {
 
   // El parentesis solo cuenta como cuenta si NO es el que trae el REF adentro.
   const sueltoEntreParentesis =
-    [...t.matchAll(/\((\d{4,8})\)/g)].map((m) => m[1]).find((n) => n !== undefined && n !== referencia) ??
-    null;
+    [...t.matchAll(/\((\d{4,8})\)/g)]
+      .map((m) => m[1])
+      .find((n) => n !== undefined && n !== referencia) ?? null;
 
   const cuenta = CUENTA.exec(t)?.[1] ?? sueltoEntreParentesis;
 

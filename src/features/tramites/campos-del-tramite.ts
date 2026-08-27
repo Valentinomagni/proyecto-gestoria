@@ -16,9 +16,18 @@ import type { Database } from "../../lib/database.types";
  * Es la misma razón por la que el resto del proyecto arma sus parches con el tipo generado.
  */
 type ColumnaEditable =
-  | "cliente_nombre" | "oferta_referencia" | "cliente_cuenta" | "vehiculo" | "dominio"
-  | "subtipo" | "gestora_id" | "administrativo" | "seccional" | "numero_pago_registro"
-  | "documentacion_retirada" | "observaciones_gestora";
+  | "cliente_nombre"
+  | "oferta_referencia"
+  | "cliente_cuenta"
+  | "vehiculo"
+  | "dominio"
+  | "subtipo"
+  | "gestora_id"
+  | "administrativo"
+  | "seccional"
+  | "numero_pago_registro"
+  | "documentacion_retirada"
+  | "observaciones_gestora";
 
 type ColumnasDeTramite = keyof Database["public"]["Tables"]["tramites"]["Update"];
 type ColumnasQueExisten = ColumnaEditable extends ColumnasDeTramite ? true : never;
@@ -91,12 +100,27 @@ const OFICINA: Rol[] = ["contable", "gerencia"];
 const TODAS: Rol[] = ["gestora", "contable", "gerencia"];
 
 export const CAMPOS: CampoEditable[] = [
-  { columna: "cliente_nombre", nombre: "Cliente", como: "texto", roles: OFICINA,
-    obligatorio: true },
-  { columna: "oferta_referencia", nombre: "Referencia de la oferta", como: "texto",
-    ayuda: "Con esto se ubica el trámite después", roles: OFICINA },
-  { columna: "cliente_cuenta", nombre: "Cuenta personal", como: "texto",
-    ayuda: "En el asunto del mail viene entre paréntesis", roles: OFICINA },
+  {
+    columna: "cliente_nombre",
+    nombre: "Cliente",
+    como: "texto",
+    roles: OFICINA,
+    obligatorio: true,
+  },
+  {
+    columna: "oferta_referencia",
+    nombre: "Referencia de la oferta",
+    como: "texto",
+    ayuda: "Con esto se ubica el trámite después",
+    roles: OFICINA,
+  },
+  {
+    columna: "cliente_cuenta",
+    nombre: "Cuenta personal",
+    como: "texto",
+    ayuda: "En el asunto del mail viene entre paréntesis",
+    roles: OFICINA,
+  },
   { columna: "vehiculo", nombre: "Vehículo", como: "texto", roles: OFICINA },
 
   /*
@@ -105,8 +129,13 @@ export const CAMPOS: CampoEditable[] = [
   */
   { columna: "dominio", nombre: "Dominio", como: "texto", roles: TODAS },
 
-  { columna: "subtipo", nombre: "Modalidad", como: "modalidad",
-    ayuda: "Sólo en patentamientos", roles: OFICINA },
+  {
+    columna: "subtipo",
+    nombre: "Modalidad",
+    como: "modalidad",
+    ayuda: "Sólo en patentamientos",
+    roles: OFICINA,
+  },
 
   /*
     ESTE ES EL PEDIDO, TEXTUAL: "que permita modificar datos, por ejemplo la gestora que realiza
@@ -114,20 +143,49 @@ export const CAMPOS: CampoEditable[] = [
     reparte distinto. Sin poder cambiarlo, el trámite le sigue apareciendo a quien no está y no
     le aparece a quien lo tiene en la mano.
   */
-  { columna: "gestora_id", nombre: "Gestora", como: "gestora",
-    ayuda: "A quién le aparece el trámite", roles: OFICINA },
+  {
+    columna: "gestora_id",
+    nombre: "Gestora",
+    como: "gestora",
+    ayuda: "A quién le aparece el trámite",
+    roles: OFICINA,
+  },
 
-  { columna: "administrativo", nombre: "Administrativo a cargo", como: "administrativo",
-    ayuda: "Quién lo lleva desde administración", roles: OFICINA },
+  {
+    columna: "administrativo",
+    nombre: "Administrativo a cargo",
+    como: "administrativo",
+    ayuda: "Quién lo lleva desde administración",
+    roles: OFICINA,
+  },
 
-  { columna: "seccional", nombre: "Seccional", como: "texto",
-    ayuda: "Dónde se presentó. Hace falta para resolverlo en el registro", roles: TODAS },
-  { columna: "numero_pago_registro", nombre: "N° de pago", como: "texto",
-    ayuda: "Con él la conciliación empareja sola", roles: TODAS },
-  { columna: "documentacion_retirada", nombre: "Documentación retirada", como: "texto",
-    ayuda: "Título, cédula y chapas", roles: TODAS },
-  { columna: "observaciones_gestora", nombre: "Observaciones de gestoría", como: "texto",
-    roles: TODAS },
+  {
+    columna: "seccional",
+    nombre: "Seccional",
+    como: "texto",
+    ayuda: "Dónde se presentó. Hace falta para resolverlo en el registro",
+    roles: TODAS,
+  },
+  {
+    columna: "numero_pago_registro",
+    nombre: "N° de pago",
+    como: "texto",
+    ayuda: "Con él la conciliación empareja sola",
+    roles: TODAS,
+  },
+  {
+    columna: "documentacion_retirada",
+    nombre: "Documentación retirada",
+    como: "texto",
+    ayuda: "Título, cédula y chapas",
+    roles: TODAS,
+  },
+  {
+    columna: "observaciones_gestora",
+    nombre: "Observaciones de gestoría",
+    como: "texto",
+    roles: TODAS,
+  },
 ];
 
 /** Los campos que ese rol puede editar. */

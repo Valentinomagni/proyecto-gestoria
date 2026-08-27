@@ -40,7 +40,10 @@ export function App() {
   return (
     <Shell
       pantalla={pantalla}
-      alNavegar={(p: Pantalla) => { setPantalla(p); setTramiteAbierto(null); }}
+      alNavegar={(p: Pantalla) => {
+        setPantalla(p);
+        setTramiteAbierto(null);
+      }}
       novedades={novedades}
       alAbrirTramite={abrir}
     >
@@ -60,4 +63,3 @@ export function App() {
     </Shell>
   );
 }
-

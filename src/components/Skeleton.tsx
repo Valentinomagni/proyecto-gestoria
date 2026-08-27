@@ -12,15 +12,18 @@ import { cn } from "../lib/ui";
  */
 export function Skeleton({ className }: { className?: string }) {
   return (
-    <div
-      aria-hidden="true"
-      className={cn("bg-surface2 rounded-md animate-pulse", className)}
-    />
+    <div aria-hidden="true" className={cn("bg-surface2 rounded-md animate-pulse", className)} />
   );
 }
 
 /** Varias barras apiladas, para una lista o un bloque de texto. */
-export function SkeletonLineas({ cantidad = 3, className }: { cantidad?: number; className?: string }) {
+export function SkeletonLineas({
+  cantidad = 3,
+  className,
+}: {
+  cantidad?: number;
+  className?: string;
+}) {
   return (
     <div aria-busy="true" className={cn("flex flex-col gap-2", className)}>
       {Array.from({ length: cantidad }, (_, i) => (

@@ -41,8 +41,16 @@ export interface Linea {
 }
 
 export function Presupuesto({
-  titulo, ayuda, rotuloTotal, lineas, conceptos, editable,
-  alAgregar, alCorregir, alQuitar, guardando,
+  titulo,
+  ayuda,
+  rotuloTotal,
+  lineas,
+  conceptos,
+  editable,
+  alAgregar,
+  alCorregir,
+  alQuitar,
+  guardando,
 }: {
   titulo: string;
   ayuda: string;
@@ -105,7 +113,11 @@ export function Presupuesto({
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setQuitando(l.id); setMotivo(""); setCorrigiendo(null); }}
+                        onClick={() => {
+                          setQuitando(l.id);
+                          setMotivo("");
+                          setCorrigiendo(null);
+                        }}
                         className={ACCION_CHICA}
                       >
                         Quitar
@@ -140,7 +152,11 @@ export function Presupuesto({
                   >
                     Guardar el importe
                   </button>
-                  <button type="button" onClick={() => setCorrigiendo(null)} className="text-sm text-ink2">
+                  <button
+                    type="button"
+                    onClick={() => setCorrigiendo(null)}
+                    className="text-sm text-ink2"
+                  >
                     Cancelar
                   </button>
                 </div>
@@ -157,12 +173,19 @@ export function Presupuesto({
                   <button
                     type="button"
                     disabled={motivo.trim() === "" || guardando}
-                    onClick={() => { alQuitar(l.id, motivo.trim()); setQuitando(null); }}
+                    onClick={() => {
+                      alQuitar(l.id, motivo.trim());
+                      setQuitando(null);
+                    }}
                     className="min-h-11 rounded-md border border-line px-3 py-2 text-sm disabled:opacity-50"
                   >
                     Quitar la línea
                   </button>
-                  <button type="button" onClick={() => setQuitando(null)} className="text-sm text-ink2">
+                  <button
+                    type="button"
+                    onClick={() => setQuitando(null)}
+                    className="text-sm text-ink2"
+                  >
                     Cancelar
                   </button>
                 </div>
@@ -187,7 +210,11 @@ export function Presupuesto({
             className={CAMPO_SUELTO}
           >
             <option value="">Concepto</option>
-            {disponibles.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+            {disponibles.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nombre}
+              </option>
+            ))}
           </select>
           <input
             inputMode="decimal"

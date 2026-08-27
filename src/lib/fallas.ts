@@ -117,7 +117,8 @@ export function clasificarFalla(e: unknown, online: boolean): Falla {
     return {
       tipo: "sin-conexion",
       titulo: "Sin conexión",
-      explicacion: "No hay internet. Cuando vuelva, probá de nuevo: no se perdió nada de lo que cargaste.",
+      explicacion:
+        "No hay internet. Cuando vuelva, probá de nuevo: no se perdió nada de lo que cargaste.",
       accion: "reintentar",
       detalleTecnico,
     };
@@ -127,7 +128,8 @@ export function clasificarFalla(e: unknown, online: boolean): Falla {
     return {
       tipo: "version-vieja",
       titulo: "Hay una versión nueva",
-      explicacion: "Se publicó una actualización mientras tenías la página abierta. Actualizá para seguir.",
+      explicacion:
+        "Se publicó una actualización mientras tenías la página abierta. Actualizá para seguir.",
       accion: "actualizar",
       detalleTecnico,
     };
@@ -149,7 +151,8 @@ export function clasificarFalla(e: unknown, online: boolean): Falla {
     return {
       tipo: "version-vieja",
       titulo: "Hay una versión nueva",
-      explicacion: "Tu navegador está usando una versión anterior del sistema. Actualizá para seguir.",
+      explicacion:
+        "Tu navegador está usando una versión anterior del sistema. Actualizá para seguir.",
       accion: "actualizar",
       detalleTecnico,
     };
@@ -173,7 +176,8 @@ export function clasificarFalla(e: unknown, online: boolean): Falla {
       return {
         tipo: "duplicado",
         titulo: "Ese dominio ya tiene un patentamiento",
-        explicacion: "Un 0km se patenta una sola vez. Mirá el trámite que ya existe antes de cargar otro.",
+        explicacion:
+          "Un 0km se patenta una sola vez. Mirá el trámite que ya existe antes de cargar otro.",
         accion: "ver-existente",
         detalleTecnico,
       };
@@ -213,7 +217,8 @@ export function clasificarFalla(e: unknown, online: boolean): Falla {
   return {
     tipo: "desconocida",
     titulo: "Algo salió mal",
-    explicacion: "No pudimos completar la acción. Probá de nuevo, y si sigue pasando avisá con el botón de reportar.",
+    explicacion:
+      "No pudimos completar la acción. Probá de nuevo, y si sigue pasando avisá con el botón de reportar.",
     accion: "reintentar",
     detalleTecnico,
   };
