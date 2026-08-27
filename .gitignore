@@ -55,3 +55,9 @@ blob-report/
 # Fuente original del pedido: se conserva, pero el .docx es binario y no aporta al diff.
 # El texto extraido si esta versionado, en docs/fuente/.
 *.docx
+
+# Lo que genera Playwright al correr. Las capturas de referencia SI se versionan; lo que
+# produce una corrida, no.
+test-results/
+playwright-report/
+e2e/**/*-snapshots/*-actual.png
