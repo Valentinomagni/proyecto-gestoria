@@ -289,6 +289,58 @@ export function useSaldos() {
   });
 }
 
+/** Un tramite presupuestado cuya tarjeta no cubre lo comprometido. */
+export type EsperandoPlata = {
+  tramite_id: string;
+  cliente_nombre: string;
+  oferta_referencia: string | null;
+  tarjeta_id: string;
+  pide: number;
+  falta: number;
+};
+
+/**
+ * ============================================================================
+ *  QUIEN ESTA ESPERANDO PLATA. NADIE LO MARCA: SE DEDUCE.
+ * ============================================================================
+ *
+ * Antes esto era un estado, `frenado_por_saldo`, que alguien tenia que marcar y sobre todo
+ * DESMARCAR cuando entraba el deposito. El desmarcado es el que se olvidaba, asi que la pantalla
+ * decia que estaba detenido algo que ya podia salir.
+ *
+ * Ahora sale de `v_esperando_plata`, que compara la tarjeta contra lo comprometido. Si entra
+ * plata, el tramite se cae de esta lista solo.
+ *
+ * `falta` ES DE LA TARJETA Y NO DEL TRAMITE, y por eso se repite en todas las filas de la misma
+ * tarjeta. La plata es de la tarjeta y se la reparten todos los presupuestos vivos: si hay tres
+ * tramites de 60 contra un saldo de 100, ninguno de los tres sale tranquilo aunque cualquiera de
+ * ellos entre solo. Lo que hay que depositar es la diferencia de la tarjeta, UNA VEZ, y no la
+ * suma de lo que pide cada uno.
+ *
+ * La invalida el mismo canal en vivo que los saldos: si no, entraria el deposito y la lista
+ * seguiria mostrando gente esperando — que es exactamente el defecto que esto vino a arreglar.
+ */
+export function useEsperandoPlata() {
+  return useQuery({
+    queryKey: ["esperando_plata"],
+    queryFn: async (): Promise<EsperandoPlata[]> => {
+      const { data, error } = await supabase
+        .from("v_esperando_plata")
+        .select("tramite_id, cliente_nombre, oferta_referencia, tarjeta_id, pide, falta")
+        .order("presupuestado_at");
+      if (error) throw error;
+      return (data ?? []).map((t) => ({
+        tramite_id: String(t.tramite_id),
+        cliente_nombre: String(t.cliente_nombre),
+        oferta_referencia: t.oferta_referencia,
+        tarjeta_id: String(t.tarjeta_id),
+        pide: aNumero(t.pide),
+        falta: aNumero(t.falta),
+      }));
+    },
+  });
+}
+
 /**
  * El saldo se entera solo cuando otro lo mueve.
  *
@@ -304,10 +356,20 @@ export function useSaldosEnVivo(cliente: QueryClient): void {
       .on("postgres_changes", { event: "*", schema: "public", table: "movimientos" }, () => {
         void cliente.invalidateQueries({ queryKey: ["saldos"] });
         void cliente.invalidateQueries({ queryKey: ["movimientos"] });
+        /*
+          LA LISTA DE QUIEN ESPERA PLATA SE VA CON EL MISMO GOLPE que el saldo, y no es un extra.
+
+          Si no se invalidara, entraria el deposito, el saldo subiria en pantalla, y la lista
+          seguiria mostrando gente esperando plata que ya esta. Eso es EXACTAMENTE el defecto que
+          esta lista vino a arreglar: `frenado_por_saldo` fallaba porque nadie se acordaba de
+          desmarcar. Dejarla sin invalidar seria reponer el mismo defecto con otra forma.
+        */
+        void cliente.invalidateQueries({ queryKey: ["esperando_plata"] });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "tramites" }, () => {
         void cliente.invalidateQueries({ queryKey: ["tramites"] });
         void cliente.invalidateQueries({ queryKey: ["saldos"] });
+        void cliente.invalidateQueries({ queryKey: ["esperando_plata"] });
       })
       .subscribe();
     return () => void supabase.removeChannel(canal);

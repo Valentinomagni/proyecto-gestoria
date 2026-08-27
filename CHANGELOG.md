@@ -22,8 +22,25 @@ control, sólo juntó el momento en que se contestan.
 **"Frenado por falta de saldo" dejó de ser un estado.** Alguien tenía que marcarlo, y sobre todo
 tenía que **desmarcarlo** cuando entraba plata — y eso se olvidaba, así que la pantalla decía que
 estaba detenido algo que ya podía salir. Ahora se calcula: un trámite presupuestado cuya tarjeta
-no alcanza está esperando plata, y **deja de estarlo solo** en cuanto el depósito acredita. Y se
-ve **cuánto falta depositar**, que es lo que hay que saber para pedirlo.
+no alcanza está esperando plata, y **deja de estarlo solo** en cuanto el depósito acredita.
+
+En Pedidos de fondos hay un bloque nuevo, **Esperando plata**, agrupado por tarjeta y con
+**cuánto falta depositar** en cada una. Está agrupado y no listado uno por uno a propósito: la
+plata es de la tarjeta y se la reparten todos los presupuestos vivos, así que se deposita **una
+vez** la diferencia de la tarjeta y salen todos. Listarlo trámite por trámite haría pensar que
+hay que depositar el triple.
+
+**El botón dice de antemano qué va a pedir.** "Resolver en el registro" necesita tres cosas —la
+seccional, el costo real y qué documentación retiraste— y la base las valida de a una, así que
+antes había que apretar cuatro veces y leer tres errores rojos para completarlas. Ahora el panel
+lo dice antes: *"Vas a necesitar la seccional, el costo real por concepto y qué documentación
+retiraste"*. Vale para todos los pasos, no sólo para ése.
+
+**Y los mensajes de error están escritos en castellano de verdad.** Decían "Anota que
+documentacion retiraste" y "Escribi por que se anula", sin una sola tilde. Sin tilde eso no es
+voseo: "Anota" es otra persona. Los diecisiete ahora están acentuados, y tres que no decían qué
+hacer ahora lo dicen — el de la razón social sin tarjeta termina indicando a quién avisarle,
+porque desde la ficha no se puede arreglar.
 
 **El saldo inicial de una tarjeta se puede volver a cargar después de anularlo.** Antes decía que
 el dato ya había sido ingresado, y dos tarjetas quedaron sin poder arrancar. Era un defecto, y era

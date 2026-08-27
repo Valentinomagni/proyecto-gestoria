@@ -47,12 +47,39 @@ import { Chip, nombreDeEstado } from "./Listado";
  * SI ACA APARECIERA UN ESTADO QUE LA BASE YA NO ACEPTA, el boton se veria bien y fallaria contra
  * un check al apretarlo. Esta lista y `tramites_estado_valido` se mueven juntas.
  */
-const SIGUIENTE: Record<string, { estado: string; boton: string } | undefined> = {
-  recibido: { estado: "controlado", boton: "Marcar como controlado" },
-  controlado: { estado: "entregado", boton: "Entregar a la gestora" },
-  entregado: { estado: "presupuestado", boton: "Cargar el presupuesto" },
-  presupuestado: { estado: "resuelto", boton: "Resolver en el registro" },
-  resuelto: { estado: "devuelto", boton: "Entregar a administración" },
+const SIGUIENTE: Record<
+  string,
+  { estado: string; boton: string; pide?: string } | undefined
+> = {
+  recibido: {
+    estado: "controlado",
+    boton: "Marcar como controlado",
+    pide: "el legajo contestado entero, sin requisitos en blanco",
+  },
+  controlado: {
+    estado: "entregado",
+    boton: "Entregar a la gestora",
+    pide: "elegir la gestora que lo lleva",
+  },
+  entregado: {
+    estado: "presupuestado",
+    boton: "Cargar el presupuesto",
+    pide: "al menos una línea del presupuesto, con su importe",
+  },
+  presupuestado: {
+    estado: "resuelto",
+    boton: "Resolver en el registro",
+    pide: "la seccional, el costo real por concepto y qué documentación retiraste",
+  },
+  /*
+    "DEVOLVER" Y NO "ENTREGAR", aunque el paso de arriba tambien entregue.
+
+    El estado que queda se llama "Devuelto", y el chip del listado lo dice asi. Si el boton dijera
+    "Entregar", la gestora apretaria una palabra y el sistema le contestaria con otra. Ademas
+    "Entregar a la gestora" ya existe tres pasos antes: dos botones con el mismo verbo en los dos
+    extremos de la cadena se confunden justo cuando alguien va apurado.
+  */
+  resuelto: { estado: "devuelto", boton: "Devolver a administración" },
 };
 
 /** Estados en los que el presupuesto ya no se toca: la reserva ya se libero. */
@@ -234,12 +261,28 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
         Y SI FALTA UN DATO, LO DICE LA BASE, con su mensaje en castellano: "Falta indicar en qué
         seccional se presentó". Eso es mejor que una lista de requisitos acá arriba, que se
         desincronizaría el día que cambie una regla del trigger.
+
+        PERO AVISAR QUE VA A PEDIR NO ES LO MISMO QUE VALIDAR, y esa distinción costó cuatro
+        viajes a la ventanilla. "Resolver en el registro" pide TRES cosas —la seccional, el costo
+        real y la documentación— y el trigger las valida de a una, cortando en la primera que
+        falta. O sea que la gestora apretaba, leía un error rojo, cargaba un dato, apretaba,
+        leía otro error rojo, y así cuatro veces, parada en el registro con el legajo en la mano.
+
+        Antes eran tres botones, y cada uno pedía UNA cosa en su momento. Fundirlos en uno no
+        sacó trabajo: sacó las señales, y agregó tres rechazos en el medio. Un rechazo por
+        intentar hacer lo correcto enseña a desconfiar de la pantalla.
+
+        `pide` no valida nada y por eso no se puede desincronizar con el trigger: sólo dice de
+        antemano qué va a hacer falta. Convierte cuatro intentos en uno.
       */}
       {paso ? (
         <Panel className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-2xs text-ink2">Paso siguiente</p>
             <p className="text-sm">{paso.boton}</p>
+            {paso.pide !== undefined && (
+              <p className="text-xs text-ink2">Vas a necesitar {paso.pide}.</p>
+            )}
           </div>
           <button
             type="button"
@@ -299,7 +342,7 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
       */}
       <Presupuesto
         titulo="Presupuesto"
-        ayuda="Es lo que se reserva de la tarjeta. Cambia solo cuando cambia una línea."
+        ayuda="Es lo que se reserva de la tarjeta. Sólo cambia cuando cambia una línea."
         rotuloTotal="Total que se pide"
         lineas={presupuesto}
         conceptos={conceptos.data ?? []}
@@ -313,7 +356,7 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
 
       <Presupuesto
         titulo="Costo real"
-        ayuda="Lo que de verdad se pagó en la ventanilla. Se carga antes de marcarlo como pagado."
+        ayuda="Lo que de verdad se pagó en la ventanilla. Cargalo antes de resolverlo en el registro."
         rotuloTotal="Total pagado"
         lineas={reales}
         conceptos={conceptos.data ?? []}

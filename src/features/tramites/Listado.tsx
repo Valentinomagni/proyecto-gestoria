@@ -20,7 +20,7 @@ import { useBorrador } from "../../lib/borrador";
  */
 
 /**
- * Los siete estados de la cadena.
+ * Los seis estados de la cadena, más `anulado`, que no es un paso sino la salida.
  *
  * ERAN DIEZ. `presentado`, `pagado` y `retirado` se fundieron en `resuelto` porque eran tres
  * botones para UN SOLO VIAJE al registro: la gestora presenta, paga y retira en la misma

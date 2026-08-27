@@ -191,7 +191,9 @@ describe("un movimiento cargado mal se anula, y solo desde la oficina", () => {
   it("gerencia tampoco puede anular sin escribir el motivo", async () => {
     const { error } = await gerencia.rpc("anular_movimiento", { p_id: unIngreso, p_motivo: "   " });
     expect(error).not.toBeNull();
-    expect(error?.message ?? "").toContain("por que se anula");
+    // CON LAS TILDES. El 27/08/2026 los mensajes se escribieron en castellano de verdad, y esta
+    // prueba fue una de las dos que lo agarraron: fija el TEXTO, no sólo que haya error.
+    expect(error?.message ?? "").toContain("Escribí por qué se anula");
   });
 
   it("y una RESERVA no se anula desde la cuenta, ni siendo gerencia", async () => {
@@ -205,7 +207,7 @@ describe("un movimiento cargado mal se anula, y solo desde la oficina", () => {
       p_id: unaReserva, p_motivo: "probando",
     });
     expect(error).not.toBeNull();
-    expect(error?.message ?? "").toContain("lo genero un tramite");
+    expect(error?.message ?? "").toContain("lo generó un trámite");
   });
 
   it("gerencia SI anula un deposito cargado mal, y el saldo vuelve a donde estaba", async () => {
@@ -338,9 +340,19 @@ describe("la cadena de seis estados", () => {
       por la base, no ignorado en silencio: si se ignorara, el tramite se quedaria donde estaba y
       la pantalla diria que guardo.
     */
-    for (const viejo of ["presentado", "pagado", "retirado", "frenado_por_saldo"]) {
-      const { error } = await gerencia
-        .from("tramites").update({ estado: viejo }).eq("id", elTramite);
+    const VIEJOS = ["presentado", "pagado", "retirado", "frenado_por_saldo"];
+
+    // Van en paralelo y no en fila: los cuatro los rechaza el mismo `check`, ninguno llega a
+    // tocar la fila, y entonces el orden entre ellos no cambia nada.
+    const rechazos = await Promise.all(
+      VIEJOS.map(async (viejo) => {
+        const { error } = await gerencia
+          .from("tramites").update({ estado: viejo }).eq("id", elTramite);
+        return { viejo, error };
+      }),
+    );
+
+    for (const { viejo, error } of rechazos) {
       expect(error, `el estado viejo ${viejo} deberia ser rechazado`).not.toBeNull();
     }
   });

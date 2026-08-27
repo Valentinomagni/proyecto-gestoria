@@ -121,7 +121,7 @@ export const CAMPOS: CampoEditable[] = [
     ayuda: "Quién lo lleva desde administración", roles: OFICINA },
 
   { columna: "seccional", nombre: "Seccional", como: "texto",
-    ayuda: "Dónde se presentó. Hace falta para marcarlo como presentado", roles: TODAS },
+    ayuda: "Dónde se presentó. Hace falta para resolverlo en el registro", roles: TODAS },
   { columna: "numero_pago_registro", nombre: "N° de pago", como: "texto",
     ayuda: "Con él la conciliación empareja sola", roles: TODAS },
   { columna: "documentacion_retirada", nombre: "Documentación retirada", como: "texto",

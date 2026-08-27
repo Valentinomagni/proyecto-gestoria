@@ -30,19 +30,59 @@
  *  Lo que hay que comprobar no es el contenido de la lista: es que las dos coincidan.
  *
  *  ============================================================================
- *   POR QUE LEE EL ARCHIVO CON UNA EXPRESION REGULAR Y NO LO IMPORTA
+ *   MIRA DOS ARCHIVOS, Y LA PRIMERA VERSION MIRABA UNO SOLO
  *  ============================================================================
  *
- *  `Listado.tsx` importa React, Tailwind y media app. Importarlo desde un script suelto pedria
- *  todo ese arbol y fallaria por razones que no tienen nada que ver con lo que se quiere mirar.
+ *  La primera version leia unicamente `Listado.tsx`, la lista del filtro. Una revision lo agarro
+ *  el mismo dia: EL BOTON ROTO NO VIVIA AHI. Vivia en `SIGUIENTE`, adentro de `Ficha.tsx`, que
+ *  es la que dice a que estado manda cada boton.
  *
- *  Leer el texto es mas grosero y es mas robusto: si alguien reescribe la constante de una forma
+ *  O sea que el guardian escrito para que el defecto no volviera no cubria el archivo donde el
+ *  defecto habia pasado. Estaba en verde mientras `Ficha.tsx` seguia nombrando estados muertos.
+ *
+ *  Y `Ficha.tsx` tenia escrito, textual: "Esta lista y `tramites_estado_valido` se mueven
+ *  juntas". No se movian juntas: no habia nada que las atara. Un comentario que describe una
+ *  proteccion inexistente es peor que no tener el comentario, porque el que lo lee deja de mirar.
+ *
+ *  ============================================================================
+ *   POR QUE LEE LOS ARCHIVOS CON UNA EXPRESION REGULAR Y NO LOS IMPORTA
+ *  ============================================================================
+ *
+ *  Los dos importan React, Tailwind y media app. Importarlos desde un script suelto pediria todo
+ *  ese arbol y fallaria por razones que no tienen nada que ver con lo que se quiere mirar.
+ *
+ *  Leer el texto es mas grosero y es mas robusto: si alguien reescribe una constante de una forma
  *  que este guardian no entiende, no encuentra nada y LO DICE — sale con error en vez de dar por
  *  bueno un silencio. Un guardian que no encuentra lo que busca no esta en verde: esta ciego.
  */
 import { readFileSync } from "node:fs";
 
-const ARCHIVO = "src/features/tramites/Listado.tsx";
+/**
+ * Las dos listas del front, con como se saca cada una.
+ *
+ * `ESTADOS` son los valores del filtro del listado: los que se pueden ELEGIR.
+ * `SIGUIENTE` son los estados a los que manda cada boton: los que se pueden ESCRIBIR.
+ *
+ * La segunda es la peligrosa. Un valor de mas en el filtro devuelve una lista vacia; un valor de
+ * mas en `SIGUIENTE` es un boton que falla al apretarlo.
+ */
+const LISTAS = [
+  {
+    archivo: "src/features/tramites/Listado.tsx",
+    constante: "ESTADOS",
+    bloque: /export const ESTADOS[^=]*=\s*\[([\s\S]*?)\];/,
+    valores: /valor:\s*"([^"]+)"/g,
+  },
+  {
+    archivo: "src/features/tramites/Ficha.tsx",
+    constante: "SIGUIENTE",
+    // `SIGUIENTE` es un objeto y no un arreglo, y sus claves TAMBIEN son estados: son el estado
+    // desde el que sale cada paso. Se miran las dos cosas, claves y destinos.
+    bloque: /const SIGUIENTE[\s\S]*?=\s*\{([\s\S]*?)\n\};/,
+    valores: /(?:^\s{2}([a-z_]+):|estado:\s*"([^"]+)")/gm,
+  },
+];
+
 const REF = "drsooohkwwpnijonxwwt";
 
 let env = {};
@@ -69,21 +109,31 @@ if (!token) {
 // 1) Lo que dice el front
 // ------------------------------------------------------------
 
-const fuente = readFileSync(ARCHIVO, "utf8");
-const bloque = /export const ESTADOS[^=]*=\s*\[([\s\S]*?)\];/.exec(fuente);
+/** Cada entrada queda como { estado, archivo, constante } para poder decir DONDE esta el problema. */
+const enElFront = [];
 
-if (bloque === null) {
-  console.error(`\n  No encontre la constante ESTADOS en ${ARCHIVO}.`);
-  console.error("  Si se renombro o se movio, actualiza este guardian. Un guardian que no");
-  console.error("  encuentra lo que busca no esta en verde: esta ciego.\n");
-  process.exit(1);
-}
+for (const lista of LISTAS) {
+  const bloque = lista.bloque.exec(readFileSync(lista.archivo, "utf8"));
 
-const enElFront = [...bloque[1].matchAll(/valor:\s*"([^"]+)"/g)].map((m) => m[1]);
+  if (bloque === null) {
+    console.error(`\n  No encontre la constante ${lista.constante} en ${lista.archivo}.`);
+    console.error("  Si se renombro o se movio, actualiza este guardian. Un guardian que no");
+    console.error("  encuentra lo que busca no esta en verde: esta ciego.\n");
+    process.exit(1);
+  }
 
-if (enElFront.length === 0) {
-  console.error(`\n  La constante ESTADOS de ${ARCHIVO} quedo vacia, o cambio de forma.\n`);
-  process.exit(1);
+  const valores = [...bloque[1].matchAll(lista.valores)]
+    .map((m) => m[1] ?? m[2])
+    .filter((v) => v !== undefined);
+
+  if (valores.length === 0) {
+    console.error(`\n  La constante ${lista.constante} de ${lista.archivo} quedo vacia, o cambio de forma.\n`);
+    process.exit(1);
+  }
+
+  for (const estado of valores) {
+    enElFront.push({ estado, archivo: lista.archivo, constante: lista.constante });
+  }
 }
 
 // ------------------------------------------------------------
@@ -118,19 +168,26 @@ const enLaBase = [...definicion.matchAll(/'([a-z_]+)'::text/g)].map((m) => m[1])
 // 3) Y tienen que decir lo mismo
 // ------------------------------------------------------------
 
-const soloEnElFront = enElFront.filter((e) => !enLaBase.includes(e));
-const soloEnLaBase = enLaBase.filter((e) => !enElFront.includes(e));
+const soloEnElFront = enElFront.filter((e) => !enLaBase.includes(e.estado));
+
+const nombrados = new Set(enElFront.map((e) => e.estado));
+const soloEnLaBase = enLaBase.filter((e) => !nombrados.has(e));
 
 if (soloEnElFront.length === 0 && soloEnLaBase.length === 0) {
-  console.log(`estados: los ${enElFront.length} del front y los de la base coinciden.`);
+  const cuantas = LISTAS.map((l) => l.constante).join(" y ");
+  console.log(
+    `estados: ${nombrados.size} estados en ${cuantas}, y coinciden con el check de la base.`,
+  );
   process.exit(0);
 }
 
-console.error("\n  La lista de estados del front NO coincide con el check de la base:\n");
+console.error("\n  Las listas de estados del front NO coinciden con el check de la base:\n");
 
 if (soloEnElFront.length > 0) {
-  console.error(`  Estan en ${ARCHIVO} y la base los RECHAZA:`);
-  for (const e of soloEnElFront) console.error(`      ${e}`);
+  console.error("  Los nombra el front y LA BASE LOS RECHAZA:");
+  for (const e of soloEnElFront) {
+    console.error(`      ${e.estado}   en ${e.archivo}, dentro de ${e.constante}`);
+  }
   console.error("");
   console.error("      Es el caso grave: la pantalla ofrece un boton que va a fallar, con un");
   console.error("      mensaje que no habla de estados. Paso el 27/08/2026.");
