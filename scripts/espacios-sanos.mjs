@@ -29,8 +29,25 @@ import { join } from "node:path";
 /** 1, 2, 3, 4, 6, 8 -> 4, 8, 12, 16, 24 y 32 pixeles. Mas `0`, `px`, `auto` y `full`. */
 const PERMITIDOS = new Set(["0", "px", "1", "2", "3", "4", "6", "8", "auto", "full"]);
 
+/*
+  ============================================================================
+   LAS ALTERNATIVAS VAN DE LA MAS LARGA A LA MAS CORTA, Y NO ES ESTILO
+  ============================================================================
+
+  La primera version tenia `gap` ANTES que `gap-x`, y la alternancia de una expresion regular
+  prueba en orden: para `gap-x-6` entraba por `gap`, y como `-x-6` tambien encaja en el patron del
+  valor, NO retrocedia. Leia el valor como "x-6", que no esta en la escala, y marcaba en rojo un
+  espacio perfectamente correcto.
+
+  Marcaba DOS de sus seis hallazgos por eso. Un guardian que marca codigo correcto se termina
+  apagando, y ahi deja de proteger de lo que si esta mal.
+
+  `px` y `mx` no tenian el problema, y la diferencia explica el defecto: para `px-4` la opcion `p`
+  engancha pero el guion siguiente no aparece, asi que la expresion retrocede sola y prueba `px`.
+  Con `gap-x` la primera opcion tiene EXITO, con el valor equivocado, y nada la hace retroceder.
+*/
 const CLASE =
-  /\b(?:gap|gap-x|gap-y|p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|space-x|space-y)-([\w.[\]-]+)/g;
+  /\b(?:gap-x|gap-y|gap|space-x|space-y|px|py|pt|pb|pl|pr|p|mx|my|mt|mb|ml|mr|m)-([\w.[\]-]+)/g;
 
 function archivos(dir) {
   return readdirSync(dir).flatMap((n) => {

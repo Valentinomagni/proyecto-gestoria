@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
 import { Link, useMatches } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -23,7 +24,7 @@ import type { FilaDeResumen } from "../lib/resumen";
  *  el navegador lo trata como lo que es: una dirección. Un botón con `onClick` que navega se ve
  *  igual y no hace nada de eso.
  */
-export function Migas({ nombreDeUsuario }: { nombreDeUsuario: string }) {
+export function Migas({ menuDeUsuario }: { menuDeUsuario: ReactNode }) {
   const tramos = useTramos();
 
   return (
@@ -61,7 +62,7 @@ export function Migas({ nombreDeUsuario }: { nombreDeUsuario: string }) {
         ))}
       </ol>
 
-      <span className="shrink-0 text-2xs text-side-ink2">{nombreDeUsuario}</span>
+      <div className="shrink-0">{menuDeUsuario}</div>
     </nav>
   );
 }

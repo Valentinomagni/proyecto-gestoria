@@ -216,7 +216,12 @@ function FilaUsuario({
         <p className="text-2xs text-ink2">{nombreDeRol(perfil.rol as Rol)}</p>
       </div>
 
-      <select value={rol} onChange={(e) => setRol(e.target.value as Rol)} className={CAMPO_SUELTO}>
+      <select
+        value={rol}
+        onChange={(e) => setRol(e.target.value as Rol)}
+        aria-label={`Rol de ${perfil.email}`}
+        className={CAMPO_SUELTO}
+      >
         <option value="sin_asignar">Sin asignar</option>
         <option value="gestora">Gestoría</option>
         <option value="contable">Contable</option>
@@ -227,6 +232,7 @@ function FilaUsuario({
         <select
           value={gestoraId}
           onChange={(e) => setGestoraId(e.target.value)}
+          aria-label={`Qué gestora es ${perfil.email}`}
           className={CAMPO_SUELTO}
         >
           <option value="">Qué gestora</option>
@@ -288,6 +294,7 @@ function RazonesYTarjetas() {
           <select
             value={r.tarjeta_id ?? ""}
             onChange={(e) => guardar.mutate({ id: r.id, tarjetaId: e.target.value || null })}
+            aria-label={`Tarjeta de ${r.nombre}`}
             className={CAMPO_SUELTO}
           >
             <option value="">Sin tarjeta</option>

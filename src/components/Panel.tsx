@@ -37,7 +37,7 @@ export function Panel({
     <div
       className={cn(
         "bg-surface border border-line rounded-xl",
-        densidad === "compacta" ? "p-3" : "p-[18px]",
+        densidad === "compacta" ? "p-3" : "p-4",
         className,
       )}
       style={{ boxShadow: "var(--ring-sh),var(--shadow)" }}

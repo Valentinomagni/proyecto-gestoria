@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { entrarComo } from "./entrar";
+import { anularPorLaApi, cargarDepositoPorLaApi, entrarComo } from "./entrar";
 
 /**
  * ============================================================================
@@ -250,4 +250,51 @@ test("cargar un tramite no pregunta la razon social", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/empresa\/[0-9a-f-]{36}\/nuevo$/);
   await expect(page.getByText("Razón social", { exact: true })).toHaveCount(0);
+});
+
+test("si alguien carga un deposito, la pantalla del otro cambia sin recargar", async ({ page }) => {
+  /*
+    ============================================================================
+     ES LA FUNCION CENTRAL DEL PRODUCTO, NO UN ADORNO
+    ============================================================================
+
+    El pedido decía, textual, que "muchas veces se pisan con el dinero que hay disponible en el
+    día". Esto es lo que lo arregla: si contable carga un depósito en San Luis, la pantalla de
+    gerencia en San Juan cambia sin que nadie recargue.
+
+    ============================================================================
+     EL DEPOSITO SE CARGA Y SE DESHACE POR LA API, NO POR LA PANTALLA
+    ============================================================================
+
+    La primera versión lo hacía todo por la interfaz: llenaba el formulario, y en el `finally`
+    anulaba con el diálogo. **Falló y dejó un depósito de un peso en producción**, que hubo que
+    anular a mano.
+
+    El problema es que la limpieza dependía de encontrar tres selectores en una pantalla que ya
+    estaba en un estado raro. Por la API es una llamada que no puede fallar por un botón que se
+    renombró.
+
+    Y no debilita la prueba: lo que se comprueba acá es que LA PANTALLA SE ENTERE, no que el
+    formulario ande — eso ya lo prueba otra.
+  */
+  await entrarComo(page, "gerencia");
+
+  const laFila = page.getByRole("link", { name: /PARIS AUTOS/ });
+  await expect(laFila).toBeVisible();
+  const antes = await laFila.innerText();
+
+  const idDelDeposito = await cargarDepositoPorLaApi(1);
+
+  try {
+    // NADIE RECARGA NADA. Si esto falla, la suscripción en vivo no está llegando.
+    await expect.poll(async () => laFila.innerText(), { timeout: 20_000 }).not.toBe(antes);
+  } finally {
+    await anularPorLaApi(
+      idDelDeposito,
+      "Depósito de prueba del tiempo real. No corresponde a ningún depósito real.",
+    );
+  }
+
+  // Y vuelve solo a donde estaba, también sin recargar.
+  await expect.poll(async () => laFila.innerText(), { timeout: 20_000 }).toBe(antes);
 });

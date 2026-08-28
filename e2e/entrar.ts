@@ -88,3 +88,69 @@ export async function entrarComo(page: Page, rol: Rol, direccion = "/"): Promise
 
   await page.goto(direccion);
 }
+
+/**
+ * Carga un depósito de prueba en la primera tarjeta y devuelve su id.
+ *
+ * SE USA SOLO PARA LA PRUEBA DE TIEMPO REAL, que necesita que la plata se mueva desde AFUERA de
+ * la pantalla que está mirando. Quien lo llame tiene que anularlo en un `finally`.
+ */
+export async function cargarDepositoPorLaApi(importe: number): Promise<number> {
+  const { token, tarjetaId } = await sesionDeGerencia();
+
+  const r = await fetch(`${URL_BASE}/rest/v1/movimientos`, {
+    method: "POST",
+    headers: {
+      apikey: CLAVE,
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Prefer: "return=representation",
+    },
+    body: JSON.stringify({
+      tarjeta_id: tarjetaId,
+      tipo: "ingreso",
+      importe,
+      concepto: "PRUEBA DE TIEMPO REAL",
+      fecha_acreditacion: new Date().toISOString().slice(0, 10),
+    }),
+  });
+
+  const filas = (await r.json()) as { id: number }[];
+  if (!r.ok || filas.length === 0) throw new Error(`no se pudo cargar: ${JSON.stringify(filas)}`);
+  return filas[0].id;
+}
+
+/** Lo deshace por la misma puerta que usaría una persona: `anular_movimiento`, con su motivo. */
+export async function anularPorLaApi(id: number, motivo: string): Promise<void> {
+  const { token } = await sesionDeGerencia();
+
+  const r = await fetch(`${URL_BASE}/rest/v1/rpc/anular_movimiento`, {
+    method: "POST",
+    headers: {
+      apikey: CLAVE,
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ p_id: id, p_motivo: motivo }),
+  });
+  if (!r.ok) throw new Error(`no se pudo anular ${String(id)}: ${await r.text()}`);
+}
+
+/** El token de gerencia y la primera tarjeta. Se pide cada vez: son dos llamadas y no vale cachear. */
+async function sesionDeGerencia(): Promise<{ token: string; tarjetaId: string }> {
+  const rSesion = await fetch(`${URL_BASE}/auth/v1/token?grant_type=password`, {
+    method: "POST",
+    headers: { apikey: CLAVE, "Content-Type": "application/json" },
+    body: JSON.stringify({ email: CORREO.gerencia, password: env["PRUEBA_PASSWORD"] ?? "" }),
+  });
+  const { access_token: token } = (await rSesion.json()) as { access_token: string };
+
+  const rTarjeta = await fetch(
+    `${URL_BASE}/rest/v1/tarjetas_habitualista?select=id&order=orden&limit=1`,
+    {
+      headers: { apikey: CLAVE, Authorization: `Bearer ${token}` },
+    },
+  );
+  const tarjetas = (await rTarjeta.json()) as { id: string }[];
+  return { token, tarjetaId: tarjetas[0].id };
+}

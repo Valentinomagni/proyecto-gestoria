@@ -131,7 +131,10 @@
   --accent-ink: #ffffff;
   --accent-soft: #e4f1f5;
   --chip: #f1f1f3;
-  --done: #0f9d6b;
+  /* CORREGIDO EL 28/08/2026, y lo encontro axe: el verde de antes, #0f9d6b, daba 3,47:1 sobre
+     blanco — por debajo del 4,5 que exige el texto. Es el MISMO defecto que el ambar de ayer, en
+     otro token: por eso ahora el guardian de contraste mide los tres estados y no dos. */
+  --done: #0c8259;
 
   /* CORREGIDO EL 28/08/2026, y lo encontro el guardian de contraste en su PRIMERA corrida, antes
      de tocar un solo color del teal. El ambar de antes, #c2790a, daba 3,48:1 sobre blanco: por
@@ -307,5 +310,14 @@ button {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  /* Las transiciones de vista NO las cubre el selector universal: viven en pseudo-elementos
+     propios del navegador y hay que apagarlas por separado. Sin esto, quien pidio no ver
+     movimiento igual veria viajar la ficha. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }

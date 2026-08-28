@@ -24,7 +24,7 @@ export function EmptyState({
   accion?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 px-6 py-12 text-center">
+    <div className="flex flex-col items-center justify-center gap-3 px-6 py-8 text-center">
       <Icono aria-hidden="true" className="text-ink2" size={28} strokeWidth={1.5} />
       <p className="text-lg">{titulo}</p>
       <p className="text-sm text-ink2 max-w-sm">{queHacer}</p>

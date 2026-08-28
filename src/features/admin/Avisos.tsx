@@ -197,7 +197,7 @@ function UnAviso({
 
       {aviso.atendido_at !== null ? (
         <p className="flex items-start gap-1 text-2xs text-done">
-          <CheckCircle2 aria-hidden="true" size={12} className="mt-0.5 shrink-0" />
+          <CheckCircle2 aria-hidden="true" size={12} className="mt-1 shrink-0" />
           <span>
             Atendido el {formatearFechaHora(aviso.atendido_at)}
             {aviso.resolucion === null ? "" : `: ${aviso.resolucion}`}

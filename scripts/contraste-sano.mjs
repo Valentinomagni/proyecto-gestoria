@@ -109,6 +109,15 @@ const PARES = [
   },
   { texto: "danger", fondo: "surface", minimo: 4.5, donde: "una Diferencia en negativo" },
   { texto: "warn", fondo: "surface", minimo: 4.5, donde: "la cuenta de los que esperan plata" },
+  /*
+    EL VERDE ENTRO EL 28/08/2026, Y LO ENCONTRO AXE Y NO ESTE GUARDIAN. Daba 3,47:1 sobre blanco,
+    el mismo defecto que el ambar del dia anterior — y este archivo no lo veia porque su lista de
+    pares no lo nombraba.
+
+    La leccion no es "faltaba un par": es que una lista escrita a mano se queda corta en silencio.
+    Los TRES estados se miden ahora, porque los tres se dibujan como texto sobre la superficie.
+  */
+  { texto: "done", fondo: "surface", minimo: 4.5, donde: "el sello de atendido y lo hecho" },
 ];
 
 /*

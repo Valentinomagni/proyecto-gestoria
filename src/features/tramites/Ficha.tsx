@@ -260,7 +260,25 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
     agregarLinea.isPending || corregirConcepto.isPending || quitarConcepto.isPending;
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4 p-6">
+    /*
+      ============================================================================
+       EL VIAJE DE LA FILA A LA FICHA, Y CUESTA CERO BYTES
+      ============================================================================
+
+      `view-transition-name` es lo unico que hace falta: el navegador anima el cambio de posicion
+      solo, sin ninguna libreria de animacion.
+
+      ES LA UNICA ANIMACION QUE EL PRODUCTO NECESITA, y no es decoracion: cuando algo aparece de
+      la nada, quien mira no entiende que es LA MISMA COSA que estaba en la lista. El viaje lo
+      dice sin palabras.
+
+      Y respeta `prefers-reduced-motion`: para algunas personas el movimiento produce mareo real.
+      La regla esta en index.css y cubre las transiciones de vista.
+    */
+    <div
+      style={{ viewTransitionName: `tramite-${id}` }}
+      className="mx-auto flex max-w-3xl flex-col gap-4 p-6"
+    >
       <button
         type="button"
         onClick={alVolver}

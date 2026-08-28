@@ -23,6 +23,7 @@ node scripts/colores-sanos.mjs || exit 1
 #     escribio el guardian: un reemplazo cambio el bloque del interruptor y no el del sistema
 #     operativo, y la app quedo con dos temas oscuros distintos segun como se hubiera llegado.
 node scripts/contraste-sano.mjs || exit 1
+node scripts/espacios-sanos.mjs || exit 1
 
 # LOS DOS QUE CONSULTAN LA BASE. Sin SUPABASE_ACCESS_TOKEN se saltean y salen con 0, asi que en
 # un repo recien clonado no rompen el primer commit.

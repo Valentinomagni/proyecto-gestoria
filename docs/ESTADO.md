@@ -423,3 +423,17 @@ Cinco cosas que ya costaron tiempo en este proyecto o en los anteriores:
    navegador descarta entero, en silencio.
 5. **Sin conexión se evalúa antes que versión vieja** en `fallas.ts`. Al revés, una recarga sin
    red deja la pantalla en blanco.
+
+---
+
+## Plan B — la app de la oficina, 28/08/2026
+
+### `menu.ts` se fue, y la regla que protegía quedó mejor protegida
+
+Encodaba "gestoría no carga trámites y no entra a Administración" en una lista de pantallas. Con
+tres niveles y sin barra lateral esa lista dejó de existir, y su prueba pasaba sin comprobar nada
+real: la app ya no la llamaba.
+
+La regla ahora la comprueban **dos pruebas de punta a punta con sesión de gestora de verdad** —que
+no ve `+ Trámite` ni `+ Dinero`, y que no ve Administración en su menú—, contra la app dibujada.
+Es más fuerte que un test sobre una lista estática.

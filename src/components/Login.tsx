@@ -42,7 +42,7 @@ export function Login() {
 
         <Panel className="w-full">
           <h1 className="text-lg mb-1">Gestoría</h1>
-          <p className="text-sm text-ink2 mb-5">Entrá con tu cuenta de la empresa.</p>
+          <p className="text-sm text-ink2 mb-6">Entrá con tu cuenta de la empresa.</p>
 
           <form onSubmit={entrar} className="flex flex-col gap-3">
             <label className="flex flex-col gap-1">

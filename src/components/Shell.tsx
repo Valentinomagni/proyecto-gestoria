@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import { LogOut, ShieldAlert } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "../lib/supabase";
@@ -12,6 +12,7 @@ import { Login } from "./Login";
 import { Avisar } from "./Avisar";
 import { Novedades } from "./Novedades";
 import { Migas } from "./Migas";
+import { MenuDeUsuario } from "./MenuDeUsuario";
 import { Panel } from "./Panel";
 
 /**
@@ -122,11 +123,10 @@ export function Shell({ children }: { children: ReactNode }) {
               roles. Un botón de avisar que está en una sola pantalla sirve para los problemas de
               esa pantalla. */}
           <Avisar pantalla={ruta} rol={perfil.rol} tramiteId={null} />
-          <BotonSalir oscuro />
         </div>
       </header>
 
-      <Migas nombreDeUsuario={perfil.nombre} />
+      <Migas menuDeUsuario={<MenuDeUsuario nombre={perfil.nombre} rol={perfil.rol} />} />
 
       {/* `tabIndex={-1}` lo hace enfocable por código sin meterlo en el orden de tabulación. */}
       <main id="contenido" tabIndex={-1} className="flex-1 overflow-auto outline-none">
@@ -136,18 +136,20 @@ export function Shell({ children }: { children: ReactNode }) {
   );
 }
 
-function BotonSalir({ oscuro = false }: { oscuro?: boolean }) {
+/**
+ * Salir, suelto.
+ *
+ * SOLO PARA LA PANTALLA DE LA CUENTA SIN ROL: ahi no hay marco, no hay migas y no hay menu de
+ * usuario, asi que sin este boton alguien que entro con una cuenta no habilitada no tendria forma
+ * de salir. En el resto de la app Salir vive adentro del menu del nombre.
+ */
+function BotonSalir() {
   return (
     <button
       type="button"
       onClick={() => void supabase.auth.signOut()}
-      className={
-        oscuro
-          ? "flex items-center gap-2 text-2xs text-side-ink2"
-          : "flex items-center gap-2 rounded-md border border-line px-3 py-2 text-sm"
-      }
+      className="flex items-center gap-2 rounded-md border border-line px-3 py-2 text-sm"
     >
-      <LogOut aria-hidden="true" size={14} />
       Salir
     </button>
   );
