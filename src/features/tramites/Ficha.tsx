@@ -7,6 +7,7 @@ import { formatearFechaHora } from "../../lib/fechas";
 import type { Database } from "../../lib/database.types";
 import {
   useAdministrativos,
+  useAgregarNota,
   useCambios,
   useConceptos,
   useConceptosDelTramite,
@@ -234,19 +235,9 @@ export function Ficha({ id, alVolver }: { id: string; alVolver: () => void }) {
     deja escribir una nota firmada por otra persona. Es lo que hace que una nota valga como
     respaldo — si se pudiera firmar por cualquiera, seria un papelito.
   */
-  const agregarNota = useGuardar(
-    async (texto: string) => {
-      const { data: sesion } = await supabase.auth.getUser();
-      const autor = sesion.user?.id;
-      if (autor === undefined)
-        throw new Error("regla_tramite: Se cerró la sesión. Entrá de nuevo.");
-      const { error } = await supabase
-        .from("tramite_notas")
-        .insert({ tramite_id: id, texto: texto.trim(), autor });
-      if (error) throw error;
-    },
-    { exito: "Nota guardada", invalidar: ["tramite_notas"] },
-  );
+  // El `insert` se mudó a `useAgregarNota`: la ficha de la gestora escribe las mismas notas, y
+  // dos copias se separan la primera vez que alguien agregue una columna.
+  const agregarNota = useAgregarNota(id);
 
   if (tramite.isLoading || !tramite.data) {
     return <SkeletonLineas cantidad={6} className="m-6 max-w-2xl" />;

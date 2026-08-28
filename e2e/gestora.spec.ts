@@ -150,6 +150,21 @@ test("desde la ficha se vuelve a la cola con el boton atras", async ({ page }) =
   await expect(page.getByRole("heading", { name: /Te toca a vos/ })).toBeVisible();
 });
 
+test("la gestora lee las notas de la oficina y puede contestar", async ({ page }) => {
+  /*
+    ES EL REEMPLAZO DEL WHATSAPP, y por eso está en la ficha y no en un chat aparte (spec 5): un
+    chat obliga a leer mensajes y compite con WhatsApp, que ya está abierto en su teléfono y
+    siempre gana. Una nota pegada al trámite no compite con nada porque está donde ya se mira.
+  */
+  await entrarComo(page, "gestora");
+  await page.locator("[data-tarjeta-tramite]").first().getByRole("link").first().click();
+  await expect(page).toHaveURL(/localhost:5173\/tramite\//);
+
+  await expect(page.getByRole("heading", { name: "Notas" })).toBeVisible();
+  await expect(page.getByRole("textbox")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Guardar|Agregar/ })).toBeVisible();
+});
+
 test("un tramite que no es suyo lo dice, y no deja la pantalla en blanco", async ({ page }) => {
   await entrarComo(page, "gestora", "/tramite/00000000-0000-0000-0000-000000000000");
 

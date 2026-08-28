@@ -827,6 +827,30 @@ export interface Nota {
   autor_nombre: string | null;
 }
 
+/**
+ * Agregar una nota a un trámite.
+ *
+ * VIVE ACA Y NO EN CADA FICHA porque son DOS pantallas —la de la oficina y la de la gestora— y es
+ * la misma conversación vista desde los dos lados. Dos copias de este `insert` se separan la
+ * primera vez que alguien agregue una columna, y el síntoma sería que una de las dos deja de
+ * guardar algo que la otra sí guarda, sin error.
+ */
+export function useAgregarNota(tramiteId: string) {
+  return useGuardar(
+    async (texto: string) => {
+      const { data: sesion } = await supabase.auth.getUser();
+      const autor = sesion.user?.id;
+      if (autor === undefined)
+        throw new Error("regla_tramite: Se cerró la sesión. Entrá de nuevo.");
+      const { error } = await supabase
+        .from("tramite_notas")
+        .insert({ tramite_id: tramiteId, texto: texto.trim(), autor });
+      if (error) throw error;
+    },
+    { exito: "Nota guardada", invalidar: ["tramite_notas"] },
+  );
+}
+
 export function useNotasDelTramite(tramiteId: string | null) {
   return useQuery({
     queryKey: ["tramite_notas", tramiteId],

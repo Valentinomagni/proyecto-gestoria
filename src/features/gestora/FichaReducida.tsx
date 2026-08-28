@@ -1,5 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { useConceptos, useConceptosDelTramite, useRazonesSociales, useTramite } from "@/lib/datos";
+import {
+  useAgregarNota,
+  useConceptos,
+  useConceptosDelTramite,
+  useNotasDelTramite,
+  useRazonesSociales,
+  useTramite,
+} from "@/lib/datos";
+import { Notas } from "@/features/tramites/Notas";
 import { Panel } from "@/components/Panel";
 import { SkeletonLineas } from "@/components/Skeleton";
 import { aCentavos, formatearCorto } from "@/lib/plata";
@@ -29,6 +37,8 @@ export function FichaReducida({ tramiteId }: { tramiteId: string }) {
   */
   const conceptos = useConceptos();
   const empresas = useRazonesSociales();
+  const notas = useNotasDelTramite(tramiteId);
+  const agregarNota = useAgregarNota(tramiteId);
 
   if (tramite.isPending) return <SkeletonLineas cantidad={5} className="mx-auto max-w-xl p-4" />;
 
@@ -90,6 +100,23 @@ export function FichaReducida({ tramiteId }: { tramiteId: string }) {
           </ul>
         )}
       </Panel>
+
+      {/*
+        SE REUSA EL COMPONENTE DE LA OFICINA, no se escribe uno parecido. Es la misma conversación
+        vista desde el otro lado, y dos componentes distintos para la misma conversación se
+        separan la primera vez que alguien agregue un campo.
+
+        Es por donde la oficina le deja escrito lo que hoy se dice por WhatsApp —"no lo presentes
+        hasta que llegue el 08"— y por donde ella contesta.
+      */}
+      <Notas
+        notas={notas.data ?? []}
+        cargando={notas.isLoading}
+        alAgregar={(texto) => {
+          agregarNota.mutate(texto);
+        }}
+        guardando={agregarNota.isPending}
+      />
     </div>
   );
 }
