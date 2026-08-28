@@ -201,3 +201,53 @@ test("el boton de Excel esta en la empresa, y baja lo de esa empresa", async ({ 
   await expect(boton).toBeVisible();
   await expect(boton).toBeEnabled();
 });
+
+test("la oficina ve + Tramite y + Dinero adentro de la empresa", async ({ page }) => {
+  await entrarComo(page, "gerencia");
+  await page.getByRole("link", { name: /PARIS AUTOS/ }).click();
+
+  await Promise.all([
+    expect(page.getByRole("link", { name: "Trámite", exact: true })).toBeVisible(),
+    expect(page.getByRole("link", { name: "Dinero", exact: true })).toBeVisible(),
+  ]);
+});
+
+test("y la gestora NO los ve", async ({ page }) => {
+  /*
+    La base ya lo impide —`movimientos_insert` exige `es_oficina()`— así que un botón visible
+    fallaría al apretarlo. Un botón que va a fallar es PEOR que no tenerlo: enseña a desconfiar de
+    la pantalla, y quien desconfía de una pantalla de plata vuelve al cuaderno.
+  */
+  await entrarComo(page, "gestora");
+  await page.getByRole("link", { name: /PARIS AUTOS/ }).click();
+
+  await Promise.all([
+    expect(page.getByRole("link", { name: "Trámite", exact: true })).toHaveCount(0),
+    expect(page.getByRole("link", { name: "Dinero", exact: true })).toHaveCount(0),
+  ]);
+});
+
+test("cargar dinero no pregunta la tarjeta: la pantalla ya la sabe", async ({ page }) => {
+  await entrarComo(page, "gerencia");
+  await page.getByRole("link", { name: /PARIS AUTOS/ }).click();
+  await page.getByRole("link", { name: "Dinero", exact: true }).click();
+
+  await expect(page).toHaveURL(/\/empresa\/[0-9a-f-]{36}\/dinero$/);
+  await expect(page.getByRole("heading", { name: /Cargar dinero en PARIS AUTOS/ })).toBeVisible();
+
+  // EL CAMPO QUE NO EXISTE NO SE PUEDE LLENAR MAL: no hay selector de tarjeta.
+  await expect(page.getByText("Tarjeta", { exact: true })).toHaveCount(0);
+
+  // Y "Volver" vuelve a la empresa, no a "atrás" en general.
+  await page.getByRole("button", { name: "Volver" }).click();
+  await expect(page).toHaveURL(/\/empresa\/[0-9a-f-]{36}$/);
+});
+
+test("cargar un tramite no pregunta la razon social", async ({ page }) => {
+  await entrarComo(page, "gerencia");
+  await page.getByRole("link", { name: /PARIS AUTOS/ }).click();
+  await page.getByRole("link", { name: "Trámite", exact: true }).click();
+
+  await expect(page).toHaveURL(/\/empresa\/[0-9a-f-]{36}\/nuevo$/);
+  await expect(page.getByText("Razón social", { exact: true })).toHaveCount(0);
+});

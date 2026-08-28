@@ -5,13 +5,7 @@ import { parsearAsunto } from "../../lib/asunto";
 import { supabase } from "../../lib/supabase";
 import { BOTON, CAMPO } from "../../lib/campos";
 import { useBorrador } from "../../lib/borrador";
-import {
-  useAdministrativos,
-  useGestoras,
-  useGuardar,
-  useRazonesSociales,
-  useSucursales,
-} from "../../lib/datos";
+import { useAdministrativos, useGestoras, useGuardar, useSucursales } from "../../lib/datos";
 
 /**
  * Alta de un tramite.
@@ -51,7 +45,6 @@ interface Alta {
   dominio: string;
   tipo: string;
   subtipo: string;
-  razonId: string;
   sucursalId: string;
   gestoraId: string;
   administrativo: string;
@@ -69,7 +62,6 @@ const VACIO: Alta = {
   dominio: "",
   tipo: "",
   subtipo: "",
-  razonId: "",
   sucursalId: "",
   gestoraId: "",
   administrativo: "",
@@ -78,8 +70,25 @@ const VACIO: Alta = {
   observaciones: "",
 };
 
-export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
-  const razones = useRazonesSociales();
+/**
+ * ============================================================================
+ *  LA RAZON SOCIAL LLEGA POR PROP, NO SE PREGUNTA
+ * ============================================================================
+ *
+ * El alta vive adentro de la empresa: la pantalla ya sabe de cual se trata. EL CAMPO QUE NO
+ * EXISTE NO SE PUEDE LLENAR MAL, y elegir la razon social equivocada mete el tramite en la
+ * empresa de al lado — donde nadie lo busca.
+ *
+ * En la base el campo SIGUE siendo obligatorio y sigue viajando en el insert: lo que cambia es
+ * quien lo contesta.
+ */
+export function AltaTramite({
+  razonSocialId,
+  alGuardar,
+}: {
+  razonSocialId: string;
+  alGuardar: () => void;
+}) {
   const sucursales = useSucursales();
   const gestoras = useGestoras();
   const administrativos = useAdministrativos();
@@ -127,7 +136,7 @@ export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
   const guardar = useGuardar(
     async () => {
       const { error } = await supabase.from("tramites").insert({
-        razon_social_id: f.razonId,
+        razon_social_id: razonSocialId,
         sucursal_id: f.sucursalId,
         tipo: f.tipo,
         subtipo: f.subtipo === "" ? null : f.subtipo,
@@ -158,7 +167,7 @@ export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
     guardar.mutate(undefined, { onSuccess: alGuardar });
   }
 
-  const listo = f.cliente.trim() !== "" && f.tipo !== "" && f.razonId !== "" && f.sucursalId !== "";
+  const listo = f.cliente.trim() !== "" && f.tipo !== "" && f.sucursalId !== "";
 
   return (
     <form onSubmit={enviar} className="mx-auto flex max-w-2xl flex-col gap-4 p-6">
@@ -260,21 +269,6 @@ export function AltaTramite({ alGuardar }: { alGuardar: () => void }) {
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <Campo etiqueta="Razón social" obligatorio>
-            <select
-              value={f.razonId}
-              onChange={(e) => cambiar({ razonId: e.target.value })}
-              required
-              className={CAMPO}
-            >
-              <option value="">Elegí</option>
-              {razones.data?.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.nombre}
-                </option>
-              ))}
-            </select>
-          </Campo>
           <Campo etiqueta="Sucursal" obligatorio>
             <select
               value={f.sucursalId}

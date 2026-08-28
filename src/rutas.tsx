@@ -12,6 +12,8 @@ import { SkeletonLineas } from "./components/Skeleton";
 import { Resumen } from "./features/resumen/Resumen";
 import { Empresa } from "./features/empresa/Empresa";
 import { Ficha } from "./features/tramites/Ficha";
+import { AltaTramite } from "./features/tramites/AltaTramite";
+import { NuevoMovimiento } from "./features/empresa/NuevoMovimiento";
 
 /**
  * ============================================================================
@@ -74,6 +76,30 @@ export const rutaTramite = createRoute({
   component: FichaEnRuta,
 });
 
+/*
+  ============================================================================
+   CARGAR UN TRAMITE Y CARGAR DINERO SON RUTAS, NO DIALOGOS
+  ============================================================================
+
+  Las dos viven adentro de la empresa, porque un tramite pertenece a una razon social y un
+  deposito es a una tarjeta que es de una empresa.
+
+  Y son RUTAS y no ventanas emergentes por tres razones concretas: el boton "atras" del navegador
+  las cierra, la direccion se puede compartir, y no hace falta ninguna maquinaria de foco atrapado
+  —que es de lo que mas se rompe en accesibilidad y de lo que menos se prueba.
+*/
+export const rutaNuevoTramite = createRoute({
+  getParentRoute: () => rutaRaiz,
+  path: "/empresa/$razonSocialId/nuevo",
+  component: NuevoTramiteEnRuta,
+});
+
+export const rutaNuevoMovimiento = createRoute({
+  getParentRoute: () => rutaRaiz,
+  path: "/empresa/$razonSocialId/dinero",
+  component: NuevoMovimiento,
+});
+
 const rutaAdmin = createRoute({
   getParentRoute: () => rutaRaiz,
   path: "/administracion",
@@ -92,6 +118,18 @@ function FichaEnRuta() {
     <Ficha
       id={tramiteId}
       alVolver={() => void navegar({ to: "/empresa/$razonSocialId", params: { razonSocialId } })}
+    />
+  );
+}
+
+/** El alta recibe la empresa de la ruta, y al guardar vuelve a ella. */
+function NuevoTramiteEnRuta() {
+  const { razonSocialId } = rutaNuevoTramite.useParams();
+  const navegar = useNavigate();
+  return (
+    <AltaTramite
+      razonSocialId={razonSocialId}
+      alGuardar={() => void navegar({ to: "/empresa/$razonSocialId", params: { razonSocialId } })}
     />
   );
 }
@@ -116,7 +154,14 @@ function NoExiste() {
   );
 }
 
-const arbol = rutaRaiz.addChildren([rutaResumen, rutaEmpresa, rutaTramite, rutaAdmin]);
+const arbol = rutaRaiz.addChildren([
+  rutaResumen,
+  rutaEmpresa,
+  rutaNuevoTramite,
+  rutaNuevoMovimiento,
+  rutaTramite,
+  rutaAdmin,
+]);
 
 export const router = createRouter({
   routeTree: arbol,

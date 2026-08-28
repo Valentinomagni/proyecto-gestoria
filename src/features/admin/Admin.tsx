@@ -5,20 +5,12 @@ import { Panel } from "../../components/Panel";
 import { Calendario } from "./Calendario";
 import { Avisos } from "./Avisos";
 import { SkeletonLineas } from "../../components/Skeleton";
-import { aPesos, formatear, parsear } from "../../lib/plata";
-import { hoyArgentina, proximoDiaHabil } from "../../lib/fechas";
+import { hoyArgentina } from "../../lib/fechas";
 import { supabase } from "../../lib/supabase";
 import { clasificarFalla } from "../../lib/fallas";
-import { BOTON, BOTON_SUAVE, CAMPO, CAMPO_SUELTO } from "../../lib/campos";
+import { BOTON_SUAVE, CAMPO_SUELTO } from "../../lib/campos";
 import { nombreDeRol, type Rol } from "../../lib/roles";
-import {
-  useCalendario,
-  useGestoras,
-  useGuardar,
-  useRazonesSociales,
-  useSaldos,
-  useTarjetas,
-} from "../../lib/datos";
+import { useGestoras, useGuardar, useRazonesSociales, useTarjetas } from "../../lib/datos";
 import { useQuery } from "@tanstack/react-query";
 
 /**
@@ -36,7 +28,17 @@ export function Admin() {
       <h1 className="text-xl">Administración</h1>
       {/* Arriba de todo, a propósito: con defectos abiertos no entran funciones nuevas. */}
       <Avisos />
-      <CargarDinero />
+      {/*
+        CARGAR DINERO SE FUE DE ACA el 28/08/2026, y esta anotado porque alguien lo va a buscar.
+
+        Vive adentro de cada empresa, al lado de "+ Trámite". No es configuracion: es trabajo
+        diario, y un deposito siempre es a una tarjeta que es de una empresa. Cargarlo desde la
+        pantalla que ya sabe cual quita el selector de tarjeta — y el campo que no existe no se
+        puede llenar mal.
+
+        Lo que SI queda aca es la lista de razones sociales y que tarjeta tiene cada una, que si
+        es configuracion.
+      */}
       <Usuarios />
       <RazonesYTarjetas />
       <Calendario />
@@ -132,139 +134,6 @@ function Respaldo() {
 // ------------------------------------------------------------
 // Carga de dinero
 // ------------------------------------------------------------
-
-function CargarDinero() {
-  const saldos = useSaldos();
-  // Los feriados salen de la tabla: un deposito ordenado el jueves antes de un feriado NO
-  // acredita el viernes. Sin esto la pantalla mostraria plata un dia antes de que exista.
-  const calendario = useCalendario();
-  const [tarjetaId, setTarjetaId] = useState("");
-  const [importe, setImporte] = useState("");
-  const [tipo, setTipo] = useState<"ingreso" | "saldo_inicial">("ingreso");
-  const [acreditaManiana, setAcreditaManiana] = useState(true);
-  const [observacion, setObservacion] = useState("");
-
-  const guardar = useGuardar(
-    async () => {
-      const centavos = parsear(importe);
-      if (centavos === null) throw new Error("importe invalido");
-
-      // La fecha de acreditación es la razón de ser de este formulario. Un depósito ordenado hoy
-      // acredita mañana, así que hasta entonces NO es saldo disponible. Si se cargara como
-      // disponible, alguien mandaría a presentar contra plata que todavía no está.
-      const hoy = hoyArgentina();
-
-      const { error } = await supabase.from("movimientos").insert({
-        tarjeta_id: tarjetaId,
-        tipo,
-        importe: aPesos(centavos),
-        fecha_acreditacion:
-          tipo === "saldo_inicial" || !acreditaManiana
-            ? hoy
-            : proximoDiaHabil(calendario.data?.feriados ?? new Set()),
-        concepto: tipo === "saldo_inicial" ? "Saldo inicial del corte" : "Depósito",
-        ...(observacion.trim() !== "" && { observacion: observacion.trim() }),
-      });
-      if (error) throw error;
-      setImporte("");
-      setObservacion("");
-    },
-    { exito: "Movimiento cargado", invalidar: ["saldos", "movimientos"] },
-  );
-
-  const centavos = parsear(importe);
-
-  return (
-    <Panel className="flex flex-col gap-3">
-      <h2 className="text-lg">Cargar dinero</h2>
-      <p className="text-xs text-ink2">
-        Un depósito ordenado hoy acredita mañana. Hasta entonces figura como en tránsito y no como
-        disponible: si contara hoy, alguien podría mandar a presentar contra plata que todavía no
-        está.
-      </p>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-ink2">Tarjeta</span>
-          <select
-            value={tarjetaId}
-            onChange={(e) => setTarjetaId(e.target.value)}
-            className={CAMPO}
-          >
-            <option value="">Elegí</option>
-            {saldos.data?.map((s) => (
-              <option key={s.tarjeta_id} value={s.tarjeta_id}>
-                {s.nombre}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-ink2">Qué es</span>
-          <select
-            value={tipo}
-            onChange={(e) => setTipo(e.target.value as "ingreso" | "saldo_inicial")}
-            className={CAMPO}
-          >
-            <option value="ingreso">Un depósito</option>
-            <option value="saldo_inicial">El saldo inicial del corte</option>
-          </select>
-        </label>
-      </div>
-
-      <label className="flex flex-col gap-1">
-        <span className="text-xs text-ink2">Importe</span>
-        <input
-          inputMode="decimal"
-          value={importe}
-          onChange={(e) => setImporte(e.target.value)}
-          placeholder="2.505.627,92"
-          className={`${CAMPO} tnum`}
-        />
-        {centavos !== null && (
-          <span className="text-2xs text-ink2 tnum">{formatear(centavos)}</span>
-        )}
-      </label>
-
-      {tipo === "ingreso" && (
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={acreditaManiana}
-            onChange={(e) => setAcreditaManiana(e.target.checked)}
-          />
-          Acredita mañana
-        </label>
-      )}
-
-      {tipo === "saldo_inicial" && (
-        <p className="text-xs text-warn">
-          El saldo inicial se carga UNA sola vez por tarjeta, y tiene que ser exactamente el que
-          muestra el sitio ese día. Es la línea de largada de todo lo demás.
-        </p>
-      )}
-
-      <label className="flex flex-col gap-1">
-        <span className="text-xs text-ink2">Observación</span>
-        <input
-          value={observacion}
-          onChange={(e) => setObservacion(e.target.value)}
-          className={CAMPO}
-        />
-      </label>
-
-      <button
-        type="button"
-        disabled={tarjetaId === "" || centavos === null || guardar.isPending}
-        onClick={() => guardar.mutate(undefined)}
-        className={BOTON}
-      >
-        {guardar.isPending ? "Guardando" : "Cargar"}
-      </button>
-    </Panel>
-  );
-}
 
 // ------------------------------------------------------------
 // Usuarios

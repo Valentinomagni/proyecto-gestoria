@@ -4,13 +4,15 @@ import { Link } from "@tanstack/react-router";
 import { Panel } from "../../components/Panel";
 import { SkeletonLineas } from "../../components/Skeleton";
 import { EmptyState } from "../../components/EmptyState";
-import { Download, Inbox } from "lucide-react";
+import { Download, Inbox, Plus } from "lucide-react";
 import { aCentavos, formatearCorto } from "../../lib/plata";
 import { useEmpresa } from "../../lib/resumen";
 import { useEsperandoPlata, useGestoras, useTramites, type Tramite } from "../../lib/datos";
 import { rutaEmpresa } from "../../rutas";
 import { BOTON_SUAVE } from "../../lib/campos";
 import { clasificarFalla } from "../../lib/fallas";
+import { puedeMoverSaldo } from "../../lib/roles";
+import { useSesion } from "../../lib/sesion";
 import { MODALIDADES, nombreDeEstado, TIPOS } from "../tramites/Listado";
 import { MovimientosPlegados } from "./MovimientosPlegados";
 import { SeccionPlegable } from "./SeccionPlegable";
@@ -69,7 +71,10 @@ export function Empresa() {
     <div className="mx-auto flex max-w-4xl flex-col gap-4 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl">{e.nombre}</h1>
-        <BajarAExcel razonSocialId={razonSocialId} nombreDeEmpresa={e.nombre} />
+        <div className="flex flex-wrap gap-2">
+          <AccionesDeOficina razonSocialId={razonSocialId} />
+          <BajarAExcel razonSocialId={razonSocialId} nombreDeEmpresa={e.nombre} />
+        </div>
       </div>
 
       {!seVe ? (
@@ -98,6 +103,42 @@ export function Empresa() {
 
       {e.tarjeta_id !== null && seVe && <MovimientosPlegados tarjetaId={e.tarjeta_id} />}
     </div>
+  );
+}
+
+/**
+ * ============================================================================
+ *  LOS DOS BOTONES QUE SOLO VE LA OFICINA
+ * ============================================================================
+ *
+ *  `+ Trámite` y `+ Dinero` viven acá y no en Administración, porque un trámite pertenece a una
+ *  razón social y un depósito es a una tarjeta que es de una empresa. Cargarlos desde una pantalla
+ *  que YA SABE de qué empresa se trata quita un campo de cada formulario, y **el campo que no
+ *  existe no se puede llenar mal**.
+ *
+ *  ============================================================================
+ *   LA GESTORA NO LOS VE, Y NO ES SOLO CORTESIA
+ *  ============================================================================
+ *
+ *  La base ya lo impide —`movimientos_insert` exige `es_oficina()`— así que un botón visible
+ *  fallaría al apretarlo. Y **un botón que va a fallar es peor que no tenerlo**: enseña a
+ *  desconfiar de la pantalla, y quien desconfía de una pantalla de plata vuelve al cuaderno.
+ */
+function AccionesDeOficina({ razonSocialId }: { razonSocialId: string }) {
+  const { perfil } = useSesion();
+  if (!puedeMoverSaldo(perfil?.rol ?? "sin_asignar")) return null;
+
+  return (
+    <>
+      <Link to="/empresa/$razonSocialId/nuevo" params={{ razonSocialId }} className={BOTON_SUAVE}>
+        <Plus aria-hidden="true" size={14} />
+        Trámite
+      </Link>
+      <Link to="/empresa/$razonSocialId/dinero" params={{ razonSocialId }} className={BOTON_SUAVE}>
+        <Plus aria-hidden="true" size={14} />
+        Dinero
+      </Link>
+    </>
   );
 }
 
