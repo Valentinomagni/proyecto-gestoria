@@ -37,8 +37,10 @@ node scripts/espacios-sanos.mjs || exit 1
 node scripts/indices-sanos.mjs || exit 1
 node scripts/estados-sanos.mjs || exit 1
 
-# FALTA UNO: `espacios` esta en rojo con 9 hallazgos que son decisiones visuales del rediseno, no
-# arreglos mecanicos. Entra cuando el front se rehaga. Mientras tanto: `npm run espacios`.
+# FALTA UNO, Y ES A PROPOSITO: `pwa` lee `dist/sw.js`, o sea que necesita un build entero. Este
+# hook esta corto a proposito —ver el encabezado— y pedirle un build a cada commit es como se
+# llega a que alguien use --no-verify. Corre en CI, despues del build. Mientras tanto:
+# `npm run build && npm run pwa`.
 
 # Si todavia no hay dependencias instaladas, el hook no puede correr el resto. No se falla
 # por eso: en un repo recien clonado el primer commit no deberia exigir un npm install.

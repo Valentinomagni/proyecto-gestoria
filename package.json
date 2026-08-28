@@ -25,7 +25,9 @@
     "colores": "node scripts/colores-sanos.mjs",
     "espacios": "node scripts/espacios-sanos.mjs",
     "estados": "node scripts/estados-sanos.mjs",
-    "contraste": "node scripts/contraste-sano.mjs"
+    "contraste": "node scripts/contraste-sano.mjs",
+    "pwa": "node scripts/pwa-sana.mjs",
+    "iconos": "node scripts/iconos.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

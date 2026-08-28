@@ -29,6 +29,13 @@ jobs:
       - name: Build
         run: npx vite build
 
+      # EL SERVICE WORKER NO CACHEA UN SOLO PESO. Va DESPUES del build porque lee `dist/sw.js`
+      # —el archivo generado, que es el hecho— y no la configuracion, que es la intencion. Por eso
+      # mismo no esta en el pre-commit: pedirle un build entero a cada commit es como se llega a
+      # que alguien use --no-verify.
+      - name: La PWA no cachea datos
+        run: node scripts/pwa-sana.mjs
+
       # Los tipos generados contra la base real. Reemplaza al esquema.ts defensivo del Tablero:
       # alla hay codigo de produccion cuyo unico trabajo es sobrevivir a que el esquema del
       # codigo y el de la base se separen. Aca el problema no llega a existir, pero SOLO si
