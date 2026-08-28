@@ -9,6 +9,39 @@ todavía no salió.
 
 ## Sin publicar todavía — lo que está listo en la versión de prueba
 
+### La app de la oficina: se entra por las empresas — 28/08/2026
+
+**La pantalla de entrada ahora es el resumen de las cinco empresas**, cada una con sus cuatro
+cifras y la Diferencia bien grande, que es la que decide. Antes había que elegir una tarjeta de
+una lista para recién ahí ver algo.
+
+**De ahí se entra a la empresa, y de la empresa al trámite.** Las tres pantallas están una adentro
+de la otra y arriba se ve el camino recorrido, con el tramo anterior clickeable. **El botón "atrás"
+del navegador funciona**: antes salía de la aplicación entera.
+
+**Cargar un trámite y cargar dinero se mudaron adentro de la empresa.** Los dos formularios ya
+saben de qué empresa se trata, así que tienen un campo menos — y el campo que no existe no se
+puede llenar mal.
+
+**Los trámites de una empresa vienen agrupados y plegados** según haga falta algo o no: lo que
+está en curso abierto, lo terminado y lo anulado plegado. Nada se borra: lo anulado sigue estando,
+sin hacer ruido.
+
+**El extracto de la cuenta abre en el día de hoy** y se pliega. Lo que se está mirando se puede
+bajar a Excel, tal como está filtrado.
+
+**Si alguien carga un depósito, la pantalla del otro se actualiza sola**, sin recargar. Es la razón
+de ser del sistema: que dos personas no se pisen con la plata disponible del día.
+
+**Administración pasó a estar detrás del nombre**, arriba a la derecha. Se entra dos veces al mes;
+tenerla siempre a la vista le daba el mismo peso que a la pantalla que se mira treinta veces
+por día.
+
+**Una empresa que todavía no tiene movimientos ahora muestra sus ceros y explica por qué**. Decía
+"Sin datos", que es lo que corresponde cuando alguien no tiene permiso para verla — pero a
+gerencia, que ve todo, le aparecía en tres de sus cinco empresas. Ahora "Sin datos" lo ve
+únicamente quien de verdad no puede ver esa tarjeta.
+
 ### La cadena se simplificó, y el saldo inicial se puede volver a cargar — 27/08/2026
 
 **El trámite pasa de diez estados a seis.** Presentar, pagar y retirar eran tres pasos separados

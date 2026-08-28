@@ -25,16 +25,16 @@ y ninguna URL se puede compartir), y traer la paleta teal de la Tarjeta Habitual
 
 | Qué | Cuánto | Comando |
 |---|---|---|
-| Tests, todos verdes | **154** en 20 archivos | `npx vitest run` |
-| Pruebas de permisos contra la API real | **57** en 2 archivos | `npm run test:rls` |
-| Pruebas en el Chrome de verdad | **6** en 2 navegadores | `npm run e2e` |
-| Guardianes | **15** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `pruebas`, `migraciones`, `secretos`, `permisos`, `indices`, `colores`, `estados`, `formato`, `espacios` |
-| Migraciones aplicadas | **38** de 38 escritas | `npx supabase migration list --linked` |
-| Tablas en la base | **21**, más **6 vistas** | consulta a `pg_class` |
-| Módulos de lógica en `src/lib` | 20 | `ls src/lib/*.ts` |
-| Archivos de código | 73, **12.884 líneas** | `find src -name "*.ts*"` |
-| `CLAUDE.md` | **116 líneas**, más 4 skills | `wc -l CLAUDE.md` |
-| Peso de arranque | **95,36 kB** + 53,77 de Supabase + 11,72 de Query | `npm run build` |
+| Tests, todos verdes | **152** en 19 archivos | `npx vitest run` |
+| Pruebas de permisos contra la API real | **66** en 2 archivos | `npm run test:rls` |
+| Pruebas en el Chrome de verdad | **66** en 4 archivos, 2 navegadores | `npm run e2e` |
+| Guardianes | **16** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `pruebas`, `migraciones`, `secretos`, `permisos`, `indices`, `colores`, `estados`, `formato`, `espacios`, `contraste` |
+| Migraciones aplicadas | **41** de 41 escritas | `npx supabase migration list --linked` |
+| Tablas en la base | **21**, más **7 vistas** | consulta a `pg_class` |
+| Módulos de lógica en `src/lib` | 38 | `ls src/lib/*.ts` |
+| Archivos de código | 80, **14.300 líneas** | `find src -name "*.ts*"` |
+| `CLAUDE.md` | **118 líneas**, más 4 skills | `wc -l CLAUDE.md` |
+| Peso de arranque | **92,68 kB** + 53,77 de Supabase + 26,13 del router + 11,72 de Query | `npm run build` |
 | Sentry, en pedazo aparte | 148,56 kB, **no bloquea el primer dibujo** | idem |
 | Excel, en pedazo aparte | 19,69 kB, **se carga recién al apretar el botón** | idem |
 | Commits sin publicar a producción | contarlos antes de decir que está publicado | `git rev-list --count origin/main..HEAD` |
@@ -437,3 +437,75 @@ real: la app ya no la llamaba.
 La regla ahora la comprueban **dos pruebas de punta a punta con sesión de gestora de verdad** —que
 no ve `+ Trámite` ni `+ Dinero`, y que no ve Administración en su menú—, contra la app dibujada.
 Es más fuerte que un test sobre una lista estática.
+
+### Lo que encontró la revisión, midiendo contra la base de verdad
+
+**Gerencia leía "No podés ver los movimientos de esta tarjeta" en tres de sus cinco empresas.**
+No salió de leer el código: salió de pedirle a la API las mismas filas con los tres usuarios y
+comparar. Con los tres roles al lado, la fila de gerencia no cerraba.
+
+La causa es una pregunta contestada con el dato equivocado. La pantalla decidía con
+`movimientos_visibles > 0`, que es un `count`, y **una tarjeta sin movimientos cuenta cero igual
+que una que no se puede leer**. Son dos preguntas:
+
+| Pregunta | La contesta |
+|---|---|
+| ¿hay algo? | el conteo |
+| ¿me lo mostrás? | el permiso |
+
+Ahora `puedo_ver` contesta la segunda, calculada con **los mismos helpers que usa la policy** —la
+única fuente que no puede desincronizarse de ella—, en `public.puedo_ver_tarjeta(uuid)`.
+
+**Es la vuelta del defecto del 27/08, y el arreglo de aquel día fue el que la creó.** Aquella vez
+toda gestora veía las cinco tarjetas en `$ 0,00` teniendo ocho millones y medio; se tapó contando
+movimientos, y el conteo rompió el otro lado. Un arreglo que resuelve un caso mirando un dato
+parecido al correcto deja el caso simétrico roto, y el simétrico de "una gestora ve de más" es
+"a gerencia se le esconde de más".
+
+**Y la prueba de punta a punta defendía el defecto.** `"una empresa sin movimientos visibles dice
+Sin datos"` entraba como **gerencia** y exigía que la dueña leyera "Sin datos" en sus empresas
+vacías. La intención era correcta y el rol no. Una prueba escrita con el rol equivocado no protege
+nada: **certifica el error**.
+
+### El `case` no alcanzaba, y se midió
+
+El primer intento guardó las llamadas a los helpers detrás de
+`case when current_role = 'authenticated' then ... else false end`, razonando que la rama no se
+evalúa para `anon` y por lo tanto no hace falta el permiso.
+
+Es falso. **Postgres comprueba el permiso de `execute` al planificar la consulta, no al recorrer
+las filas.** Después de aplicarla, `anon` recibía 42501 en `v_saldos` y `v_resumen_empresas` —
+exactamente la regresión que el `case` pretendía evitar. Ninguna forma de escribir la condición
+lo evita: el arreglo tiene que estar en los permisos.
+
+Se supo porque la sonda de `anon` se corrió **después** de aplicar, y no sólo antes.
+
+### Un fondo se mide contra todos los textos que pueden caer encima
+
+Tercera vez que axe encuentra un par que el guardián de contraste no medía: `--ink2` sobre
+`--accent-soft` daba 4,19:1. `--accent-soft` dejó de ser sólo el fondo de la fila seleccionada
+cuando pasó a ser el `hover:` de toda fila con enlace, y ahí encima van la fecha y el nombre de
+la gestora.
+
+**La lección ya no es "faltaba un par".** Es que el día que un fondo empieza a usarse en un lugar
+nuevo hay que enumerar a propósito todos los colores de texto que pueden caer sobre él. Nadie lo
+hace solo.
+
+Se oscureció el texto y **no** se aclaró el fondo: aclararlo hasta que pasara dejaba el hover
+invisible. Medido, 4,93:1 sobre el hover y 5,69:1 sobre la superficie.
+
+### Lo que queda abierto, y hay que saberlo
+
+- **La revisión independiente de esta tanda no se hizo.** `revisor-producto` y `revisor-seguridad`
+  se lanzaron cuatro veces y las cuatro murieron por el límite de gasto mensual. Lo de arriba lo
+  encontré yo revisando mi propio trabajo, que es más débil por definición. **Queda pendiente
+  pasarles esta tanda cuando el límite lo permita**, de a uno.
+- **El arnés de permisos deja dos movimientos de un peso por corrida** en la base compartida con
+  producción. Están anulados y no mueven el saldo, pero se ven en el extracto del día. Es el
+  precio de que la prueba de anulación sea real; se termina cuando exista la segunda base.
+- **`npm run deadcode` sigue en rojo.** No entra al portón todavía.
+- **Dos guardianes salen con 0 cuando no comprueban nada**: `permisos` si falta el token, y el
+  `pre-commit` entero si falta `node_modules`. Salir en verde y no haber mirado nada son cosas
+  distintas y hoy se ven iguales.
+- **Una sola base de Supabase.** La app lo dice en pantalla. Cambia antes de que haya saldos
+  reales.
