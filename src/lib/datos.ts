@@ -607,8 +607,24 @@ export function useMovimientos(tarjetaId: string | null) {
     queryKey: ["movimientos", tarjetaId],
     enabled: tarjetaId !== null,
     queryFn: async () => {
+      /*
+        ============================================================================
+         SE LEE `v_movimientos` Y NO LA TABLA, Y ES UNA DECISION DE PRIVACIDAD
+        ============================================================================
+
+        `movimientos_select` es POR TARJETA —tiene que serlo: el saldo es la suma de la tarjeta—
+        pero el trigger de la cuenta corriente escribe el nombre del cliente ADENTRO del concepto:
+        `'Presupuesto - ' || t.cliente_nombre`.
+
+        Leyendo la tabla, una gestora recibía en la respuesta de la API el apellido de los clientes
+        de OTRA gestora, sobre la misma tarjeta. La vista tapa `concepto`, `observacion` y
+        `gestora_id` cuando el movimiento cuelga de un trámite que quien consulta no puede ver.
+
+        Lo encontró la revisión de seguridad del 28/08/2026. Estaba en cero filas —hay una sola
+        gestora con trámites— y se activa el día que sean dos, que es el caso normal.
+      */
       const { data, error } = await supabase
-        .from("movimientos")
+        .from("v_movimientos")
         // El select va en UNA sola cadena literal, sin partirla con `+`: supabase-js infiere los
         // tipos leyendo ese literal, y una concatenacion lo deja en `GenericStringError` — o sea
         // que se pierde el chequeo de tipos justo en la consulta que trae plata.
@@ -633,7 +649,15 @@ export function useMovimientos(tarjetaId: string | null) {
         observacion: m.observacion,
         corrige_movimiento_id: m.corrige_movimiento_id,
         cliente: m.tramites?.cliente_nombre ?? null,
-        anulado: m.anulado,
+        /*
+          `?? false` PORQUE AHORA SALE DE UNA VISTA. Los tipos de una vista salen todos anulables:
+          Postgres no puede garantizar que una columna de una vista no sea nula, aunque en la tabla
+          de abajo sea `not null`. Se normaliza acá, en el borde, igual que en `useNotasDelTramite`.
+
+          Y el valor por omisión es `false` —no anulado— a propósito: tratar un movimiento como
+          anulado por una duda de tipos lo sacaría del saldo que la pantalla muestra.
+        */
+        anulado: m.anulado ?? false,
       }));
     },
   });

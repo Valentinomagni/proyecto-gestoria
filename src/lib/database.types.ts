@@ -291,6 +291,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "movimientos_corrige_movimiento_id_fkey"
+            columns: ["corrige_movimiento_id"]
+            isOneToOne: false
+            referencedRelation: "v_movimientos"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "movimientos_creado_por_fkey"
             columns: ["creado_por"]
             isOneToOne: false
@@ -1315,6 +1322,115 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_saldos"
             referencedColumns: ["tarjeta_id"]
+          },
+        ]
+      }
+      v_movimientos: {
+        Row: {
+          anulado: boolean | null
+          concepto: string | null
+          corrige_movimiento_id: number | null
+          fecha: string | null
+          fecha_acreditacion: string | null
+          gestora_id: string | null
+          id: number | null
+          importe: number | null
+          observacion: string | null
+          tarjeta_id: string | null
+          tipo: string | null
+          tramite_id: string | null
+        }
+        Insert: {
+          anulado?: boolean | null
+          concepto?: never
+          corrige_movimiento_id?: number | null
+          fecha?: string | null
+          fecha_acreditacion?: string | null
+          gestora_id?: never
+          id?: number | null
+          importe?: number | null
+          observacion?: never
+          tarjeta_id?: string | null
+          tipo?: string | null
+          tramite_id?: string | null
+        }
+        Update: {
+          anulado?: boolean | null
+          concepto?: never
+          corrige_movimiento_id?: number | null
+          fecha?: string | null
+          fecha_acreditacion?: string | null
+          gestora_id?: never
+          id?: number | null
+          importe?: number | null
+          observacion?: never
+          tarjeta_id?: string | null
+          tipo?: string | null
+          tramite_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimientos_corrige_movimiento_id_fkey"
+            columns: ["corrige_movimiento_id"]
+            isOneToOne: false
+            referencedRelation: "movimientos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimientos_corrige_movimiento_id_fkey"
+            columns: ["corrige_movimiento_id"]
+            isOneToOne: false
+            referencedRelation: "v_movimientos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimientos_tarjeta_id_fkey"
+            columns: ["tarjeta_id"]
+            isOneToOne: false
+            referencedRelation: "tarjetas_habitualista"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimientos_tarjeta_id_fkey"
+            columns: ["tarjeta_id"]
+            isOneToOne: false
+            referencedRelation: "v_saldos"
+            referencedColumns: ["tarjeta_id"]
+          },
+          {
+            foreignKeyName: "movimientos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "tramites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimientos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_de_gestora"
+            referencedColumns: ["tramite_id"]
+          },
+          {
+            foreignKeyName: "movimientos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_esperando_plata"
+            referencedColumns: ["tramite_id"]
+          },
+          {
+            foreignKeyName: "movimientos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_tramite_totales"
+            referencedColumns: ["tramite_id"]
+          },
+          {
+            foreignKeyName: "movimientos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_tramites"
+            referencedColumns: ["id"]
           },
         ]
       }

@@ -111,5 +111,26 @@ test("sin conexion la app ABRE, lo dice, y NO muestra ningun importe", async ({
   const cuerpo = (await page.locator("body").textContent()) ?? "";
   expect(cuerpo, "hay un importe en pantalla sin conexion").not.toMatch(/\$\s?[\d.]/);
 
+  /*
+    ============================================================================
+     Y SE PUEDE SALIR DE ACA SIN RECARGAR
+    ============================================================================
+
+    LO ENCONTRO LA REVISION DE SEGURIDAD DEL 28/08/2026, y era la mitad del defecto: `fallo` no
+    volvía a `false` por el camino corto —el de "no hay sesión"— así que recuperar la señal no
+    alcanzaba. La app seguía diciendo que no hasta que el token se renovara, hasta una hora. Y no
+    había botón.
+
+    Traducido: la gestora sale del subsuelo del registro, tiene señal, mira el teléfono, y el
+    teléfono le miente.
+  */
+  await expect(page.getByRole("button", { name: /Probar de nuevo/ })).toBeVisible();
+
   await context.setOffline(false);
+  await page.getByRole("button", { name: /Probar de nuevo/ }).click();
+
+  await expect(
+    page.getByRole("heading", { name: /Te toca a vos/ }),
+    "volvio la senial y la app siguio diciendo que no",
+  ).toBeVisible({ timeout: 20_000 });
 });

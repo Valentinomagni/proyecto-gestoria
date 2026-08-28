@@ -70,6 +70,37 @@ const SOSPECHAS = [
     patron: /NetworkFirst|CacheFirst|StaleWhileRevalidate|NetworkOnly\s*\(|runtimeCaching/,
     que: "una estrategia de cache en tiempo de ejecucion",
   },
+  /*
+    ============================================================================
+     Y EL CACHE ESCRITO A MANO, QUE ES EL QUE ESTE GUARDIAN NO VEIA
+    ============================================================================
+
+    LO ENCONTRO LA REVISION DE SEGURIDAD DEL 28/08/2026, probandolo de las dos maneras: la
+    violacion con forma de Workbox salia en rojo, y un service worker de siete lineas que cachea
+    TODA respuesta de red salia en VERDE, con el cartel "el armazon se cachea y los datos no".
+
+        self.addEventListener("fetch", (ev) => { ev.respondWith((async () => {
+          const c = await caches.open("datos");
+          const h = await c.match(ev.request); if (h) return h;
+          const r = await fetch(ev.request); c.put(ev.request, r.clone()); return r;
+        })()) });
+
+    Las cuatro sospechas de arriba son todas de Workbox. La Cache Storage API pelada no aparece en
+    ninguna, y se llega a ella pasando a `strategies: "injectManifest"`, que es la forma normal de
+    pedir "un poco mas de offline".
+
+    Se miran las TRES piezas que hacen falta juntas para guardar una respuesta: abrir un cache,
+    escribir en el, y responder una peticion. Cualquiera de las tres sola puede ser legitima; las
+    tres en el mismo archivo son un cache de datos escrito a mano.
+  */
+  {
+    patron: /caches\s*\.\s*open|\.\s*put\s*\(\s*(?:ev|event|e)\s*\.\s*request/,
+    que: "un cache escrito a mano (Cache Storage sin Workbox)",
+  },
+  {
+    patron: /addEventListener\s*\(\s*["']fetch["']/,
+    que: "un manejador de `fetch` propio, que puede responder desde cache",
+  },
 ];
 
 let malos = 0;

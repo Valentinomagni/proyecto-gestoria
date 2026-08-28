@@ -14,7 +14,7 @@ import { Novedades } from "./Novedades";
 import { Migas } from "./Migas";
 import { MenuDeUsuario } from "./MenuDeUsuario";
 import { Panel } from "./Panel";
-import { SinConexion, useHayConexion } from "./SinConexion";
+import { LaBaseNoContesta, SinConexion, useHayConexion } from "./SinConexion";
 
 /**
  * La cáscara: decide qué se ve según quién entró.
@@ -51,7 +51,7 @@ import { SinConexion, useHayConexion } from "./SinConexion";
 export function Shell({ children }: { children: ReactNode }) {
   const cliente = useQueryClient();
   const navegar = useNavigate();
-  const { cargando, session, perfil, fallo } = useSesion();
+  const { cargando, session, perfil, fallo, errorDeLaBase, reintentar } = useSesion();
   const hayConexion = useHayConexion();
 
   // El saldo se entera solo cuando otro lo mueve. Es la función central del producto: sin esto,
@@ -102,12 +102,22 @@ export function Shell({ children }: { children: ReactNode }) {
 
     Sirve igual en una dirección: cuando dice que NO, no hay. Por eso queda, pero como atajo.
 
-    LA SEÑAL QUE DE VERDAD SABE es `fallo`: la consulta a `perfiles` se hizo y volvió con error.
-    Eso no se puede confundir con nada — es "no pude preguntar", que es distinto de "preguntá y no
-    hay nadie". La misma distinción de ausencia contra rechazo que el proyecto ya tiene escrita
-    para la base, de este lado.
+    LA SEÑAL QUE DE VERDAD SABE es `fallo`: la consulta a `perfiles` se hizo y no llegó. Eso no se
+    puede confundir con nada — es "no pude preguntar", que es distinto de "preguntá y no hay
+    nadie". La misma distinción de ausencia contra rechazo que el proyecto ya tiene escrita para la
+    base, de este lado.
+
+    ============================================================================
+     Y SI LA BASE CONTESTO QUE NO, SE DICE OTRA COSA
+    ============================================================================
+
+    Lo encontró la revisión de seguridad del 28/08/2026: la primera versión mandaba a "Sin
+    conexión" CUALQUIER error, incluidos los de la base. Un 42P17 —la recursión en las policies de
+    `perfiles`, que devuelve 500 en todas las tablas— se veía como un problema de señal. Mensaje
+    falso, y encima manda a revisar el WiFi mientras la base está rota.
   */
-  if (!hayConexion || fallo) return <SinConexion />;
+  if (errorDeLaBase !== null) return <LaBaseNoContesta codigo={errorDeLaBase} />;
+  if (!hayConexion || fallo) return <SinConexion alReintentar={reintentar} />;
 
   if (cargando) {
     return (

@@ -209,9 +209,26 @@ const NOMBRE_DEL_TIPO: Record<string, string> = {
   pago: "Pago en el registro",
 };
 
-/** Qué dice la fila. El apellido al lado, porque es con lo que se busca. */
+/**
+ * Qué dice la fila. El apellido al lado, porque es con lo que se busca.
+ *
+ * ============================================================================
+ *  EL NOMBRE DEL TIPO VA PRIMERO, SIEMPRE, Y ESO ARREGLA UNA FUGA
+ * ============================================================================
+ *
+ * La versión anterior, cuando `cliente` venía nulo, devolvía `m.concepto ?? m.tipo` — o sea que
+ * caía al concepto crudo JUSTO cuando la RLS había escondido el trámite. Y el concepto de una
+ * reserva lo escribe el trigger como `'Presupuesto - ' || cliente_nombre`: el nombre volvía por la
+ * puerta de atrás.
+ *
+ * Ahora `v_movimientos` devuelve ese concepto en null, así que la fuga está cerrada del lado de la
+ * base. Esto es el otro cerrojo: un movimiento de la cadena se describe por su TIPO, que es un
+ * texto nuestro, y sólo se le agrega el nombre si de verdad se puede ver.
+ *
+ * Para un depósito o un ajuste —que no cuelgan de ningún trámite— `NOMBRE_DEL_TIPO` no tiene
+ * entrada y sigue mandando el concepto, que es lo que escribió una persona.
+ */
 function describir(m: Movimiento): string {
-  if (m.cliente !== null)
-    return `${NOMBRE_DEL_TIPO[m.tipo] ?? m.concepto ?? m.tipo} — ${m.cliente}`;
-  return m.concepto ?? m.tipo;
+  const que = NOMBRE_DEL_TIPO[m.tipo] ?? m.concepto ?? m.tipo;
+  return m.cliente !== null ? `${que} — ${m.cliente}` : que;
 }

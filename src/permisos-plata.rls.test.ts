@@ -802,3 +802,93 @@ describe("la cola de la gestora", () => {
     expect(data?.length ?? 0).toBe(0);
   });
 });
+
+/**
+ * ============================================================================
+ *  EL EXTRACTO DE UNA TARJETA COMPARTIDA NO DICE DE QUE CLIENTE ES CADA RESERVA
+ * ============================================================================
+ *
+ *  LO ENCONTRO LA REVISION DE SEGURIDAD DEL 28/08/2026.
+ *
+ *  `movimientos_select` es POR TARJETA —tiene que serlo, porque el saldo es la suma de la
+ *  tarjeta— pero el trigger escribe el nombre del cliente ADENTRO del concepto:
+ *  `'Presupuesto - ' || t.cliente_nombre`. Leyendo la tabla, una gestora recibía el apellido de
+ *  los clientes de otra gestora sobre la misma tarjeta.
+ *
+ *  La vista `v_movimientos` lo tapa. Estas pruebas son lo que impide que alguien vuelva a apuntar
+ *  la pantalla a la tabla sin darse cuenta.
+ */
+describe("el extracto no dice de quien es cada reserva", () => {
+  it("la vista existe y la gestora la puede leer", async () => {
+    const { data, error } = await gestora
+      .from("v_movimientos")
+      .select("id, tipo, importe, concepto, tramite_id")
+      .limit(5);
+    expect(error).toBeNull();
+    expect(data?.length ?? 0, "la gestora no ve ningun movimiento").toBeGreaterThan(0);
+  });
+
+  it("ningun concepto nombra un tramite que ella no puede ver", async () => {
+    /*
+      ESTA ES LA PRUEBA QUE IMPORTA. Se cruzan las dos listas: los movimientos que ve y los
+      trámites que ve. Si un movimiento cuelga de un trámite que NO está en su lista, su concepto
+      tiene que venir en null — porque ahí adentro va el apellido del cliente.
+    */
+    const { data: movs } = await gestora
+      .from("v_movimientos")
+      .select("id, tramite_id, concepto, observacion");
+    const { data: suyos } = await gestora.from("tramites").select("id");
+
+    const mios = new Set((suyos ?? []).map((t) => String(t.id)));
+
+    const filtrados = (movs ?? []).filter(
+      (m) => m.tramite_id !== null && !mios.has(String(m.tramite_id)) && m.concepto !== null,
+    );
+
+    expect(
+      filtrados.map((m) => `#${String(m.id)}: ${String(m.concepto)}`).join(" | "),
+      "hay conceptos de tramites que la gestora no puede ver",
+    ).toBe("");
+  });
+
+  it("pero los movimientos que SI son suyos conservan su concepto", async () => {
+    /*
+      La otra mitad. Una vista que tapa todo también pasaría la prueba de arriba, y dejaría el
+      extracto ilegible: la gestora necesita saber a qué corresponde cada reserva de SUS trámites.
+    */
+    const { data: movs } = await gestora
+      .from("v_movimientos")
+      .select("id, tramite_id, concepto")
+      .not("tramite_id", "is", null);
+    const { data: suyos } = await gestora.from("tramites").select("id");
+
+    const mios = new Set((suyos ?? []).map((t) => String(t.id)));
+    const propios = (movs ?? []).filter((m) => mios.has(String(m.tramite_id)));
+
+    expect(propios.length, "no hay ningun movimiento propio con el que probar").toBeGreaterThan(0);
+    expect(
+      propios.filter((m) => m.concepto !== null).length,
+      "se tapo el concepto de sus propios tramites: el extracto quedo ilegible",
+    ).toBe(propios.length);
+  });
+
+  it("y la oficina los ve todos, que es lo suyo", async () => {
+    const { data: movs } = await gerencia
+      .from("v_movimientos")
+      .select("id, tramite_id, concepto")
+      .not("tramite_id", "is", null)
+      .limit(20);
+
+    expect(movs?.length ?? 0).toBeGreaterThan(0);
+    expect(
+      (movs ?? []).filter((m) => m.concepto === null).length,
+      "a la oficina se le tapo un concepto",
+    ).toBe(0);
+  });
+
+  it("y sin sesion la vista devuelve ausencia, no rechazo", async () => {
+    const { data, error } = await anonimo.from("v_movimientos").select("id");
+    expect(error, "anon recibe rechazo en vez de cero filas").toBeNull();
+    expect(data?.length ?? 0).toBe(0);
+  });
+});
