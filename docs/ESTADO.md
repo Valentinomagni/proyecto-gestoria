@@ -1,23 +1,25 @@
 # Estado del proyecto
 
-Contado de nuevo el **27/08/2026**, después de aplicar la cadena de seis estados. Los números
-salen de correr los comandos, no de recordar.
+Contado de nuevo el **28/08/2026**, al cerrar el Plan C. Los números salen de correr los comandos,
+no de recordar.
 
-**Dónde estamos: el Plan A está cerrado.** El circuito entero funciona de punta a punta, la cadena
-bajó de diez estados a seis, los saldos están corregidos, y el andamio que hace cumplir las reglas
-—hooks, guardianes, Playwright, formateador— corre solo en cada commit.
+**Dónde estamos: los tres planes están cerrados.**
 
-Entrando con las tres cuentas reales, cada una ve lo que le toca: gerencia y administración las 13
-trámites y las cinco tarjetas; la gestora sólo sus 8 trámites, y el saldo únicamente de las
-tarjetas donde tiene trabajo.
+- **Plan A** — la base y el andamio. La cadena bajó de diez estados a seis, los saldos están
+  corregidos, y los guardianes corren solos en cada commit.
+- **Plan B** — la app de la oficina. Resumen de empresas → empresa → trámite, con el router
+  encendido, la paleta de la Tarjeta Habitualista y el tiempo real.
+- **Plan C** — la app de la gestora. Una sola pantalla con lo que le toca, el salto en vivo cuando
+  entra la plata, la ficha reducida con las notas, y la app instalable que abre sin señal.
 
-**Lo único que queda en rojo a propósito** es `npm run espacios`, con 9 hallazgos que son
-decisiones visuales del rediseño y no arreglos mecánicos.
+**Son dos productos sobre una base.** `/` dibuja el resumen para gerencia y administración, y la
+cola para la gestora. Nadie elige: lo decide el rol, que lo decide la base.
 
-**Lo que sigue es el Plan B:** el rediseño de las dos pantallas. La de gestoría tiene que dejar de
-parecerse a la de la oficina —son dos necesidades distintas y hoy comparten forma—, encender el
-router (`@tanstack/react-router` está instalado y **apagado**, así que el botón "atrás" no funciona
-y ninguna URL se puede compartir), y traer la paleta teal de la Tarjeta Habitualista.
+**Todo el portón en verde:** 17 guardianes, 165 pruebas, 71 de permisos contra la base real y 103
+en el Chrome de verdad, incluidas las que corren contra la app construida.
+
+**La deuda más grande es que la revisión independiente no se hizo**, ni del Plan B ni del Plan C:
+los revisores murieron cuatro veces por el límite de gasto. Está detallado al final.
 
 ---
 
@@ -25,16 +27,17 @@ y ninguna URL se puede compartir), y traer la paleta teal de la Tarjeta Habitual
 
 | Qué | Cuánto | Comando |
 |---|---|---|
-| Tests, todos verdes | **152** en 19 archivos | `npx vitest run` |
-| Pruebas de permisos contra la API real | **66** en 2 archivos | `npm run test:rls` |
-| Pruebas en el Chrome de verdad | **66** en 4 archivos, 2 navegadores | `npm run e2e` |
-| Guardianes | **16** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `pruebas`, `migraciones`, `secretos`, `permisos`, `indices`, `colores`, `estados`, `formato`, `espacios`, `contraste` |
-| Migraciones aplicadas | **41** de 41 escritas | `npx supabase migration list --linked` |
-| Tablas en la base | **21**, más **7 vistas** | consulta a `pg_class` |
-| Módulos de lógica en `src/lib` | 38 | `ls src/lib/*.ts` |
-| Archivos de código | 80, **14.300 líneas** | `find src -name "*.ts*"` |
+| Tests, todos verdes | **165** en 21 archivos | `npx vitest run` |
+| Pruebas de permisos contra la API real | **71** en 2 archivos | `npm run test:rls` |
+| Pruebas en el Chrome de verdad | **103** en 7 archivos, 2 navegadores + la app construida | `npm run e2e` |
+| Guardianes | **17** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `pruebas`, `migraciones`, `secretos`, `permisos`, `indices`, `colores`, `estados`, `formato`, `espacios`, `contraste`, `pwa` |
+| Migraciones aplicadas | **42** de 42 escritas | `npx supabase migration list --linked` |
+| Tablas en la base | **21**, más **8 vistas** | consulta a `pg_class` |
+| Módulos de lógica en `src/lib` | 42 | `ls src/lib/*.ts` |
+| Archivos de código | 89, **15.452 líneas** | `find src -name "*.ts*"` |
 | `CLAUDE.md` | **118 líneas**, más 4 skills | `wc -l CLAUDE.md` |
-| Peso de arranque | **92,68 kB** + 53,77 de Supabase + 26,13 del router + 11,72 de Query | `npm run build` |
+| Peso de arranque | **94,68 kB** + 53,77 de Supabase + 26,13 del router + 11,72 de Query | `npm run build` |
+| La app instalable | manifiesto, 3 íconos, **30 archivos precacheados** | `npm run pwa` |
 | Sentry, en pedazo aparte | 148,56 kB, **no bloquea el primer dibujo** | idem |
 | Excel, en pedazo aparte | 19,69 kB, **se carga recién al apretar el botón** | idem |
 | Commits sin publicar a producción | contarlos antes de decir que está publicado | `git rev-list --count origin/main..HEAD` |
@@ -509,3 +512,76 @@ invisible. Medido, 4,93:1 sobre el hover y 5,69:1 sobre la superficie.
   distintas y hoy se ven iguales.
 - **Una sola base de Supabase.** La app lo dice en pantalla. Cambia antes de que haya saldos
   reales.
+
+---
+
+## Plan C — la app de la gestora, 28/08/2026
+
+### Lo que entregó
+
+Una sola pantalla con tres bloques, el salto en vivo, la ficha reducida con las notas, la app
+instalable y la pantalla de sin conexión. La decisión que ordenó todo el plan está escrita antes
+de la primera tarea: **quién va en qué bloque lo decide la base**, en `v_cola_de_gestora`, apoyada
+en `v_esperando_plata`. Rehacer esa cuenta en el navegador habría sido reescribir la parte difícil
+—la plata es de la tarjeta y se la reparten todos los presupuestos vivos— peor y en otro idioma.
+
+### Lo que encontró ejecutarlo, y no leerlo
+
+**Un defecto de plata, y lo agarré mirando la pantalla.** La tarjeta decía `$ 5.200` para un
+presupuesto de 520.000 y `$ 450` para uno de 45.000: **todo dividido por cien**. La base manda
+pesos, `formatear` espera centavos, y en esta app la conversión pasa en el punto de dibujo. Las
+doce pruebas de punta a punta estaban **en verde** con el defecto puesto, porque ninguna miraba el
+importe. Ahora una lo ata al peso exacto.
+
+Es hermano del `Number("600.000")` que costó un factor de mil el 19/08. La forma se repite: un
+importe que cruza un borde sin la conversión, sin error y sin advertencia.
+
+**`view-transition-name` no alcanzaba, y casi queda así.** El navegador anima el viaje sólo si el
+cambio de DOM ocurre adentro de `document.startViewTransition`. Con sólo el atributo, la tarjeta
+desaparecía de un bloque y aparecía en el otro — y las dos primeras pruebas del salto pasaban
+igual, porque comprueban **dónde** queda y no **cómo** llegó. La tercera espía la función y cuenta
+las llamadas.
+
+**Y esa prueba encontró una animación espuria:** contaba una antes de tocar la plata. La primera
+llegada de datos disparaba una transición, así que todas las tarjetas parecían haberse movido
+cuando recién aparecían. El salto tiene que significar una sola cosa.
+
+**Sin señal, la app decía que te habían desactivado la cuenta.** Es un defecto que ya existía:
+`traerPerfil` no distinguía "no pude preguntar" de "no hay perfil", y la pantalla elegía la peor
+lectura. Está fotografiado. `useSesion` ahora devuelve `fallo`.
+
+**`navigator.onLine` no sirve solo, y se midió:** con la red cortada de verdad seguía informando
+`true`. Contesta "hay una placa de red", no "llego a Supabase" — que es exactamente la diferencia
+entre una oficina y el subsuelo de un registro.
+
+**El guardián de la PWA se equivocó dos veces antes de servir**, y las dos se vieron metiéndole la
+violación a mano: buscaba `registerRoute` (que Workbox emite siempre, así que marcaba en rojo un
+service worker correcto) y buscaba `supabase.co` con el punto literal, cuando las reglas llegan al
+archivo generado como expresión regular — `supabase\.co`. Con la violación puesta, una mitad del
+guardián decía MAL y la otra OK, mirando el mismo archivo.
+
+### Lo que cambió en las pruebas de la oficina, y por qué
+
+Cuatro se acomodaron, por cuatro razones distintas. Dos entraban como **gestora** a una pantalla
+que su rol ya no alcanza —una prueba así no protege nada, y la regla que cuidaban se mudó a
+`gestora.spec.ts`—. Una se apoyaba en que **DORAL CHEVROLET estuviera vacía**, y el trámite que el
+plan C necesita para probar el salto le dejó su reserva: **una prueba se apoyaba en que una fila no
+existiera y otra prueba la creó**. La cuarta ahora entra por la dirección en vez de navegando, que
+es más exigente.
+
+### Lo que queda abierto, y hay que saberlo
+
+- **La revisión independiente sigue sin hacerse**, ahora de dos tandas. Los revisores murieron
+  cuatro veces por el límite de gasto en el plan B y en el plan C no se lanzaron por lo mismo. Todo
+  lo de arriba lo revisé yo sobre mi propio trabajo, que es más débil por definición. **Es la deuda
+  más grande que tiene el proyecto hoy.**
+- **Una sola base de Supabase.** Ahora hay instructivo: `docs/SEGUNDA-BASE.md`. El cartel de la
+  pantalla se apaga solo cuando se separen.
+- **El arnés y las pruebas del salto dejan filas en la base que mirás.** Todas anuladas y
+  compensadas —el saldo cierra— pero se ven en el extracto. Se termina con la segunda base.
+- **Hay un trámite de prueba vivo**, "PRUEBA ESPERANDO PLATA" en DORAL CHEVROLET, con su reserva de
+  45.000. Existe para que la prueba del salto tenga algo que mover; sin él esa prueba se saltearía
+  sola y no comprobaría nada. Se anula el día que haya saldos reales.
+- **`npm run deadcode` sigue en rojo.** No entra al portón todavía.
+- **El pre-commit sale con 0 si falta `node_modules`**, y `permisos` si falta el token. Salir en
+  verde y no haber mirado nada se ven iguales.

@@ -89,3 +89,49 @@ test("la gestora no ve Administracion en el menu", async ({ page }) => {
   await expect(page.getByRole("menuitem", { name: "Administración" })).toHaveCount(0);
   await expect(page.getByRole("menuitem", { name: "Salir" })).toBeVisible();
 });
+
+/**
+ * ============================================================================
+ *  LAS DOS PANTALLAS DE LA GESTORA
+ * ============================================================================
+ *
+ *  Entran acá el 28/08/2026, con el plan C. Son las que se miran en un teléfono, con una mano y a
+ *  veces en la calle — donde el contraste real es peor que el de un monitor de oficina.
+ *
+ *  Y se miden en los dos temas por la misma razón que las de la oficina: un color que pasa sobre
+ *  blanco puede no pasar sobre un fondo casi negro, y al revés.
+ */
+for (const oscuro of [false, true]) {
+  const tema = oscuro ? "en oscuro" : "en claro";
+
+  test(`la cola de la gestora no tiene violaciones serias, ${tema}`, async ({ page }) => {
+    if (oscuro) await page.emulateMedia({ colorScheme: "dark" });
+    await entrarComo(page, "gestora");
+    await page.getByRole("heading", { name: /Te toca a vos/ }).waitFor();
+    await page.waitForLoadState("networkidle");
+
+    const r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
+    const serias = r.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+
+    expect(
+      serias,
+      serias.map((v) => `${v.id}: ${v.nodes.length} elemento(s)`).join(" | "),
+    ).toHaveLength(0);
+  });
+
+  test(`y la ficha reducida tampoco, ${tema}`, async ({ page }) => {
+    if (oscuro) await page.emulateMedia({ colorScheme: "dark" });
+    await entrarComo(page, "gestora");
+    await page.locator("[data-tarjeta-tramite]").first().getByRole("link").first().click();
+    await page.getByRole("heading", { name: "Notas" }).waitFor();
+    await page.waitForLoadState("networkidle");
+
+    const r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
+    const serias = r.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+
+    expect(
+      serias,
+      serias.map((v) => `${v.id}: ${v.nodes.length} elemento(s)`).join(" | "),
+    ).toHaveLength(0);
+  });
+}

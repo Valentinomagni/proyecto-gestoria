@@ -9,6 +9,38 @@ todavía no salió.
 
 ## Sin publicar todavía — lo que está listo en la versión de prueba
 
+### La app de la gestora: una sola pantalla con lo que le toca — 28/08/2026
+
+**La gestora ya no ve la pantalla de la oficina.** Al entrar le aparece su lista de trabajo, y
+nada más: sin menú, sin tabla, sin filtros y sin buscador.
+
+**Son tres bloques.** Arriba, **Te toca a vos**: lo que puede hacer ahora, cada trámite con un
+botón que dice exactamente qué sigue —"Cargar el presupuesto", "Andá al registro", "Entregar a
+administración"—. Abajo, **Esperando a la oficina**: lo que está frenado porque falta plata, sin
+botón y **diciendo cuánto falta depositar**. Y al final, **Terminados hoy**.
+
+**Un trámite sin plata no tiene botón, a propósito.** Un botón que la manda al registro cuando la
+tarjeta no cubre es un viaje perdido y un rebote en la ventanilla.
+
+**Cuando la oficina deposita, la tarjeta se mueve sola** del bloque de abajo al de arriba y le
+aparece el botón. No recarga nada, no pregunta por WhatsApp: si está mirando, lo ve pasar. Esa es
+la razón de ser del sistema.
+
+**Arriba está el saldo de las tarjetas donde trabaja**, en vivo. Sin selector de empresa: cada
+trámite dice de cuál es.
+
+**Tocando el nombre del cliente se abre la ficha**, en una sola columna para el teléfono, con los
+datos, el presupuesto y **las notas** — que es por donde la oficina le deja escrito lo que hoy se
+dice por WhatsApp, y por donde ella contesta. Queda con el nombre de quien la escribió y no se
+puede editar ni borrar.
+
+**La app se puede instalar en el teléfono**, con su ícono, y abre aunque no haya señal. **Sin
+señal no te muestra ningún importe**: te dice que no hay conexión. Un saldo de hace un rato se lee
+igual que el de ahora, y con ese número se sale a pagar.
+
+**Y si se corta la señal ya no dice que tu cuenta no está habilitada.** Era lo que pasaba antes:
+la app no podía preguntar quién eras y lo contaba como si te hubieran sacado el permiso.
+
 ### La app de la oficina: se entra por las empresas — 28/08/2026
 
 **La pantalla de entrada ahora es el resumen de las cinco empresas**, cada una con sus cuatro
