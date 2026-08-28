@@ -18,10 +18,13 @@ test("el resumen muestra las cinco empresas, y la Diferencia de cada una", async
 
   await expect(page.getByRole("heading", { name: "Grupo Paris" })).toBeVisible();
 
-  // Las cinco están, y cada una es un enlace a la suya.
-  for (const empresa of ["PARIS AUTOS", "PARIS CARS", "DORAL CHEVROLET"]) {
-    await expect(page.getByRole("link", { name: new RegExp(empresa) })).toBeVisible();
-  }
+  // Las cinco están, y cada una es un enlace a la suya. En paralelo: son comprobaciones
+  // independientes, ninguna depende del resultado de la anterior.
+  await Promise.all(
+    ["PARIS AUTOS", "PARIS CARS", "DORAL CHEVROLET"].map((empresa) =>
+      expect(page.getByRole("link", { name: new RegExp(empresa) })).toBeVisible(),
+    ),
+  );
 });
 
 test("una empresa sin movimientos visibles dice Sin datos, no un cero", async ({ page }) => {
@@ -76,14 +79,11 @@ test("la empresa muestra las cuatro cifras, y la Diferencia es la mas grande", a
   await entrarComo(page, "gerencia");
   await page.getByRole("link", { name: /PARIS AUTOS/ }).click();
 
-  for (const rotulo of [
-    "Saldo día de hoy",
-    "Depósito pendiente",
-    "Saldo reservado",
-    "Diferencia",
-  ]) {
-    await expect(page.getByText(rotulo, { exact: true })).toBeVisible();
-  }
+  await Promise.all(
+    ["Saldo día de hoy", "Depósito pendiente", "Saldo reservado", "Diferencia"].map((rotulo) =>
+      expect(page.getByText(rotulo, { exact: true })).toBeVisible(),
+    ),
+  );
 });
 
 test("una empresa que no existe lo dice, y no deja la pantalla en blanco", async ({ page }) => {
@@ -110,4 +110,55 @@ test("la gestora ve el saldo de su empresa, no ceros", async ({ page }) => {
   const conDatos = page.getByRole("link", { name: /PARIS AUTOS/ });
   await expect(conDatos).toBeVisible();
   await expect(conDatos).not.toContainText("Sin datos");
+});
+
+test("las secciones arrancan segun su criterio, y se pliegan", async ({ page }) => {
+  /*
+    EL CRITERIO ES UNO SOLO: abierto lo que necesita algo, plegado lo que ya pasó. Los terminados
+    y los anulados siguen estando —acá nada se borra— pero no acumulan ruido.
+  */
+  await entrarComo(page, "gerencia");
+  await page.getByRole("link", { name: /PARIS AUTOS/ }).click();
+
+  const enCurso = page.getByRole("button", { name: /En curso/ });
+  const anulados = page.getByRole("button", { name: /Anulados/ });
+
+  await expect(enCurso).toHaveAttribute("aria-expanded", "true");
+  await expect(anulados).toHaveAttribute("aria-expanded", "false");
+
+  // Y se pliega. Es un `button` con `aria-expanded`, así que se llega con teclado y el lector de
+  // pantalla dice si está abierto — un `div` que escucha clics no hace ninguna de las dos cosas.
+  await enCurso.click();
+  await expect(enCurso).toHaveAttribute("aria-expanded", "false");
+});
+
+test("las filas de tramite son enlaces, y llevan al tramite", async ({ page }) => {
+  await entrarComo(page, "gerencia");
+  await page.getByRole("link", { name: /PARIS AUTOS/ }).click();
+
+  const primera = page.locator("[data-fila-tramite]").first();
+  await expect(primera).toBeVisible();
+  await primera.click();
+
+  // La dirección lleva la empresa Y el trámite: es lo que hace que "volver" sepa a dónde volver.
+  await expect(page).toHaveURL(/\/empresa\/[0-9a-f-]{36}\/tramite\/[0-9a-f-]{36}$/);
+});
+
+test("y en la lista no hay ninguna cuenta por gestora", async ({ page }) => {
+  /*
+    NO SE MIDE A LAS PERSONAS. La gestora aparece como dato de la fila —para saber a quién
+    llamar— y nunca como agrupación, conteo ni total.
+
+    El día que exista esa tabla de posiciones, los presupuestos se cargan tarde y redondeados, y
+    el comprometido —que es la razón de ser del sistema— pasa a ser mentira.
+  */
+  await entrarComo(page, "gerencia");
+  await page.getByRole("link", { name: /PARIS AUTOS/ }).click();
+
+  const encabezados = await page
+    .getByRole("button", { name: /En curso|Anulados|Terminados/ })
+    .allTextContents();
+  for (const t of encabezados) {
+    expect(t).not.toMatch(/Carla|Mariana/);
+  }
 });

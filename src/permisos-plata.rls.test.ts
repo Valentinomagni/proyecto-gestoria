@@ -39,6 +39,10 @@ let gerencia: SupabaseClient;
 let gestora: SupabaseClient;
 let anonimo: SupabaseClient;
 
+/** Suma una columna de importes. Fuera de los tests: no captura nada de ninguno. */
+const sumar = (filas: { contable: unknown }[] | null): number =>
+  (filas ?? []).reduce((t, x) => t + Number(x.contable), 0);
+
 beforeAll(async () => {
   gerencia = await comoUsuario(env["PRUEBA_GERENCIA"] ?? "");
   gestora = await comoUsuario(env["PRUEBA_GESTORA"] ?? "");
@@ -604,9 +608,6 @@ describe("el resumen de empresas", () => {
   it("y la suma cierra contra v_saldos", async () => {
     const { data: resumen } = await gerencia.from("v_resumen_empresas").select("contable");
     const { data: saldos } = await gerencia.from("v_saldos").select("contable");
-    const sumar = (f: { contable: unknown }[] | null) =>
-      (f ?? []).reduce((t, x) => t + Number(x.contable), 0);
-
     expect(
       sumar(resumen),
       "el total del grupo no coincide con la suma de las tarjetas: el join esta duplicando plata",

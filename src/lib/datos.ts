@@ -599,7 +599,9 @@ export function useAnularMovimiento() {
 // Tramites
 // ------------------------------------------------------------
 
-export function useTramites(filtros: { estado?: string; buscar?: string } = {}) {
+export function useTramites(
+  filtros: { estado?: string; buscar?: string; razonSocialId?: string } = {},
+) {
   return useQuery({
     queryKey: ["tramites", filtros],
     queryFn: async (): Promise<Tramite[]> => {
@@ -609,6 +611,13 @@ export function useTramites(filtros: { estado?: string; buscar?: string } = {}) 
         .order("recibido_at", { ascending: false })
         .limit(300);
       if (filtros.estado) q = q.eq("estado", filtros.estado);
+      /*
+        FILTRAR POR EMPRESA EN LA BASE Y NO EN EL FRONT. Traer los 300 de todo el grupo para
+        quedarse con los de una es pedirle a la base trabajo que despues se tira, y el dia que
+        haya seis mil tramites —la planilla de PARIS AUTOS ya pasa de 6.868 filas— el limite de
+        300 empezaria a esconder tramites de la empresa que se esta mirando, sin decirlo.
+      */
+      if (filtros.razonSocialId) q = q.eq("razon_social_id", filtros.razonSocialId);
       if (filtros.buscar && filtros.buscar.trim() !== "") {
         const b = `%${filtros.buscar.trim()}%`;
         // Una sola caja que busca en los cuatro campos con los que se ubica un tramite.

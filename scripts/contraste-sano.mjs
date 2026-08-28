@@ -47,14 +47,16 @@ function hexASrgb(hex) {
   return [0, 2, 4].map((i) => parseInt(n.slice(i, i + 2), 16) / 255);
 }
 
+/** Un canal de sRGB a lineal. Vive afuera: no depende de nada de `luminancia`. */
+const aLineal = (v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+
 /** Luminancia relativa, tal como la define WCAG. */
 function luminancia([r, g, b]) {
-  const f = (v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
-  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+  return 0.2126 * aLineal(r) + 0.7152 * aLineal(g) + 0.0722 * aLineal(b);
 }
 
 function contraste(c1, c2) {
-  const [a, b] = [luminancia(c1), luminancia(c2)].sort((x, y) => y - x);
+  const [a, b] = [luminancia(c1), luminancia(c2)].toSorted((x, y) => y - x);
   return (a + 0.05) / (b + 0.05);
 }
 
@@ -157,7 +159,7 @@ const bloqueOscuro = (marca) => {
 
   return [...css.slice(desde, i).matchAll(/--([a-z0-9-]+)\s*:\s*([^;]+);/g)]
     .map((m) => `${m[1]}: ${m[2].trim()}`)
-    .sort()
+    .toSorted()
     .join("\n");
 };
 
