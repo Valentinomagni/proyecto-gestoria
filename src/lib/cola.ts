@@ -1,7 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "./supabase";
-import { aNumero } from "./datos";
-
 /**
  * ============================================================================
  *  LA COLA DE LA GESTORA
@@ -27,9 +23,24 @@ export interface FilaDeCola {
   estado: string;
   bloque: Bloque;
   accion: Accion;
-  /** Lo que pide el presupuesto, en centavos. */
+  /*
+    ============================================================================
+     LOS DOS IMPORTES VIENEN EN PESOS, COMO LOS MANDA LA BASE
+    ============================================================================
+
+    NO son centavos, aunque el CLAUDE.md diga que en JavaScript la plata son centavos enteros. La
+    conversión de esta app pasa en el PUNTO DE DIBUJO —`formatearCorto(aCentavos(x))`, igual que
+    `Cifra` en la pantalla de la empresa y que las tres cifras del resumen—, así que estos campos
+    son consistentes con `Saldo.contable` y con `FilaDeResumen.contable`.
+
+    Está escrito porque cuesta caro: el 28/08/2026 pasé `falta` directo a `formatearCorto` y un
+    presupuesto de $ 520.000 se dibujó como $ 5.200. Dividido por cien, sin error y sin
+    advertencia. Lo agarró mirar la pantalla, no una prueba.
+
+    QUIEN DIBUJE UNO DE ESTOS DOS: `aCentavos` primero, siempre.
+  */
   pide: number;
-  /** Cuánto falta depositar en la tarjeta para que salga. En centavos. Cero si no espera nada. */
+  /** Cuánto falta depositar en la tarjeta para que salga. Cero si no espera nada. */
   falta: number;
   desde: string | null;
 }
@@ -102,37 +113,4 @@ export function agrupar(filas: FilaDeCola[]): Record<Bloque, FilaDeCola[]> {
     r[b] = r[b].toSorted((a, z) => clave(a).localeCompare(clave(z)));
   }
   return r;
-}
-
-/*
-  EL SELECT VA EN UNA SOLA CADENA LITERAL, sin partirla con `+`: supabase-js infiere los tipos
-  leyendo ese literal, y una concatenacion lo deja en `GenericStringError` — o sea que se pierde
-  el chequeo de tipos justo en la consulta que trae plata.
-*/
-const COLUMNAS =
-  "tramite_id, cliente_nombre, dominio, oferta_referencia, empresa, razon_social_id, tarjeta_id, estado, bloque, accion, pide, falta, desde";
-
-export function useCola() {
-  return useQuery({
-    queryKey: ["cola"],
-    queryFn: async (): Promise<FilaDeCola[]> => {
-      const { data, error } = await supabase.from("v_cola_de_gestora").select(COLUMNAS);
-      if (error) throw error;
-      return (data ?? []).map((f) => ({
-        tramite_id: String(f.tramite_id),
-        cliente_nombre: String(f.cliente_nombre),
-        dominio: f.dominio === null ? null : String(f.dominio),
-        oferta_referencia: f.oferta_referencia === null ? null : String(f.oferta_referencia),
-        empresa: String(f.empresa),
-        razon_social_id: String(f.razon_social_id),
-        tarjeta_id: f.tarjeta_id === null ? null : String(f.tarjeta_id),
-        estado: String(f.estado),
-        bloque: f.bloque as Bloque,
-        accion: f.accion as Accion,
-        pide: aNumero(f.pide),
-        falta: aNumero(f.falta),
-        desde: f.desde === null ? null : String(f.desde),
-      }));
-    },
-  });
 }

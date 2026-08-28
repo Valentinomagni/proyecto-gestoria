@@ -10,6 +10,8 @@ import {
 import { Shell } from "./components/Shell";
 import { SkeletonLineas } from "./components/Skeleton";
 import { Resumen } from "./features/resumen/Resumen";
+import { Cola } from "./features/gestora/Cola";
+import { useSesion } from "./lib/sesion";
 import { Empresa } from "./features/empresa/Empresa";
 import { Ficha } from "./features/tramites/Ficha";
 import { AltaTramite } from "./features/tramites/AltaTramite";
@@ -58,10 +60,31 @@ const rutaRaiz = createRootRoute({
   notFoundComponent: NoExiste,
 });
 
+/**
+ * ============================================================================
+ *  LA MISMA DIRECCION, DOS PRODUCTOS
+ * ============================================================================
+ *
+ *  `/` es el resumen de empresas para la oficina y la cola para la gestora. Son dos productos
+ *  distintos sobre la misma base, y cada uno entra por su puerta sin tener que elegirla.
+ *
+ *  POR QUE NO DOS RUTAS: una ruta aparte obligaría a que algo mande ahí —un redirect o un menú—.
+ *  Un redirect deja una dirección intermedia en el historial que rompe el botón "atrás", y un
+ *  menú es justo lo que la app de la gestora no tiene.
+ *
+ *  EL ROL LO DECIDE LA BASE, no esta función: `useSesion` lo lee de `perfiles`. Y aunque alguien
+ *  llegara a dibujar la pantalla que no le toca, la RLS ya impide que vea lo que no es suyo —
+ *  esto elige qué mostrar, no qué proteger.
+ */
+function PantallaDeEntrada() {
+  const { rol } = useSesion();
+  return rol === "gestora" ? <Cola /> : <Resumen />;
+}
+
 const rutaResumen = createRoute({
   getParentRoute: () => rutaRaiz,
   path: "/",
-  component: Resumen,
+  component: PantallaDeEntrada,
 });
 
 export const rutaEmpresa = createRoute({

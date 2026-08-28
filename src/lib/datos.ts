@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tansta
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "./supabase";
+import type { Accion, Bloque, FilaDeCola } from "./cola";
 import { clasificarFalla } from "./fallas";
 import { recordado, recordar } from "./recordar";
 import {
@@ -417,6 +418,50 @@ export function useEsperandoPlata() {
         tarjeta_id: String(t.tarjeta_id),
         pide: aNumero(t.pide),
         falta: aNumero(t.falta),
+      }));
+    },
+  });
+}
+
+/**
+ * La cola de la gestora: sus trámites con el bloque y la acción ya decididos.
+ *
+ * EL HOOK VIVE ACA Y LA LOGICA EN `cola.ts`, igual que `useNovedades` con `novedades.ts`. Lo que
+ * se puede equivocar —el orden de los bloques, qué botón va en cada acción, cómo se agrupa— vive
+ * allá SIN DEPENDENCIAS, para poder probarlo sin credenciales. Tenerlo todo junto hacía que
+ * `cola.test.ts` cargara el cliente de Supabase, y el guardián de pruebas lo marcó en rojo.
+ */
+export function useCola() {
+  return useQuery({
+    queryKey: ["cola"],
+    queryFn: async (): Promise<FilaDeCola[]> => {
+      /*
+        EL SELECT VA EN UNA SOLA CADENA LITERAL, sin partirla con `+`: supabase-js infiere los
+        tipos leyendo ese literal, y una concatenacion lo deja en `GenericStringError` — o sea que
+        se pierde el chequeo de tipos justo en la consulta que trae plata.
+      */
+      const { data, error } = await supabase
+        .from("v_cola_de_gestora")
+        .select(
+          "tramite_id, cliente_nombre, dominio, oferta_referencia, empresa, razon_social_id, tarjeta_id, estado, bloque, accion, pide, falta, desde",
+        );
+      if (error) throw error;
+      return (data ?? []).map((f) => ({
+        tramite_id: String(f.tramite_id),
+        cliente_nombre: String(f.cliente_nombre),
+        dominio: f.dominio === null ? null : String(f.dominio),
+        oferta_referencia: f.oferta_referencia === null ? null : String(f.oferta_referencia),
+        empresa: String(f.empresa),
+        razon_social_id: String(f.razon_social_id),
+        tarjeta_id: f.tarjeta_id === null ? null : String(f.tarjeta_id),
+        estado: String(f.estado),
+        bloque: f.bloque as Bloque,
+        accion: f.accion as Accion,
+        // En PESOS, como los manda la base. Se convierten con `aCentavos` al dibujar: la razon
+        // entera, y lo que costo, esta en el tipo `FilaDeCola`.
+        pide: aNumero(f.pide),
+        falta: aNumero(f.falta),
+        desde: f.desde === null ? null : String(f.desde),
       }));
     },
   });
