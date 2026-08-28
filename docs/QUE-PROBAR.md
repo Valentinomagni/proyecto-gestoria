@@ -23,10 +23,20 @@ todos. Lo que ves depende de tu rol:
 
 No hay que elegir nada ni pasar por ningún menú.
 
-**Hay datos de prueba en la base.** Están a propósito y se ven: un trámite llamado `PRUEBA
-ESPERANDO PLATA` en DORAL CHEVROLET, y movimientos de un peso y de 45.000 —todos anulados y
-compensados, el saldo cierra— que dejan las pruebas automáticas. Se terminan cuando exista la
-segunda base de Supabase (`docs/SEGUNDA-BASE.md`).
+**Hay datos de prueba en la base, y uno se ve mucho.** Están a propósito:
+
+- Un trámite llamado **`PRUEBA ESPERANDO PLATA`** en DORAL CHEVROLET, con un presupuesto de 45.000.
+  Existe para que la prueba automática del salto tenga algo que mover: sin un trámite esperando
+  plata, esa prueba se saltearía sola y no comprobaría nada.
+
+  **Por eso DORAL CHEVROLET te va a mostrar `-$ 45.000` de Diferencia, en rojo.** No es un defecto:
+  la tarjeta está en cero y tiene 45.000 comprometidos, así que ese número es cierto. Se anula el
+  día que haya saldos reales.
+
+- Movimientos de un peso y de 45.000 que dejan las pruebas automáticas, **todos anulados y
+  compensados** — el saldo cierra, pero se ven en el extracto del día.
+
+Todo esto se termina cuando exista la segunda base de Supabase (`docs/SEGUNDA-BASE.md`).
 
 ---
 
