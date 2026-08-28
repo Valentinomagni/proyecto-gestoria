@@ -499,12 +499,22 @@ export function useSaldosEnVivo(cliente: QueryClient): void {
           distintas de la misma plata.
         */
         void cliente.invalidateQueries({ queryKey: ["resumen"] });
+        /*
+          Y LA COLA DE LA GESTORA, que es donde el deposito se convierte en un boton.
+
+          Sin esto la plata entra, el saldo de arriba sube, y la tarjeta sigue en "esperando a la
+          oficina": la misma pantalla diciendo dos cosas distintas de la misma plata. Es el
+          defecto de `frenado_por_saldo` —que alguien tenia que desmarcar a mano— reaparecido con
+          otra forma.
+        */
+        void cliente.invalidateQueries({ queryKey: ["cola"] });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "tramites" }, () => {
         void cliente.invalidateQueries({ queryKey: ["tramites"] });
         void cliente.invalidateQueries({ queryKey: ["saldos"] });
         void cliente.invalidateQueries({ queryKey: ["esperando_plata"] });
         void cliente.invalidateQueries({ queryKey: ["resumen"] });
+        void cliente.invalidateQueries({ queryKey: ["cola"] });
       })
       .subscribe();
     return () => void supabase.removeChannel(canal);

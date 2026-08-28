@@ -95,8 +95,17 @@ export async function entrarComo(page: Page, rol: Rol, direccion = "/"): Promise
  * SE USA SOLO PARA LA PRUEBA DE TIEMPO REAL, que necesita que la plata se mueva desde AFUERA de
  * la pantalla que está mirando. Quien lo llame tiene que anularlo en un `finally`.
  */
-export async function cargarDepositoPorLaApi(importe: number): Promise<number> {
-  const { token, tarjetaId } = await sesionDeGerencia();
+export async function cargarDepositoPorLaApi(
+  importe: number,
+  /*
+    EN QUE TARJETA. Sin esto siempre cae en la primera por `orden`, que es PARIS AUTOS — la que
+    tiene once millones y la que mira la duenia. La prueba del salto necesita depositar en una
+    tarjeta VACIA, que es donde puede haber alguien esperando plata, y ademas conviene que el
+    movimiento de prueba caiga lo mas lejos posible de la plata de verdad.
+  */
+  nombreDeTarjeta?: string,
+): Promise<number> {
+  const { token, tarjetaId } = await sesionDeGerencia(nombreDeTarjeta);
 
   const r = await fetch(`${URL_BASE}/rest/v1/movimientos`, {
     method: "POST",
@@ -136,8 +145,16 @@ export async function anularPorLaApi(id: number, motivo: string): Promise<void> 
   if (!r.ok) throw new Error(`no se pudo anular ${String(id)}: ${await r.text()}`);
 }
 
-/** El token de gerencia y la primera tarjeta. Se pide cada vez: son dos llamadas y no vale cachear. */
-async function sesionDeGerencia(): Promise<{ token: string; tarjetaId: string }> {
+/**
+ * El token de gerencia y una tarjeta. Se pide cada vez: son dos llamadas y no vale cachear.
+ *
+ * Sin nombre, la primera por `orden`. Con nombre, esa — y si no existe, FALLA en vez de caer en
+ * la primera: depositar en la tarjeta equivocada es mover plata donde nadie lo pidió, y el
+ * síntoma sería una prueba que "no salta" por una razón que no tiene nada que ver.
+ */
+async function sesionDeGerencia(
+  nombreDeTarjeta?: string,
+): Promise<{ token: string; tarjetaId: string }> {
   const rSesion = await fetch(`${URL_BASE}/auth/v1/token?grant_type=password`, {
     method: "POST",
     headers: { apikey: CLAVE, "Content-Type": "application/json" },
@@ -145,12 +162,23 @@ async function sesionDeGerencia(): Promise<{ token: string; tarjetaId: string }>
   });
   const { access_token: token } = (await rSesion.json()) as { access_token: string };
 
+  const filtro =
+    nombreDeTarjeta === undefined
+      ? "order=orden&limit=1"
+      : `nombre=ilike.*${encodeURIComponent(nombreDeTarjeta)}*&limit=1`;
+
   const rTarjeta = await fetch(
-    `${URL_BASE}/rest/v1/tarjetas_habitualista?select=id&order=orden&limit=1`,
+    `${URL_BASE}/rest/v1/tarjetas_habitualista?select=id,nombre&${filtro}`,
     {
       headers: { apikey: CLAVE, Authorization: `Bearer ${token}` },
     },
   );
-  const tarjetas = (await rTarjeta.json()) as { id: string }[];
+  const tarjetas = (await rTarjeta.json()) as { id: string; nombre: string }[];
+
+  if (tarjetas.length === 0) {
+    throw new Error(
+      `No hay ninguna tarjeta que se llame "${nombreDeTarjeta ?? ""}". No se deposita a ciegas.`,
+    );
+  }
   return { token, tarjetaId: tarjetas[0].id };
 }
