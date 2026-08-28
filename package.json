@@ -24,7 +24,8 @@
     "indices": "node scripts/indices-sanos.mjs",
     "colores": "node scripts/colores-sanos.mjs",
     "espacios": "node scripts/espacios-sanos.mjs",
-    "estados": "node scripts/estados-sanos.mjs"
+    "estados": "node scripts/estados-sanos.mjs",
+    "contraste": "node scripts/contraste-sano.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

@@ -10,10 +10,38 @@
    decimales incluidos. Tailwind 4 permite tener las dos cosas en el mismo bloque @theme, y
    por eso se eligio Tailwind 4.
 
-   LA MARCA ES MONOCROMA. Negro, blanco y grises. El color aparece SOLO en estados:
-   --color-done, --color-warn, --color-danger. En un sistema donde lo que importa es si algo
-   vence o si falta plata, un color "de marca" en un boton compite con la unica senal que
-   importa.
+   EL CONTENIDO ES MONOCROMO. Negro, blanco y grises. Los estados conservan su color:
+   --color-done, --color-warn, --color-danger.
+
+   ============================================================================
+    EL COLOR DE MARCA, ENMENDADO EL 26/08/2026
+   ============================================================================
+
+   La regla original decia monocromo y punto. Se enmendo a pedido del duenio del producto: la
+   gama de la Tarjeta Habitualista entra en el MARCO —la tira de arriba, la de migas— y en UN
+   SOLO acento: el boton principal, el foco, la seleccion.
+
+   Se propuso usar la misma familia con un tono propio, porque el hexadecimal de Habitualista es
+   la identidad de otra empresa. La respuesta fue que sea la gama de Habitualista, para que le
+   resulte agradable a la duenia. Va como se pidio, y queda escrito quien lo decidio: dentro de un
+   anio alguien va a preguntar por que una herramienta de Grupo Paris usa el color de otra marca.
+
+   LO QUE NO CAMBIO: UN NUMERO NUNCA ES DEL COLOR DE LA MARCA. Cuando todo es teal, el rojo de
+   "falta plata" deja de gritar, y ese grito es la razon de ser del sistema.
+
+   ============================================================================
+    NO HAY TOKENS DE COLOR NUEVOS, Y ESO ES A PROPOSITO
+   ============================================================================
+
+   `--side-*` eran el cromado oscuro de la barra lateral, que este redisenio elimina. Pasan a ser
+   la tira superior y la de migas: mismo rol —el marco de la app—, otro color. Y `--accent`, que
+   ya manejaba boton, foco y seleccion, pasa de negro a teal.
+
+   Tres valores cambiados en vez de seis tokens nuevos. Todo lo que ya usaba esos tokens sigue
+   funcionando, y sigue habiendo UN SOLO acento en toda la app.
+
+   LOS VALORES ESTAN MEDIDOS, NO ELEGIDOS A OJO: `npm run contraste` calcula el contraste real de
+   los ocho pares que existen en pantalla, en claro y en oscuro, y falla si alguno no llega a AA.
    ============================================================================ */
 
 @font-face {
@@ -97,20 +125,36 @@
   --ink: #18181b;
   --ink2: #71717a;
   --line: #e4e4e7;
-  --accent: #18181b;
+  /* El teal de Habitualista. Medido: 4,91:1 en las dos direcciones — texto blanco encima para el
+     boton, y el sobre blanco para el anillo de foco. */
+  --accent: #0e7c8c;
   --accent-ink: #ffffff;
-  --accent-soft: #ececee;
+  --accent-soft: #e4f1f5;
   --chip: #f1f1f3;
   --done: #0f9d6b;
-  --warn: #c2790a;
+
+  /* CORREGIDO EL 28/08/2026, y lo encontro el guardian de contraste en su PRIMERA corrida, antes
+     de tocar un solo color del teal. El ambar de antes, #c2790a, daba 3,48:1 sobre blanco: por
+     debajo del 4,5 que exige el texto. Y es el color de la cuenta de los que esperan plata, o sea
+     justo el numero que dice donde hay que depositar. Ahora da 5,19:1. */
+  --warn: #9a6006;
   --danger: #dc2626;
   --warn-soft: #faf0dc;
   --danger-soft: #fbe6e6;
-  --side-bg: #0a0a0b;
-  --side-bg2: #141416;
-  --side-ink: #fafafa;
-  --side-ink2: #8b8b93;
 
+  /* El cromado. Eran los de la barra lateral; ahora son la tira superior y la de migas.
+     Medidos: 8,83:1 y 7,64:1 el texto principal, 5,07:1 el secundario sobre la de migas. */
+  --side-bg: #0a4f5a;
+  --side-bg2: #0a5966;
+  --side-ink: #fafafa;
+  --side-ink2: #a9d6de;
+
+  /* Tres niveles y basta. Cada uno lleva DOS capas: una de contacto, corta y opaca, y una de
+     ambiente, larga y difusa. Con una sola capa la sombra se ve pegada o se ve sucia.
+       --shadow-sm  las tablas y las filas
+       --shadow     las tarjetas y los paneles
+       --shadow-lg  los menus y los dialogos */
+  --shadow-sm: 0 1px 1px rgba(24, 24, 27, 0.04), 0 1px 3px rgba(24, 24, 27, 0.06);
   --shadow: 0 1px 1px rgba(24, 24, 27, 0.03), 0 2px 8px rgba(24, 24, 27, 0.05);
   --shadow-lg: 0 2px 8px rgba(24, 24, 27, 0.06), 0 24px 56px -12px rgba(24, 24, 27, 0.16);
 
@@ -131,20 +175,23 @@
   --ink: #f4f4f5;
   --ink2: #a1a1aa;
   --line: #33333a;
-  --accent: #e4e4e7;
+  /* En oscuro el teal SUBE de luminosidad, no baja de saturacion: un teal desaturado se ve
+     enfermo, parece gris con una idea de color. Medido: 6,66:1 en las dos direcciones. */
+  --accent: #35b0c2;
   --accent-ink: #0b0b0c;
-  --accent-soft: #26262a;
+  --accent-soft: #12313a;
   --chip: #26262a;
   --done: #34d399;
   --warn: #fbbf24;
   --danger: #f87171;
   --warn-soft: #332a17;
   --danger-soft: #3a2020;
-  --side-bg: #050506;
-  --side-bg2: #111113;
+  --side-bg: #062f37;
+  --side-bg2: #0a4149;
   --side-ink: #fafafa;
-  --side-ink2: #82828b;
+  --side-ink2: #9fcdd6;
 
+  --shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.45);
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.55), 0 6px 18px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.6), 0 24px 56px rgba(0, 0, 0, 0.6);
   --ring-sh: 0 0 0 1px rgba(255, 255, 255, 0.05);
@@ -158,20 +205,23 @@
     --ink: #f4f4f5;
     --ink2: #a1a1aa;
     --line: #33333a;
-    --accent: #e4e4e7;
+    /* En oscuro el teal SUBE de luminosidad, no baja de saturacion: un teal desaturado se ve
+       enfermo, parece gris con una idea de color. Medido: 6,66:1 en las dos direcciones. */
+    --accent: #35b0c2;
     --accent-ink: #0b0b0c;
-    --accent-soft: #26262a;
+    --accent-soft: #12313a;
     --chip: #26262a;
     --done: #34d399;
     --warn: #fbbf24;
     --danger: #f87171;
     --warn-soft: #332a17;
     --danger-soft: #3a2020;
-    --side-bg: #050506;
-    --side-bg2: #111113;
+    --side-bg: #062f37;
+    --side-bg2: #0a4149;
     --side-ink: #fafafa;
-    --side-ink2: #82828b;
+    --side-ink2: #9fcdd6;
 
+    --shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.45);
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.55), 0 6px 18px rgba(0, 0, 0, 0.5);
     --shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.6), 0 24px 56px rgba(0, 0, 0, 0.6);
     --ring-sh: 0 0 0 1px rgba(255, 255, 255, 0.05);

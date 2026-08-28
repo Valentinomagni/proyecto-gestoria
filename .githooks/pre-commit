@@ -16,6 +16,14 @@ node scripts/sin-secretos.mjs || exit 1
 node scripts/migraciones-sanas.mjs || exit 1
 node scripts/colores-sanos.mjs || exit 1
 
+# EL CONTRASTE, desde el 28/08/2026. No necesita red ni token: lee src/index.css y calcula. Mira
+# dos cosas distintas, y las dos son invisibles a ojo:
+#   - que los ocho pares que existen en pantalla lleguen a AA, en claro Y en oscuro;
+#   - que los DOS bloques de modo oscuro digan lo mismo. Ese defecto aparecio el mismo dia que se
+#     escribio el guardian: un reemplazo cambio el bloque del interruptor y no el del sistema
+#     operativo, y la app quedo con dos temas oscuros distintos segun como se hubiera llegado.
+node scripts/contraste-sano.mjs || exit 1
+
 # LOS DOS QUE CONSULTAN LA BASE. Sin SUPABASE_ACCESS_TOKEN se saltean y salen con 0, asi que en
 # un repo recien clonado no rompen el primer commit.
 #

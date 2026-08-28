@@ -62,7 +62,9 @@ un archivo de setecientas, se leen esas diez con su contexto.
 - **Ningún plazo ni arancel escrito en el código.** Van en tablas, con la norma citada y la fecha
   de verificación.
 - **Un número nunca es del color de la marca.** El teal va en el marco; los estados conservan su
-  color. Ver `marca-grupo-paris`.
+  color. Ver `marca-grupo-paris`. **Los valores están medidos, no elegidos a ojo:**
+  `npm run contraste` calcula el contraste real de los ocho pares que existen en pantalla, en
+  claro y en oscuro, y comprueba que los **dos** bloques de modo oscuro digan lo mismo.
 - **Comentarios en español que explican el POR QUÉ**, no el qué. La densidad alta es deliberada:
   esto lo mantiene una sola persona que no es programadora.
 
