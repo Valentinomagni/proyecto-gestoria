@@ -118,6 +118,19 @@ const PARES = [
     Los TRES estados se miden ahora, porque los tres se dibujan como texto sobre la superficie.
   */
   { texto: "done", fondo: "surface", minimo: 4.5, donde: "el sello de atendido y lo hecho" },
+  /*
+    EL 28/08/2026, TERCERA VEZ QUE ESTA LISTA SE QUEDA CORTA EN SILENCIO — y otra vez lo encontro
+    axe y no este archivo.
+
+    `--accent-soft` no es solo el fondo de la fila seleccionada: es el `hover:` de TODA fila que
+    sea un enlace, y encima van la fecha y el nombre de la gestora en `--ink2`. Daba 4,18:1.
+
+    La leccion ya no es "faltaba un par". Es que un fondo se mide contra TODOS los colores de
+    texto que pueden caer encima, y eso hay que enumerarlo a proposito cada vez que un fondo pasa
+    a usarse en un lugar nuevo. Que `--accent-soft` se volviera un `hover:` fue exactamente eso.
+  */
+  { texto: "ink2", fondo: "accent-soft", minimo: 4.5, donde: "la fecha y la gestora, en hover" },
+  { texto: "ink2", fondo: "surface", minimo: 4.5, donde: "la fecha y la gestora, en reposo" },
 ];
 
 /*

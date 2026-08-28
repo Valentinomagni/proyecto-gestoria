@@ -66,20 +66,30 @@ export interface Saldo {
   comprometido: number;
   /**
    * ============================================================================
-   *  CERO MOVIMIENTOS VISIBLES NO ES CERO PESOS
+   *  CUANTOS MOVIMIENTOS HAY. NO SIRVE PARA DECIDIR SI SE MUESTRAN
    * ============================================================================
    *
    * La vista hace `left join` y `coalesce(...,0)`, asi que una tarjeta cuyos movimientos NO SE
-   * PUEDEN LEER sale con los mismos ceros que una que de verdad esta vacia. Sin este numero, la
-   * pantalla no tiene con que distinguirlas.
+   * PUEDEN LEER sale con los mismos ceros que una que de verdad esta vacia. El 27/08/2026 toda
+   * gestora veia las cinco tarjetas en `$ 0,00` —no "sin datos", CERO, que es un numero y se lee
+   * como un hecho— y concluia que no podia salir a pagar. Paris Autos tenia ocho millones y medio.
    *
-   * Y la diferencia importa: el 27/08/2026 toda gestora veia las cinco tarjetas en `$ 0,00`
-   * —no "sin datos", CERO, que es un numero y se lee como un hecho— y concluia que no podia
-   * salir a pagar. Paris Autos tenia ocho millones y medio.
+   * DECIDIR CON `> 0` FUE EL ARREGLO DE ESE DIA, Y ESTABA MAL: una tarjeta vacia cuenta cero
+   * igual que una prohibida, asi que el 28/08/2026 gerencia abria Doral Chevrolet y leia "No
+   * podes ver los movimientos de esta tarjeta". Para eso esta `puedo_ver`.
    *
-   * Cuando esto da 0, la pantalla dice "sin datos". Nunca un importe.
+   * Este numero sirve para lo otro: separar "vacia" de "con movimientos" DENTRO de lo que ya se
+   * puede ver, para poder decir "todavia no hay movimientos" en vez de dibujar una lista vacia.
    */
   movimientos_visibles: number;
+  /**
+   * Si esta persona puede leer los movimientos de esta tarjeta.
+   *
+   * Lo contesta la base con los mismos helpers que usa la policy — la unica fuente que no se
+   * puede desincronizar de ella. Es lo UNICO que la pantalla mira para decidir si muestra
+   * importes o dice que no los ve.
+   */
+  puedo_ver: boolean;
 }
 
 export interface Tramite {
@@ -353,6 +363,8 @@ export function useSaldos() {
         en_transito: aNumero(s.en_transito),
         comprometido: aNumero(s.comprometido),
         movimientos_visibles: aNumero(s.movimientos_visibles),
+        // `=== true` explicito: un `undefined` por una columna que falte no debe leerse como "no".
+        puedo_ver: s.puedo_ver === true,
       }));
     },
   });

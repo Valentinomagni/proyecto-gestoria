@@ -5,12 +5,24 @@ import { aNumero } from "./datos";
 /**
  * Una empresa en el resumen.
  *
- * `movimientos_visibles` en 0 significa "NO SE VEN SUS MOVIMIENTOS", no "está en cero". La vista
- * hace `left join` y `coalesce(...,0)`, así que una tarjeta que no se puede leer sale con los
- * mismos ceros que una vacía — y sin este número la pantalla no tiene con qué distinguirlas.
+ * ============================================================================
+ *  `puedo_ver` CONTESTA EL PERMISO. `movimientos_visibles` CUENTA. NO SON LO MISMO
+ * ============================================================================
  *
- * El 27/08/2026 toda gestora veía las cinco tarjetas en `$ 0,00` mientras Paris Autos tenía ocho
- * millones y medio. Un cero es un número y se lee como un hecho.
+ * La vista hace `left join` y `coalesce(...,0)`, así que una tarjeta que no se puede leer sale
+ * con los mismos ceros que una vacía. El 27/08/2026 toda gestora veía las cinco tarjetas en
+ * `$ 0,00` mientras Paris Autos tenía ocho millones y medio, y salía al registro creyendo que no
+ * había con qué pagar. Un cero es un número y se lee como un hecho.
+ *
+ * El arreglo de ese día fue contar los movimientos y decidir con `count > 0`. **Estaba mal, y lo
+ * pagó el otro lado:** una tarjeta SIN MOVIMIENTOS cuenta cero igual que una prohibida, así que
+ * el 28/08/2026 gerencia abría Doral Chevrolet y leía "No podés ver los movimientos de esta
+ * tarjeta". Puede verlos. Está vacía.
+ *
+ * Un conteo no puede responder una pregunta de permiso. `puedo_ver` la responde con los mismos
+ * helpers que usa la policy, y es lo único que la pantalla debe mirar para decidir si muestra
+ * importes. El conteo sirve para otra cosa: distinguir "vacía" de "con movimientos" DENTRO de lo
+ * que ya se puede ver.
  */
 export interface FilaDeResumen {
   razon_social_id: string;
@@ -22,6 +34,7 @@ export interface FilaDeResumen {
   diferencia: number;
   esperan: number;
   movimientos_visibles: number;
+  puedo_ver: boolean;
 }
 
 /*
@@ -30,7 +43,7 @@ export interface FilaDeResumen {
   el chequeo de tipos justo en la consulta que trae plata.
 */
 const COLUMNAS =
-  "razon_social_id, nombre, tarjeta_id, contable, en_transito, comprometido, diferencia, esperan, movimientos_visibles";
+  "razon_social_id, nombre, tarjeta_id, contable, en_transito, comprometido, diferencia, esperan, movimientos_visibles, puedo_ver";
 
 /** El mapeo vive en un solo lado: dos copias se separan la primera vez que se agrega una columna. */
 function aFila(f: Record<string, unknown>): FilaDeResumen {
@@ -44,6 +57,11 @@ function aFila(f: Record<string, unknown>): FilaDeResumen {
     diferencia: aNumero(f["diferencia"]),
     esperan: aNumero(f["esperan"]),
     movimientos_visibles: aNumero(f["movimientos_visibles"]),
+    /*
+      `=== true` y no un truthy: si algún día la columna faltara en el `select`, `undefined` sería
+      falso y la pantalla diría "no podés ver" a todo el mundo. Prefiero que sea explícito.
+    */
+    puedo_ver: f["puedo_ver"] === true,
   };
 }
 

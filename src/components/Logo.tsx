@@ -17,7 +17,7 @@
 
 type Tono = "negro" | "blanco";
 
-/** Solo el simbolo. Para espacios chicos: barra lateral, favicon, avatar. */
+/** Solo el simbolo. Para espacios chicos: tira superior, favicon, avatar. */
 export function Isotipo({ tono = "negro", alto = 34 }: { tono?: Tono; alto?: number }) {
   return (
     <img

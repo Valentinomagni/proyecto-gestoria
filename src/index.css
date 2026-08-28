@@ -123,7 +123,16 @@
   --surface: #ffffff;
   --surface2: #f1f1f3;
   --ink: #18181b;
-  --ink2: #71717a;
+  /*
+    Era #71717a y daba 4,19:1 sobre --accent-soft, que es el hover de toda fila con enlace: la
+    fecha y el nombre de la gestora quedaban por debajo de AA cada vez que el mouse pasaba por
+    encima. Lo encontro axe el 28/08/2026.
+
+    SE OSCURECIO EL TEXTO Y NO SE ACLARO EL FONDO a proposito: aclarar --accent-soft hasta que
+    pasara lo dejaba casi blanco, o sea sin hover visible. Asi el tinte se sigue viendo y de paso
+    sube todo el texto secundario. Medido: 4,93:1 sobre el hover, 5,69:1 sobre la superficie.
+  */
+  --ink2: #66666e;
   --line: #e4e4e7;
   /* El teal de Habitualista. Medido: 4,91:1 en las dos direcciones — texto blanco encima para el
      boton, y el sobre blanco para el anillo de foco. */

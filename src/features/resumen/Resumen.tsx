@@ -91,16 +91,20 @@ export function Resumen() {
  */
 function FilaDeEmpresa({ empresa }: { empresa: FilaDeResumen }) {
   /*
-    SIN MOVIMIENTOS VISIBLES NO SE MUESTRA UN IMPORTE, SE DICE QUE NO SE VE.
+    LO QUE NO SE PUEDE LEER DICE "SIN DATOS". LO QUE ESTA VACIO MUESTRA SUS CEROS.
 
     La vista hace `left join` y `coalesce(...,0)`, asi que una tarjeta que no se puede leer sale
     con los mismos ceros que una vacia. El 27/08/2026 toda gestora leia las cinco tarjetas en
     `$ 0,00` mientras Paris Autos tenia ocho millones y medio, y salia al registro creyendo que no
-    habia con que pagar.
+    habia con que pagar. Un cero es un numero y se lee como un hecho. "Sin datos" no.
 
-    Un cero es un numero y se lee como un hecho. "Sin datos" no.
+    PERO LA VUELTA TAMBIEN ES FALSA, y costo el 28/08/2026: decidir con `movimientos_visibles > 0`
+    ponia "Sin datos" en las tres empresas todavia vacias de gerencia, que las ve todas. Ahi el
+    cero SI es el hecho, y esconderlo es la mentira.
+
+    `puedo_ver` es una respuesta de permiso y contesta la pregunta que hay que hacer.
   */
-  const seVe = empresa.movimientos_visibles > 0;
+  const seVe = empresa.puedo_ver;
   const espera = empresa.esperan > 0;
 
   return (

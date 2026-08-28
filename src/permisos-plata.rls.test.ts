@@ -544,20 +544,89 @@ describe("la gestora ve el saldo de la tarjeta donde tiene tramites", () => {
 
   it("una tarjeta donde no tiene nada dice `sin datos`, y no un importe", async () => {
     /*
-      La diferencia entre las dos filas es lo que importa: la vista no puede distinguir sola una
-      tarjeta vacía de una que no se ve, y por eso devuelve `movimientos_visibles`. Si esta
-      prueba dejara de encontrar una tarjeta sin movimientos visibles, querría decir que la
-      gestora las ve todas — que es lo contrario del permiso mínimo.
+      Lo que separa las dos filas es `puedo_ver`, NO el conteo. Si esta prueba dejara de
+      encontrar una tarjeta cerrada, querría decir que la gestora las ve todas — que es lo
+      contrario del permiso mínimo.
     */
-    const { data } = await gestora.from("v_saldos").select("nombre, movimientos_visibles");
-    const sinDatos = (data ?? []).filter((s) => Number(s.movimientos_visibles) === 0);
-    expect(sinDatos.length, "la gestora ve TODAS las tarjetas, y no deberia").toBeGreaterThan(0);
+    const { data } = await gestora.from("v_saldos").select("nombre, puedo_ver");
+    const cerradas = (data ?? []).filter((s) => s.puedo_ver === false);
+    expect(cerradas.length, "la gestora ve TODAS las tarjetas, y no deberia").toBeGreaterThan(0);
   });
 
   it("la oficina las ve todas", async () => {
     const { data } = await gerencia.from("v_saldos").select("nombre, movimientos_visibles");
     const conDatos = (data ?? []).filter((s) => Number(s.movimientos_visibles) > 0);
     expect(conDatos.length).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * ============================================================================
+ *  UNA TARJETA VACIA NO ES UNA TARJETA PROHIBIDA
+ * ============================================================================
+ *
+ *  ESTO SE ENCONTRO EL 28/08/2026, revisando el plan B contra la base de verdad.
+ *
+ *  `movimientos_visibles` es un `count`, y la pantalla decidía con `count > 0`. Pero una tarjeta
+ *  SIN MOVIMIENTOS cuenta cero igual que una que no se puede leer, así que GERENCIA —la dueña—
+ *  abría Doral Chevrolet y leía "No podés ver los movimientos de esta tarjeta. Vas a ver el saldo
+ *  de las empresas donde tengas trámites".
+ *
+ *  Las dos frases son falsas para ella: puede verlos, y no depende de tener trámites. Tres de sus
+ *  cinco empresas decían "Sin datos" en el resumen por la misma razón.
+ *
+ *  Un conteo no puede responder una pregunta de permiso. `puedo_ver` la responde con los mismos
+ *  helpers que usa la policy, que es la única fuente que no puede desincronizarse de ella.
+ */
+describe("una tarjeta vacia no es una tarjeta prohibida", () => {
+  it("gerencia puede ver las CINCO, incluidas las que todavia no tienen un peso", async () => {
+    const { data, error } = await gerencia
+      .from("v_saldos")
+      .select("nombre, puedo_ver, movimientos_visibles");
+
+    expect(error).toBeNull();
+    const negadas = (data ?? []).filter((s) => s.puedo_ver !== true);
+    expect(
+      negadas.map((s) => s.nombre).join(", "),
+      "a gerencia se le niega una tarjeta: es el defecto del 28/08/2026",
+    ).toBe("");
+  });
+
+  it("y las vacias son vacias de verdad: el cero que muestran es cierto", async () => {
+    const { data } = await gerencia
+      .from("v_saldos")
+      .select("nombre, puedo_ver, movimientos_visibles, contable, comprometido");
+
+    const vacias = (data ?? []).filter(
+      (s) => s.puedo_ver === true && Number(s.movimientos_visibles) === 0,
+    );
+    expect(vacias.length, "no hay ninguna tarjeta vacia con la que probar esto").toBeGreaterThan(0);
+
+    for (const v of vacias) {
+      expect(Number(v.contable), `${v.nombre} dice cero movimientos y tiene saldo`).toBe(0);
+      expect(Number(v.comprometido), `${v.nombre} dice cero movimientos y tiene reservas`).toBe(0);
+    }
+  });
+
+  it("el resumen de empresas responde lo mismo que v_saldos", async () => {
+    const { data: resumen } = await gerencia
+      .from("v_resumen_empresas")
+      .select("nombre, puedo_ver, tarjeta_id");
+    const { data: saldos } = await gerencia.from("v_saldos").select("tarjeta_id, puedo_ver");
+
+    const porTarjeta = new Map((saldos ?? []).map((s) => [s.tarjeta_id, s.puedo_ver]));
+    for (const e of resumen ?? []) {
+      if (e.tarjeta_id === null) continue;
+      expect(e.puedo_ver, `${e.nombre} contesta distinto en el resumen que en la tarjeta`).toBe(
+        porTarjeta.get(e.tarjeta_id),
+      );
+    }
+  });
+
+  it("a la gestora le sigue diciendo que no donde no tiene trabajo", async () => {
+    const { data } = await gestora.from("v_resumen_empresas").select("nombre, puedo_ver");
+    const cerradas = (data ?? []).filter((e) => e.puedo_ver === false);
+    expect(cerradas.length, "la gestora ve el detalle de todas las empresas").toBeGreaterThan(0);
   });
 });
 

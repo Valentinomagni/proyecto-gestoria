@@ -27,19 +27,54 @@ test("el resumen muestra las cinco empresas, y la Diferencia de cada una", async
   );
 });
 
-test("una empresa sin movimientos visibles dice Sin datos, no un cero", async ({ page }) => {
+test("a quien no la puede ver, una empresa le dice Sin datos y no un cero", async ({ page }) => {
   /*
     ES EL DEFECTO DEL 27/08/2026 CONVERTIDO EN PRUEBA. Toda gestora veía las cinco tarjetas en
     `$ 0,00` mientras Paris Autos tenía ocho millones y medio, y salía al registro creyendo que no
     había con qué pagar.
 
     Un cero es un número y se lee como un hecho. "Sin datos" no.
+
+    ENTRA COMO GESTORA, Y ESO ES EL ARREGLO DEL 28/08/2026: esta misma prueba entraba como
+    GERENCIA y exigía que la dueña leyera "Sin datos" en sus propias empresas vacías. Estaba
+    defendiendo el defecto de al lado. La intención era correcta y el rol no.
   */
-  await entrarComo(page, "gerencia");
+  await entrarComo(page, "gestora");
 
   const doral = page.getByRole("link", { name: /DORAL CHEVROLET/ });
   await expect(doral).toContainText("Sin datos");
   await expect(doral).not.toContainText("$ 0");
+});
+
+test("pero a gerencia una empresa vacia le muestra sus ceros, que son ciertos", async ({
+  page,
+}) => {
+  /*
+    ============================================================================
+     EL DEFECTO DEL 28/08/2026, QUE LO VEIA LA DUENIA
+    ============================================================================
+
+    La pantalla decidía con `movimientos_visibles > 0`, y una tarjeta VACIA cuenta cero igual que
+    una prohibida. Gerencia veía "Sin datos" en tres de sus cinco empresas, y al abrir una leía
+    "No podés ver los movimientos de esta tarjeta. (...) Vas a ver el saldo de las empresas donde
+    tengas trámites".
+
+    Puede verlos, y no depende de tener trámites: es la dueña. Ahora decide `puedo_ver`, que es
+    una respuesta de permiso y no un conteo.
+  */
+  await entrarComo(page, "gerencia");
+
+  const doral = page.getByRole("link", { name: /DORAL CHEVROLET/ });
+  await expect(doral).not.toContainText("Sin datos");
+  await expect(doral).toContainText("$ 0");
+
+  await doral.click();
+  await expect(page.getByRole("heading", { name: /Doral Chevrolet/i })).toBeVisible();
+
+  // La frase que no puede aparecerle NUNCA a la oficina.
+  await expect(page.getByText(/No podés ver los movimientos/)).toHaveCount(0);
+  // Y el cero se explica, en vez de dejar una lista vacía sin motivo.
+  await expect(page.getByText(/Todavía no hay movimientos/)).toBeVisible();
 });
 
 test("de resumen a empresa y de vuelta, con el boton atras del navegador", async ({ page }) => {

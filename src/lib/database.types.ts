@@ -1274,6 +1274,7 @@ export type Database = {
           movimientos_visibles: number | null
           nombre: string | null
           orden: number | null
+          puedo_ver: boolean | null
           razon_social_id: string | null
           tarjeta_id: string | null
         }
@@ -1302,6 +1303,7 @@ export type Database = {
           movimientos_visibles: number | null
           nombre: string | null
           orden: number | null
+          puedo_ver: boolean | null
           tarjeta_id: string | null
         }
         Relationships: []
@@ -1515,6 +1517,7 @@ export type Database = {
       opero_esta_tarjeta: { Args: { p_tarjeta: string }; Returns: boolean }
       orden_estado: { Args: { p: string }; Returns: number }
       puede_ver_cobros: { Args: never; Returns: boolean }
+      puedo_ver_tarjeta: { Args: { p_tarjeta: string }; Returns: boolean }
       tengo_tramite_en_esta_tarjeta: {
         Args: { p_tarjeta: string }
         Returns: boolean

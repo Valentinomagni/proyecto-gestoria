@@ -65,7 +65,20 @@ export function Empresa() {
   }
 
   const e = empresa.data;
-  const seVe = e.movimientos_visibles > 0;
+
+  /*
+    ============================================================================
+     SE DECIDE POR PERMISO, NO POR CONTEO
+    ============================================================================
+
+    Hasta el 28/08/2026 esto era `movimientos_visibles > 0`, y una tarjeta VACIA cuenta cero igual
+    que una prohibida: gerencia abría Doral Chevrolet y leía que no podía ver sus movimientos.
+
+    Son dos preguntas distintas y ahora hay una respuesta para cada una. `puedo_ver` decide si se
+    muestran importes; el conteo sólo distingue la tarjeta vacía de la que tiene historia.
+  */
+  const puedeVer = e.puedo_ver;
+  const estaVacia = puedeVer && e.movimientos_visibles === 0;
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4 p-6">
@@ -77,7 +90,11 @@ export function Empresa() {
         </div>
       </div>
 
-      {!seVe ? (
+      {!puedeVer ? (
+        /*
+          A esta rama sólo llega una gestora, y por eso el texto puede hablarle a ella. Cuando lo
+          decidía el conteo, esta misma frase le aparecía a la dueña de la empresa.
+        */
         <Panel>
           <p className="text-sm">No podés ver los movimientos de esta tarjeta.</p>
           <p className="mt-1 text-xs text-ink2">
@@ -101,7 +118,23 @@ export function Empresa() {
 
       <SeccionesDeTramites razonSocialId={razonSocialId} />
 
-      {e.tarjeta_id !== null && seVe && <MovimientosPlegados tarjetaId={e.tarjeta_id} />}
+      {e.tarjeta_id !== null &&
+        puedeVer &&
+        (estaVacia ? (
+          /*
+            UNA LISTA VACIA NO EXPLICA POR QUE ESTA VACIA. Los cuatro importes de arriba dicen
+            cero y ese cero es cierto: conviene decirlo con todas las letras, porque el mismo cero
+            significaba "no te lo muestro" hasta ayer.
+          */
+          <Panel>
+            <p className="text-sm text-ink2">
+              Todavía no hay movimientos en esta tarjeta. Los importes están en cero porque está
+              vacía, no porque falte información.
+            </p>
+          </Panel>
+        ) : (
+          <MovimientosPlegados tarjetaId={e.tarjeta_id} />
+        ))}
     </div>
   );
 }
