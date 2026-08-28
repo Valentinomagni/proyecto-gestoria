@@ -2,7 +2,7 @@ import { useEffect, type ReactNode } from "react";
 import { ShieldAlert } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { supabase } from "../lib/supabase";
+import { hayUnaSolaBase, supabase } from "../lib/supabase";
 import { useSesion } from "../lib/sesion";
 import { useNovedades, useSaldosEnVivo } from "../lib/datos";
 import { Isotipo } from "./Logo";
@@ -137,8 +137,11 @@ export function Shell({ children }: { children: ReactNode }) {
   /*
     Mientras haya una sola base de Supabase, la app lo dice. Un riesgo conocido que no se ve, se
     olvida — y el día que esto tenga saldos reales, una prueba destructiva los tocaría.
+
+    SE APAGA SOLO. Era un texto fijo hasta el 28/08/2026, y el día que las bases se separen nadie
+    se iba a acordar de sacarlo: el cartel no molesta. Ver `hayUnaSolaBase` y `docs/SEGUNDA-BASE.md`.
   */
-  const avisoBase = "Base compartida con desarrollo";
+  const avisoBase = hayUnaSolaBase() ? "Base compartida con desarrollo" : null;
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -146,7 +149,7 @@ export function Shell({ children }: { children: ReactNode }) {
       <header className="flex items-center justify-between gap-3 bg-side-bg px-4 py-2">
         <Isotipo tono="blanco" alto={22} />
         <div className="flex items-center gap-3">
-          <span className="text-2xs text-side-ink2">{avisoBase}</span>
+          {avisoBase !== null && <span className="text-2xs text-side-ink2">{avisoBase}</span>}
           <Novedades
             lista={novedades.lista}
             sinVer={novedades.sinVer}

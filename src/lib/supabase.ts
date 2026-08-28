@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./database.types";
+import { esLaMismaBase } from "./base";
 
 /**
  * El cliente de Supabase. Uno solo para toda la app.
@@ -24,3 +25,13 @@ if (!URL || !CLAVE) {
 }
 
 export const supabase = createClient<Database>(URL, CLAVE);
+
+/**
+ * Si desarrollo y producción comparten la misma base, contra las variables de verdad.
+ *
+ * La decisión —y por qué el cartel se calcula en vez de estar escrito a mano— vive en `base.ts`,
+ * SIN dependencias, para que su prueba pueda correr sin credenciales.
+ */
+export function hayUnaSolaBase(): boolean {
+  return esLaMismaBase(URL, import.meta.env["VITE_SUPABASE_URL_PRODUCCION"] as string | undefined);
+}
