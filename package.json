@@ -30,27 +30,21 @@
     "iconos": "node scripts/iconos.mjs"
   },
   "dependencies": {
-    "@hookform/resolvers": "^5.9.1",
     "@sentry/react": "^10.70.0",
     "@supabase/supabase-js": "^2.112.3",
     "@tanstack/react-query": "^5.101.4",
     "@tanstack/react-router": "^1.170.31",
-    "@tanstack/react-table": "^9.1.2",
-    "@tanstack/react-virtual": "^3.14.10",
     "lucide-react": "^1.33.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-hook-form": "^7.85.0",
     "sonner": "^2.0.8",
-    "write-excel-file": "^4.1.1",
-    "zod": "^4.4.3"
+    "write-excel-file": "^4.1.1"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.62.1",
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.1",
-    "@testing-library/react": "^16.3.2",
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",

@@ -27,35 +27,17 @@
  *  Es deliberadamente grosero: prefiere marcar de mas y que alguien lo lea, antes que dejar
  *  pasar uno. Un guardian que no molesta nunca no esta mirando.
  */
-import { readFileSync } from "node:fs";
+import { tokenODecirlo } from "./token.mjs";
 
 const REF = "drsooohkwwpnijonxwwt";
 
-let env = {};
-try {
-  env = Object.fromEntries(
-    readFileSync(".env.local", "utf8")
-      .split("\n")
-      .filter((l) => l.includes("=") && !l.trim().startsWith("#"))
-      .map((l) => [l.slice(0, l.indexOf("=")).trim(), l.slice(l.indexOf("=") + 1).trim()]),
-  );
-} catch {
-  // Sin .env.local no se puede consultar nada. Se dice y se sale.
-}
-
-const token = env["SUPABASE_ACCESS_TOKEN"] ?? process.env["SUPABASE_ACCESS_TOKEN"];
-if (!token) {
-  /*
-    SE SALTEA, PERO LO DICE. Y sale con 0 a proposito: en un repo recien clonado, sin token, el
-    primer commit no deberia fallar por esto.
-
-    Queda anotado como deuda en el ESTADO: un guardian que se saltea en silencio y devuelve 0 es
-    medio guardian, y esta es la mitad que falta.
-  */
-  console.error("indices: sin SUPABASE_ACCESS_TOKEN no se puede consultar el esquema. Se saltea.");
-  console.error("         Para correrlo: SUPABASE_ACCESS_TOKEN=sbp_... npm run indices");
-  process.exit(0);
-}
+/*
+  SE SALTEA EN UNA MAQUINA Y FALLA EN CI. Era la mitad que faltaba, anotada como deuda en el ESTADO
+  desde el Plan A: "un guardian que se saltea en silencio y devuelve 0 es medio guardian". La razón
+  de por qué CI es distinto está en `token.mjs`.
+*/
+const token = tokenODecirlo("indices");
+if (token === null) process.exit(0);
 
 async function sql(query) {
   const r = await fetch(`https://api.supabase.com/v1/projects/${REF}/database/query`, {

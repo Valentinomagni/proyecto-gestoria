@@ -20,12 +20,37 @@ jobs:
         run: node scripts/sin-secretos.mjs
       - name: Migraciones sanas
         run: node scripts/migraciones-sanas.mjs
+
+      # ============================================================================
+      #  LOS GUARDIANES QUE SOLO CORRIAN EN EL PRE-COMMIT
+      # ============================================================================
+      #
+      # Entran a CI el 28/08/2026. Estaban SOLO en `.githooks/pre-commit`, y un hook se saltea con
+      # `--no-verify` — no hay que suponer mala intención: alcanza con un commit apurado. CI es el
+      # único lugar que corre siempre, y desde cualquier máquina.
+      #
+      # Ninguno necesita red ni token: leen archivos del repositorio.
+      - name: Colores
+        run: node scripts/colores-sanos.mjs
+      - name: Contraste
+        run: node scripts/contraste-sano.mjs
+      - name: Espacios
+        run: node scripts/espacios-sanos.mjs
+      - name: Formato
+        run: npx oxfmt --check .
       - name: Tipos
         run: npx tsc -b
       - name: Lint
         run: npx oxlint
       - name: Tests
         run: npx vitest run
+      # CODIGO MUERTO. Entra al portón el 28/08/2026, cuando llegó a cero por primera vez: estaba
+      # en rojo desde antes del Plan A con seis dependencias sin usar y una pantalla entera que
+      # nadie dibujaba. Meter un guardián rojo al portón bloquea todos los commits, incluido el que
+      # lo arregla — por eso entra ahora y no antes.
+      - name: Nada de codigo muerto
+        run: npx knip
+
       - name: Build
         run: npx vite build
 
@@ -36,13 +61,35 @@ jobs:
       - name: La PWA no cachea datos
         run: node scripts/pwa-sana.mjs
 
+      # ============================================================================
+      #  LOS TRES QUE CONSULTAN LA BASE
+      # ============================================================================
+      #
+      # Necesitan el secreto SUPABASE_ACCESS_TOKEN cargado en GitHub. **NO llevan `if`**: si el
+      # token falta, `scripts/token.mjs` los hace FALLAR porque estamos en CI —donde el token
+      # siempre tiene que estar—, en vez de saltearse en verde.
+      #
+      # Un `if: ${{ env.HAY_TOKEN != '' }}` los habría hecho desaparecer en silencio el día que el
+      # secreto se venza. Eso es un guardián apagado sin que nadie se entere, que es justo lo que
+      # el ESTADO tenía anotado como deuda desde el Plan A.
+      - name: Permisos de la base
+        run: node scripts/permisos-sanos.mjs
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      - name: Indices unicos parciales
+        run: node scripts/indices-sanos.mjs
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      - name: Los estados del front y los de la base
+        run: node scripts/estados-sanos.mjs
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
       # Los tipos generados contra la base real. Reemplaza al esquema.ts defensivo del Tablero:
       # alla hay codigo de produccion cuyo unico trabajo es sobrevivir a que el esquema del
       # codigo y el de la base se separen. Aca el problema no llega a existir, pero SOLO si
-      # algo lo verifica. Necesita el secreto SUPABASE_ACCESS_TOKEN cargado en GitHub.
+      # algo lo verifica.
       - name: Los tipos estan al dia
-        if: ${{ env.HAY_TOKEN != '' }}
         run: node scripts/tipos.mjs --verificar
         env:
-          HAY_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

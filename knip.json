@@ -1,0 +1,8 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["scripts/*.mjs", "e2e/*.spec.ts", "scripts/hooks/*.mjs"],
+  "project": ["src/**/*.{ts,tsx,css}", "scripts/**/*.mjs", "e2e/**/*.ts"],
+  "ignore": ["src/lib/database.types.ts"],
+  "ignoreExportsUsedInFile": true,
+  "vite": true
+}

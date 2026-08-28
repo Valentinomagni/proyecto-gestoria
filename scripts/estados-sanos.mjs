@@ -56,6 +56,7 @@
  *  bueno un silencio. Un guardian que no encuentra lo que busca no esta en verde: esta ciego.
  */
 import { readFileSync } from "node:fs";
+import { tokenODecirlo } from "./token.mjs";
 
 /**
  * Las dos listas del front, con como se saca cada una.
@@ -85,25 +86,10 @@ const LISTAS = [
 
 const REF = "drsooohkwwpnijonxwwt";
 
-let env = {};
-try {
-  env = Object.fromEntries(
-    readFileSync(".env.local", "utf8")
-      .split("\n")
-      .filter((l) => l.includes("=") && !l.trim().startsWith("#"))
-      .map((l) => [l.slice(0, l.indexOf("=")).trim(), l.slice(l.indexOf("=") + 1).trim()]),
-  );
-} catch {
-  // Sin .env.local no se puede consultar nada. Se dice abajo y se sale.
-}
-
-const token = env["SUPABASE_ACCESS_TOKEN"] ?? process.env["SUPABASE_ACCESS_TOKEN"];
-if (!token) {
-  // Se saltea, pero lo dice. Sale con 0: en un repo recien clonado, sin token, el primer commit
-  // no deberia fallar por esto.
-  console.error("estados: sin SUPABASE_ACCESS_TOKEN no se puede consultar el check. Se saltea.");
-  process.exit(0);
-}
+// Se saltea en una máquina y FALLA en CI. La razón está en `token.mjs`, que también es quien lee
+// el token de `.env.local` — antes eso estaba copiado en los tres guardianes.
+const token = tokenODecirlo("estados");
+if (token === null) process.exit(0);
 
 // ------------------------------------------------------------
 // 1) Lo que dice el front

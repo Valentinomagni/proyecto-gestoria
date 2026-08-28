@@ -69,6 +69,29 @@ test("sin conexion la app ABRE, lo dice, y NO muestra ningun importe", async ({
   await entrarComo(page, "gestora");
   await expect(page.getByRole("heading", { name: /Te toca a vos/ })).toBeVisible();
 
+  /*
+    ============================================================================
+     SE ESPERA A QUE EL SERVICE WORKER TOME EL CONTROL, Y NO ES CEREMONIA
+    ============================================================================
+
+    Registrarse no alcanza: hasta que el service worker CONTROLA la página, la recarga sale a la
+    red de verdad y sin conexión devuelve ERR_INTERNET_DISCONNECTED — la prueba falla por una
+    carrera y no por el producto.
+
+    Pasó el 28/08/2026, en una corrida donde la misma prueba había pasado antes. Una prueba
+    intermitente es peor que una que falla siempre: la primera se termina volviendo a correr hasta
+    que sale en verde, y ahí deja de proteger.
+
+    `navigator.serviceWorker.ready` espera a que esté activo; `controller !== null` es lo que de
+    verdad importa, porque es la condición bajo la cual el service worker intercepta la navegación.
+  */
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null, null, {
+    timeout: 20_000,
+  });
+
   await context.setOffline(true);
   await page.reload();
 

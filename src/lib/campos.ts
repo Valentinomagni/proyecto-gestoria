@@ -35,27 +35,22 @@
  *  usar en el registro o no.
  */
 
-/** Un campo de texto o un select que ocupa todo el ancho. */
+/**
+ * Un campo de texto o un select que ocupa todo el ancho.
+ *
+ * EL ALTO MINIMO ES 44 px, Y ESTA MEDIDO. Había acá un `CAMPO_CON_ICONO` para las cajas con lupa
+ * adentro; se fue el 28/08/2026 con el listado que lo usaba, pero su medición vale para cualquier
+ * campo que se arme de nuevo: **con relleno vertical, al `input` de adentro le quedaban 26 px de
+ * los 44 de la caja**, así que tocar arriba o abajo del renglón no abría el teclado. Si algún día
+ * vuelve a hacer falta un campo con algo adentro, el relleno va sólo horizontal y lo de adentro se
+ * estira a todo el alto con `items-stretch`.
+ */
 export const CAMPO =
   "w-full min-h-11 rounded-md border border-line bg-surface2 px-3 py-2 text-base sm:text-sm";
 
 /** Un campo que NO ocupa todo el ancho: filtros, selects al lado de otra cosa. */
 export const CAMPO_SUELTO =
   "min-h-11 rounded-md border border-line bg-surface2 px-3 py-2 text-base sm:text-sm";
-
-/**
- * La caja de un campo que lleva ALGO MAS adentro: una lupa, un signo.
- *
- * VA APARTE Y NO ES `CAMPO` CON UN ICONO ENCIMA. Se midió: con el relleno vertical de `CAMPO`,
- * al input le quedaban 26 px de los 44 de la caja, así que tocar arriba o abajo del renglón no
- * abría el teclado. Acá el relleno es sólo horizontal y el de adentro se estira a todo el alto,
- * con `items-stretch`: toda la caja es el campo.
- */
-export const CAMPO_CON_ICONO =
-  "flex w-full min-h-11 items-stretch gap-2 rounded-md border border-line bg-surface2 px-3";
-
-/** Lo que va adentro de `CAMPO_CON_ICONO`. Sin borde propio: el borde lo pone la caja. */
-export const CAMPO_ADENTRO = "w-full bg-transparent text-base outline-none sm:text-sm";
 
 /**
  * El botón de la acción principal de la pantalla. Uno solo por pantalla.

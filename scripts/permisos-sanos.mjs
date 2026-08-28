@@ -31,19 +31,20 @@
  *  `permisos.rls.test.ts`. Este script mira el otro cerrojo, el de los GRANT.
  *
  *  CUANDO CORRERLO: antes de publicar a produccion, y despues de cada migracion que cree
- *  tablas o vistas. Necesita SUPABASE_ACCESS_TOKEN (el `sbp_...` de la cuenta). Si no esta, no
- *  falla: avisa y sale con 0, porque un guardian que rompe el build de quien no tiene la clave
- *  se termina sacando del build.
+ *  tablas o vistas. Necesita SUPABASE_ACCESS_TOKEN (el `sbp_...` de la cuenta).
+ *
+ *  SIN TOKEN: en una maquina se saltea avisando —un guardian que rompe el build de quien no tiene
+ *  la clave se termina sacando del build— pero EN CI FALLA, porque ahi el token siempre tiene que
+ *  estar. Ver `scripts/token.mjs`, que es donde vive esa decision para los tres guardianes que
+ *  consultan la base.
  */
+import { tokenODecirlo } from "./token.mjs";
 
 const REF = "drsooohkwwpnijonxwwt";
-const TOKEN = process.env["SUPABASE_ACCESS_TOKEN"];
 
-if (!TOKEN) {
-  console.log("permisos: sin SUPABASE_ACCESS_TOKEN no se puede consultar el esquema. Se saltea.");
-  console.log("          Para correrlo: SUPABASE_ACCESS_TOKEN=sbp_... npm run permisos");
-  process.exit(0);
-}
+// Sin token: en una máquina se saltea diciéndolo, EN CI FALLA. La razón entera está en `token.mjs`.
+const TOKEN = tokenODecirlo("permisos");
+if (TOKEN === null) process.exit(0);
 
 /** Corre SQL con el token de cuenta. Es lo que usa el editor SQL del panel. */
 async function sql(consulta) {
