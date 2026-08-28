@@ -97,7 +97,7 @@ Están incorporadas a las tareas 2 y 3. **No hace falta volver a invocar las ski
 | `supabase/migrations/<generado>_resumen_de_empresas.sql` | La vista `v_resumen_empresas`: una fila por razón social con sus cuatro cifras y cuántos esperan plata |
 | `src/rutas.tsx` | El árbol de rutas y el router. Un solo archivo: si se parte, el árbol deja de leerse de un vistazo |
 | `src/components/Migas.tsx` | La tira de migas y el nombre de quien entró. Es toda la navegación |
-| `src/features/resumen/Resumen.tsx` | Nivel 1 — la tabla de las cinco empresas |
+| `src/features/resumen/Resumen.tsx` | Nivel 1 — la tabla de las cinco empresas, decidida en la tarea 5 |
 | `src/features/empresa/Empresa.tsx` | Nivel 2 — el armado de la pantalla de una empresa |
 | `src/features/empresa/CifrasDeLaEmpresa.tsx` | Las cuatro cifras del encabezado, con sus botones |
 | `src/features/empresa/SeccionPlegable.tsx` | Una sección con su título, su cuenta, su total y su estado abierto o plegado |
@@ -1172,86 +1172,191 @@ cd "C:/Users/Vmagni/Desktop/GRUPO PARIS/GESTORIA" && git add -A && git commit -m
 
 ---
 
-## Tarea 5: Tres variantes del resumen, y se elige mirándolas
+## Tarea 5: El resumen queda decidido, y acá está por qué
 
 **Archivos:**
-- Crear: `src/features/sistema/VariantesDelResumen.tsx`
-- Modificar: `src/features/sistema/SistemaVisual.tsx`
 - Modificar: `docs/ESTADO.md`
 
 **Interfaces:**
+- Produce: el contrato exacto de la pantalla que construye la tarea 6 — qué columnas, qué pesa
+  más, qué se marca y qué no se mueve.
 - Consume: `FilaDeResumen` de `src/lib/resumen.ts`.
-- Produce: **nada que sobreviva.** Este archivo se borra en la tarea 13, junto con las dos
-  variantes que no se elijan.
 
-**Por qué existe esta tarea:** el spec la pide con nombre y apellido — *"antes de fijar la pantalla
-del resumen se dibujan tres versiones distintas y se elige una mirándolas al lado"*.
+**Esta tarea reemplaza al paso de tres variantes que pedía el spec, y conviene decir por qué.**
 
-**Y por qué importa acá más que en otro lado:** es la primera pantalla que abre la dueña. Las tres
-muestras anteriores se rechazaron; ésta decide si hay una cuarta.
+El spec decía: *"antes de fijar la pantalla del resumen se dibujan tres versiones distintas y se
+elige una mirándolas al lado"*. La primera versión de este plan las describía con una "apuesta" y
+un "riesgo" cada una. El dueño del producto lo rechazó, y el argumento es más fuerte que una
+preferencia:
 
-- [ ] **Paso 1: Escribir las tres, con los datos reales de hoy**
+> *"no debería haber riesgo ni apuesta en cada una. Buscá una solución óptima que minimice los
+> riesgos. El hecho es que sea simple y funcional."*
 
-Crear `src/features/sistema/VariantesDelResumen.tsx`. Las tres reciben las **mismas** filas y se
-dibujan una debajo de la otra, cada una con su nombre.
+Tiene razón. **Un plan que ofrece tres apuestas está delegando una decisión que se puede razonar.**
+Dibujar tres pantallas para elegir de a ojo tiene sentido cuando el criterio es estético; acá el
+criterio es funcional y se puede escribir. Y una de las tres cargaba un defecto que ni siquiera
+había nombrado — está abajo.
 
-Lo que este plan fija es qué apuesta cada una y qué riesgo corre, que es lo que hay que comparar:
+Además, el dueño quitó una restricción que pesaba: *"mencionaste que deja de parecerse al Excel, no
+me importa eso realmente"*. Con eso, el único "riesgo" que tenía la variante C desaparece, y la
+comparación cambia.
+
+### Qué tiene que contestar esta pantalla
+
+Dos preguntas, y sólo dos:
+
+1. **¿Dónde falta plata?** — con qué empresa hay que depositar.
+2. **¿Dónde hay algo que hacer?** — dónde hay trámites esperando.
+
+Todo lo que no conteste una de las dos es adorno.
+
+### Los datos de verdad, medidos el 27/08/2026
+
+Es importante que la decisión se tome contra estos números y no contra un ejemplo inventado:
 
 ```
-A — TABLA. Cinco filas, cuatro columnas, como la solapa del Excel.
-    Apuesta: el reconocimiento. Es lo que ella ya sabe leer.
-    Riesgo: con cuatro empresas en cero se ve vacia, y lo unico que importa —la Diferencia de
-    Paris Autos— pesa lo mismo que cuatro ceros.
-
-B — UNA CIFRA GRANDE Y LA TABLA DEBAJO. El total del grupo arriba en `text-4xl`, las cinco filas
-    abajo en `text-sm`.
-    Apuesta: la jerarquia. El numero que decide algo es el mas grande de la pantalla, que es la
-    primera de las nueve decisiones del spec.
-    Riesgo: con el total del grupo no se decide nada. Se decide por empresa.
-
-C — TARJETAS POR EMPRESA, la que espera plata adelante. Una tarjeta por empresa, ordenadas por
-    cuantos tramites esperan, y las que estan en cero plegadas abajo en una sola linea.
-    Apuesta: la accion. Lo primero que se ve es donde hay algo que hacer.
-    Riesgo: deja de parecerse al Excel, que es de donde viene la confianza.
+  empresa           SALDO HOY      RESERVADO      DIFERENCIA   movimientos  esperan
+  PARIS AUTOS      9.435.000,00    820.000,00    8.615.000,00      115         0
+  DORAL CHEVROLET          0,00          0,00            0,00        0         0
+  PARIS CARS               0,00          0,00            0,00        5         0
+  PARIS MOTOR              0,00          0,00            0,00        0         0
+  PARIS TRAC               0,00          0,00            0,00        0         0
 ```
 
-**El JSX de las tres lo escribe quien ejecute la tarea**, con `FilaDeResumen` y los tokens de la
-tarea 1. Escribir acá el código de tres pantallas de las que dos se van a tirar sería trabajo que
-se tira; lo que no se puede improvisar —qué compara cada una— está arriba.
+**Una empresa con movimiento y cuatro sin.** Y tres de esas cuatro con CERO movimientos visibles,
+que no es lo mismo que estar en cero.
 
-- [ ] **Paso 2: Colgarlas de la pantalla de sistema visual**
+### Qué está mal en cada una de las tres, sin llamarlo "riesgo"
 
-`src/features/sistema/SistemaVisual.tsx` ya existe y es donde viven las piezas para mirar. Agregar
-las tres al final, bajo un título que diga que son para elegir y que dos se van a borrar.
+**A — la tabla de cinco filas por cuatro columnas.**
+Todos los números pesan lo mismo. La Diferencia —el único con el que se decide algo— tiene el mismo
+tamaño que el Saldo de hoy, que es contexto. Con cuatro empresas en cero, el ojo tiene que recorrer
+cinco filas y cuatro columnas para encontrar el número que importa. **No está mal por gusto: hace
+trabajar de más para contestar la pregunta 1.**
 
-- [ ] **Paso 3: MIRARLAS. Este paso no lo reemplaza ningún test**
+**B — la cifra grande arriba y la tabla debajo.**
+El número grande es el total del grupo, y **con el total del grupo no se decide nada**. No se
+deposita "en el grupo": se deposita en una tarjeta. Entonces lo más grande de la pantalla es lo
+menos accionable que hay. Eso no es una apuesta que pueda salir bien: es poner el énfasis en el
+lugar equivocado.
+
+**C — tarjetas por empresa, ordenadas por cuántas esperan.**
+Tiene dos costos, y en la primera versión de este plan **sólo nombré uno**:
+
+1. Una tarjeta ocupa mucho más alto que una fila. Cinco tarjetas obligan a scrollear en una
+   pantalla donde cinco filas entran sin problema.
+2. **Ordenar por "esperan" hace que una empresa cambie de lugar.** Nadie puede aprender que Paris
+   Autos es la primera si la primera cambia. Y es la misma forma de defecto que `frenado_por_saldo`:
+   algo que se mueve solo, sin que nadie se lo haya pedido, y que obliga a leer de nuevo cada vez.
+   Ese segundo costo es el que faltaba, y es el que la descarta.
+
+### La cuarta: qué se toma de cada una y qué se tira
+
+| De | Se toma | Se tira |
+|---|---|---|
+| **A** | La tabla: orden fijo, una fila por empresa, todo en una pantalla, columnas comparables | Que todo pese lo mismo |
+| **B** | La jerarquía: que algo sea claramente más grande | Que lo grande sea el total del grupo |
+| **C** | Que lo que necesita algo se destaque | Reordenar, y el alto de las tarjetas |
+
+**La síntesis es una sola frase:** la tabla de A, con la jerarquía de B aplicada a la **Diferencia
+de cada fila** en vez de al total, y el destaque de C hecho **en el lugar** en vez de moviendo la
+fila.
+
+### La pantalla, decidida
+
+```
+GRUPO PARIS                                                    27/08   Sofía
+────────────────────────────────────────────────────────────────────────────
+  EMPRESA            SALDO HOY     RESERVADO        DIFERENCIA      ESPERAN
+  Paris Autos        9.435.000       820.000         8.615.000            —
+  Doral Chevrolet    Sin datos
+  Paris Cars                 0             0                 0            —
+  Paris Motor        Sin datos
+  Paris Trac         Sin datos
+────────────────────────────────────────────────────────────────────────────
+  TOTAL                                              8.615.000
+```
+
+Seis reglas, y cada una contesta a un defecto concreto de las tres de arriba:
+
+1. **La Diferencia de cada fila es el número más grande de la pantalla.** `text-2xl`, alineada a la
+   derecha, con `.tnum`. Las otras dos columnas en `text-sm` y `text-ink2`: son contexto.
+   *Arregla el defecto de A y usa la jerarquía de B donde sirve.*
+
+2. **El orden es fijo y sale de la base.** La columna `orden` de `razones_sociales` existe justo
+   para eso: se puede cambiar sin tocar código, y **no cambia sola nunca**.
+   *Arregla el defecto que descarta a C.*
+
+3. **La fila que tiene trámites esperando se marca donde está.** El número en `text-warn` y un
+   borde izquierdo del mismo color. **No se mueve de lugar.**
+   *Toma lo bueno de C sin su costo.*
+
+4. **Sin movimientos visibles, la fila dice "Sin datos" y nada más.** Ni ceros ni guiones en las
+   columnas de plata. Un cero es un número y se lee como un hecho: el 27/08/2026 toda gestora veía
+   las cinco tarjetas en `$ 0,00` mientras Paris Autos tenía ocho millones y medio.
+
+5. **ESPERAN muestra `—` cuando es cero**, no `0`. Un cero en una columna de cuentas invita a
+   leerlo como plata.
+
+6. **El total va en el pie, en `text-sm`.** Es útil —contesta "cuánto tiene el grupo"— pero no es
+   con lo que se decide, así que no es lo más grande.
+
+### Por qué esto es más simple que las tres
+
+No porque tenga menos cosas: porque **tiene menos reglas que aprender**.
+
+- No hay nada que se pliegue.
+- No hay nada que se reordene.
+- No hay nada que aparezca o desaparezca según el momento.
+- No hay que interactuar para ver todo: se ve entero de una.
+
+**Siempre las mismas cinco filas, siempre en el mismo lugar.** Lo único que cambia entre un día y
+otro son los números, que es exactamente lo que tiene que cambiar.
+
+### Y por qué es más funcional
+
+- El número con el que se decide es el primero que se ve, sin buscarlo.
+- Dónde hay trabajo se ve sin que nada se mueva.
+- Una empresa sin datos lo dice, en vez de mentir con un cero.
+- Entra en una pantalla sin scrollear, hoy con cinco empresas y también con diez.
+
+### Lo que queda deliberadamente afuera
+
+Escrito para que no se agregue "de paso":
+
+- **Gráficos.** No hay ninguna pregunta de esta pantalla que un gráfico conteste mejor que un
+  número.
+- **Comparación contra ayer o contra el mes pasado.** La pregunta es qué hay hoy.
+- **Cualquier cosa por gestora.** Ni una columna, ni un conteo, ni un orden. El día que exista esa
+  tabla de posiciones, los presupuestos se cargan tarde y redondeados.
+
+- [ ] **Paso 1: Escribir la decisión en el `ESTADO.md`, con su porqué**
+
+No en un comentario del código: en `docs/ESTADO.md`, que es donde se lee dentro de seis meses. Va
+la tabla de "qué se toma y qué se tira" y las seis reglas. **Una decisión de diseño sin su porqué
+se revierte sola la primera vez que alguien la mira con otro humor.**
+
+Incluir la frase que la originó, textual, y quién la dijo: es lo que explica por qué este plan no
+tiene el paso de tres variantes que el spec pedía.
+
+- [ ] **Paso 2: Comprobar que la decisión no contradice ninguna regla dura**
 
 ```bash
-cd "C:/Users/Vmagni/Desktop/GRUPO PARIS/GESTORIA" && export PATH="$HOME/tools/node-v22.17.0-win-x64:$PATH" && npm run dev
+cd "C:/Users/Vmagni/Desktop/GRUPO PARIS/GESTORIA" && grep -n "número nunca es del color\|No se mide a las personas\|escala de nueve pasos\|tnum" CLAUDE.md .claude/skills/marca-grupo-paris/SKILL.md
 ```
 
-Mirar las tres **con los datos reales de hoy**: Paris Autos con 8.915.000 de diferencia y una
-esperando, y cuatro empresas en cero.
+Las tres reglas que esta pantalla toca:
 
-Tres preguntas, en este orden:
+- **Un número nunca es del color de la marca.** La Diferencia va en `text-ink`; en `text-danger`
+  sólo si es negativa. **Nada teal en los números.**
+- **No se mide a las personas.** Ninguna columna de gestora.
+- **Escala de nueve pasos, nunca un tamaño a mano.** `text-2xl` para la Diferencia, `text-sm` para
+  el contexto, `text-2xs` para los rótulos: tres pasos distintos, todos de la escala.
 
-1. **¿Cuál contesta más rápido "de dónde falta plata"?** Es la pregunta con la que se entra.
-2. **¿Cuál se parece más a la solapa que ella ya usa?** El reconocimiento vale, y es la razón por
-   la que las tres muestras anteriores fallaron: la app estaba organizada por verbos y su Excel
-   por empresas.
-3. **¿Cuál aguanta el día que las cinco tengan movimiento?** Hoy cuatro están en cero, y eso no va
-   a durar.
-
-- [ ] **Paso 4: Escribir cuál se eligió y por qué, en el `ESTADO.md`**
-
-No en un comentario del archivo que se va a borrar: en `docs/ESTADO.md`, que es donde se lee dentro
-de seis meses. Una decisión de diseño sin su porqué se revierte sola la primera vez que alguien la
-mira con otro humor.
-
-- [ ] **Paso 5: Commit**
+- [ ] **Paso 3: Commit**
 
 ```bash
-cd "C:/Users/Vmagni/Desktop/GRUPO PARIS/GESTORIA" && git add -A && git commit -m "Tres resumenes al lado, y el que se eligio con su porque escrito"
+cd "C:/Users/Vmagni/Desktop/GRUPO PARIS/GESTORIA" && git add -A && git commit -m "El resumen queda decidido: la tabla de A, la jerarquia de B donde sirve, el destaque de C sin mover nada"
 ```
 
 ---
@@ -1266,11 +1371,12 @@ cd "C:/Users/Vmagni/Desktop/GRUPO PARIS/GESTORIA" && git add -A && git commit -m
 - Consume: `useResumen()` y `FilaDeResumen` de `src/lib/resumen.ts`; la ruta `/empresa/$razonSocialId`.
 - Produce: el componente `Resumen`, que ya está referenciado por `src/rutas.tsx`.
 
-**Depende de una decisión que se toma en la tarea 5.** Este plan fija la estructura, los datos y
-las reglas; **el reparto visual es la variante que se haya elegido mirándolas.** Por eso acá no hay
-un JSX cerrado: escribirlo sería decidir de antemano lo que la tarea 5 existe para decidir.
+**La pantalla está decidida en la tarea 5**, con sus seis reglas y su porqué. Acá se construye.
 
-**Lo que NO depende de la variante y va sí o sí:**
+**Las tres que definen el reparto**, repetidas para que quien ejecute esta tarea no tenga que ir a
+buscarlas: la Diferencia de cada fila es el número más grande —`text-2xl`, a la derecha, con
+`.tnum`—; el orden sale de la columna `orden` de la base y **no cambia nunca solo**; y la fila que
+tiene trámites esperando se marca **donde está**, sin moverse.
 
 - [ ] **Paso 1: Cada fila es un enlace, no un `div` con `onClick`**
 
@@ -2028,7 +2134,7 @@ suscripción o simplemente espera a que TanStack refresque solo al volver el foc
 Recién ahora, y comprobando primero:
 
 ```bash
-cd "C:/Users/Vmagni/Desktop/GRUPO PARIS/GESTORIA" && for f in Bandeja Tarjeta Listado VariantesDelResumen; do printf '%-22s ' "$f"; grep -rl "$f" src/ --include=*.tsx --include=*.ts | grep -v "$f.tsx" | tr '\n' ' '; echo; done
+cd "C:/Users/Vmagni/Desktop/GRUPO PARIS/GESTORIA" && for f in Bandeja Tarjeta Listado; do printf '%-22s ' "$f"; grep -rl "$f" src/ --include=*.tsx --include=*.ts | grep -v "$f.tsx" | tr '\n' ' '; echo; done
 ```
 
 **Un archivo se borra sólo si esa línea sale vacía.** Borrar antes de comprobar es como se pierde
@@ -2107,8 +2213,8 @@ que arranca en el resumen de las cinco empresas, sin menú— y no de rutas ni d
 
 - [ ] **Paso 5: El ESTADO, con los números contados de nuevo**
 
-Correr los comandos y escribir **esos** números, no los de antes. Y anotar cuál de las tres
-variantes del resumen se eligió, con su porqué.
+Correr los comandos y escribir **esos** números, no los de antes. Y que la decisión del resumen
+—la de la tarea 5— siga escrita con su porqué.
 
 - [ ] **Paso 6: Publicar**
 
@@ -2151,9 +2257,10 @@ Escrito para que nadie lo suponga:
 
 ## Lo que depende de vos
 
-1. **Elegir una de las tres variantes del resumen** (tarea 5). Es la única decisión de diseño que
-   el plan no toma solo, y es la primera pantalla que abre la dueña.
-2. **Cambiar la contraseña genérica** antes de que haya saldos reales.
-3. **La segunda base de Supabase**, antes de cargar el `saldo_inicial` real.
-4. **Recargar los dos saldos iniciales**, que el Plan A destrabó y todavía no se hicieron.
-5. **La regla escrita de gerencia:** no se deposita contra una foto de cuaderno.
+**Ninguna es una decisión de diseño:** la del resumen la toma la tarea 5, con su razonamiento
+escrito. Estas cuatro son cosas que sólo vos podés hacer.
+
+1. **Cambiar la contraseña genérica** antes de que haya saldos reales.
+2. **La segunda base de Supabase**, antes de cargar el `saldo_inicial` real.
+3. **Recargar los dos saldos iniciales**, que el Plan A destrabó y todavía no se hicieron.
+4. **La regla escrita de gerencia:** no se deposita contra una foto de cuaderno.
