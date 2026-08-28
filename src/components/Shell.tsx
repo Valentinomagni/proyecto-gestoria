@@ -1,16 +1,17 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { LogOut, ShieldAlert } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "../lib/supabase";
-import { nombreDeRol } from "../lib/roles";
 import { useSesion } from "../lib/sesion";
-import { menuPara, type Pantalla } from "../menu";
+import { useNovedades, useSaldosEnVivo } from "../lib/datos";
 import { Isotipo } from "./Logo";
 import { SkeletonLineas } from "./Skeleton";
 import { EmptyState } from "./EmptyState";
 import { Login } from "./Login";
 import { Avisar } from "./Avisar";
 import { Novedades } from "./Novedades";
-import type { Novedad } from "../lib/novedades";
+import { Migas } from "./Migas";
 import { Panel } from "./Panel";
 
 /**
@@ -22,23 +23,56 @@ import { Panel } from "./Panel";
  *  - con sesión pero SIN rol -> una pantalla que EXPLICA y dice a quién avisarle.
  *
  * El tercero es el que se suele olvidar, y es el que más se ve el primer día: todas las cuentas
- * nuevas nacen sin permisos. Dejar a esa persona frente a una pantalla vacía es hacerle creer
- * que el sistema está roto.
+ * nuevas nacen sin permisos. Dejar a esa persona frente a una pantalla vacía es hacerle creer que
+ * el sistema está roto.
+ *
+ * ============================================================================
+ *  PERDIO LA BARRA LATERAL, Y LA DE ABAJO TAMBIEN
+ * ============================================================================
+ *
+ * El pedido fue textual: "no quiero tener una barra lateral, parece literalmente la réplica del
+ * tablero contable". Y no se reemplaza por otra barra: se reemplaza por PROFUNDIDAD —resumen,
+ * empresa, trámite— con las migas mostrando el camino.
+ *
+ * LA BARRA DE ABAJO DEL TELEFONO SE VA POR LA MISMA RAZON, y hay que decir qué se pierde y qué se
+ * gana. Existía porque eran cinco pantallas planas y el pulgar de una mano llega al borde
+ * inferior y no al superior — se midió, y en un teléfono de 375 px la barra lateral dejaba 151 px
+ * de contenido.
+ *
+ * Con tres niveles no hay cinco destinos que poner ahí. Y a cambio se gana algo que antes no
+ * existía: **el gesto nativo de "atrás" del teléfono ahora funciona**, porque hay router. Antes
+ * sacaba de la app.
+ *
+ * La pantalla de la gestora se rehace entera en el Plan C, y ahí se vuelve a mirar la ergonomía
+ * del teléfono con la cola de tareas ya diseñada.
  */
-export function Shell({
-  children,
-  pantalla,
-  alNavegar,
-  novedades,
-  alAbrirTramite,
-}: {
-  children: ReactNode;
-  pantalla: Pantalla;
-  alNavegar: (p: Pantalla) => void;
-  novedades: { lista: Novedad[]; sinVer: number; marcarVistas: () => void };
-  alAbrirTramite: (id: string) => void;
-}) {
+export function Shell({ children }: { children: ReactNode }) {
+  const cliente = useQueryClient();
+  const navegar = useNavigate();
   const { cargando, session, perfil } = useSesion();
+
+  // El saldo se entera solo cuando otro lo mueve. Es la función central del producto: sin esto,
+  // dos personas miran el mismo número viejo y comprometen la misma plata.
+  useSaldosEnVivo(cliente);
+
+  // La campana escucha los pasos de la cadena. Necesita saber QUIÉN soy para no avisarme mis
+  // propios cambios: quien acaba de mover un trámite ya sabe que lo movió.
+  const novedades = useNovedades(perfil?.id ?? null);
+
+  const ruta = useRouterState({ select: (s) => s.location.pathname });
+
+  /*
+    EL FOCO SE MUEVE AL CONTENIDO AL CAMBIAR DE NIVEL, y es requisito de WCAG.
+
+    Sin esto, quien usa lector de pantalla cambia de pantalla y sigue parado en el encabezado:
+    escucha "Grupo Paris" de nuevo y no se entera de que abajo hay algo distinto.
+
+    Se hace acá y no en cada pantalla porque una pantalla que se olvide de hacerlo no falla de
+    forma visible: simplemente deja a alguien sin saber dónde está.
+  */
+  useEffect(() => {
+    document.getElementById("contenido")?.focus();
+  }, [ruta]);
 
   if (cargando) {
     return (
@@ -52,7 +86,7 @@ export function Shell({
 
   if (!perfil || !perfil.activo || perfil.rol === "sin_asignar") {
     return (
-      <div className="flex min-h-screen items-center justify-center p-6">
+      <div className="flex min-h-dvh items-center justify-center p-6">
         <Panel className="max-w-md">
           <EmptyState
             icono={ShieldAlert}
@@ -65,132 +99,39 @@ export function Shell({
     );
   }
 
-  const menu = menuPara(perfil.rol);
-
   /*
-    Mientras haya una sola base de Supabase, la app lo dice. Un riesgo conocido que no se ve,
-    se olvida — y el día que esto tenga saldos reales, una prueba destructiva en una vista
-    previa los tocaría.
+    Mientras haya una sola base de Supabase, la app lo dice. Un riesgo conocido que no se ve, se
+    olvida — y el día que esto tenga saldos reales, una prueba destructiva los tocaría.
   */
   const avisoBase = "Base compartida con desarrollo";
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
-      {/*
-        ============================================================================
-         DOS NAVEGACIONES, Y NO ES UN CAPRICHO: SON DOS PERSONAS DISTINTAS.
-        ============================================================================
-
-        En el escritorio trabaja administración y gerencia, sentadas, con el listado a la vista
-        todo el día: barra al costado, nombres completos.
-
-        En el teléfono trabaja LA GESTORA, PARADA EN EL REGISTRO Y CON UNA MANO. Por eso la
-        barra va ABAJO: el pulgar de una mano llega al borde inferior de la pantalla y no llega
-        al superior. Un menú arriba obliga a la segunda mano, y la segunda mano tiene el legajo.
-
-        SE MIDIO, y por eso existe este cambio: con la barra lateral de 224 px, en un teléfono
-        de 375 px al contenido le quedaban 151. La pantalla de quien más la necesita era la
-        única inusable.
-      */}
-
-      {/* Teléfono: tira de identidad arriba, fina, que no compite con los números. */}
-      <header className="flex items-center justify-between gap-3 bg-side-bg px-4 py-2 md:hidden">
+    <div className="flex min-h-dvh flex-col">
+      {/* La tira superior: teal oscuro, y es lo primero que se ve. */}
+      <header className="flex items-center justify-between gap-3 bg-side-bg px-4 py-2">
         <Isotipo tono="blanco" alto={22} />
         <div className="flex items-center gap-3">
-          <span className="text-2xs text-warn">{avisoBase}</span>
+          <span className="text-2xs text-side-ink2">{avisoBase}</span>
           <Novedades
             lista={novedades.lista}
             sinVer={novedades.sinVer}
             alAbrirPanel={novedades.marcarVistas}
-            alAbrirTramite={alAbrirTramite}
+            alAbrirTramite={() => void navegar({ to: "/" })}
           />
-          <Avisar pantalla={pantalla} rol={perfil.rol} tramiteId={null} />
+          {/* El andon vive en la cáscara, así que está en TODAS las pantallas y para todos los
+              roles. Un botón de avisar que está en una sola pantalla sirve para los problemas de
+              esa pantalla. */}
+          <Avisar pantalla={ruta} rol={perfil.rol} tramiteId={null} />
           <BotonSalir oscuro />
         </div>
       </header>
 
-      {/* Escritorio: la barra de siempre. */}
-      <aside className="hidden w-56 shrink-0 flex-col justify-between bg-side-bg p-4 md:flex">
-        <div className="flex flex-col gap-6">
-          <Isotipo tono="blanco" alto={34} />
-          <nav className="flex flex-col gap-1">
-            {menu.map((m) => {
-              const Icono = m.icono;
-              const activa = pantalla === m.id;
-              return (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => alNavegar(m.id)}
-                  aria-current={activa ? "page" : undefined}
-                  className={`flex items-center gap-2 rounded-md px-2 py-2 text-sm ${
-                    activa ? "bg-side-bg2 text-side-ink" : "text-side-ink2"
-                  }`}
-                >
-                  <Icono aria-hidden="true" size={16} />
-                  {m.nombre}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
+      <Migas nombreDeUsuario={perfil.nombre} />
 
-        <div className="flex flex-col gap-2">
-          <div>
-            <p className="text-xs text-side-ink">{perfil.nombre}</p>
-            <p className="text-2xs text-side-ink2">{nombreDeRol(perfil.rol)}</p>
-          </div>
-          <p className="text-2xs text-warn">{avisoBase}</p>
-          {/*
-            LA CAMPANA VA EN LAS DOS BARRAS. Quien mas la necesita es la gestora, que esta en el
-            telefono y no tiene otra forma de enterarse de que la oficina movio su tramite.
-            Dejarla solo en el escritorio seria ponerla donde menos hace falta.
-          */}
-          <Novedades
-            lista={novedades.lista}
-            sinVer={novedades.sinVer}
-            alAbrirPanel={novedades.marcarVistas}
-            alAbrirTramite={alAbrirTramite}
-          />
-          {/* El andon vive en la cáscara, así que está en TODAS las pantallas y para todos los
-              roles. Un botón de avisar que está en una sola pantalla sirve para los problemas
-              de esa pantalla. */}
-          <Avisar pantalla={pantalla} rol={perfil.rol} tramiteId={null} />
-          <BotonSalir oscuro />
-        </div>
-      </aside>
-
-      {/*
-        El relleno de abajo deja pasar la barra: sin él, la última fila del listado queda
-        tapada por la navegación y nadie se entera de que hay algo más.
-      */}
-      <main className="flex-1 overflow-auto pb-24 md:pb-0">{children}</main>
-
-      {/*
-        Teléfono: la navegación, abajo. `pb-[env(safe-area-inset-bottom)]` la levanta por
-        encima de la barra del iPhone; sin eso el último renglón de texto queda debajo del
-        indicador y el botón se toca mal justo en el borde.
-      */}
-      <nav className="fixed inset-x-0 bottom-0 z-10 flex justify-around border-t border-side-bg2 bg-side-bg pb-[env(safe-area-inset-bottom)] md:hidden">
-        {menu.map((m) => {
-          const Icono = m.icono;
-          const activa = pantalla === m.id;
-          return (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => alNavegar(m.id)}
-              aria-current={activa ? "page" : undefined}
-              className={`flex min-h-14 flex-1 flex-col items-center justify-center gap-1 px-1 py-2 ${
-                activa ? "text-side-ink" : "text-side-ink2"
-              }`}
-            >
-              <Icono aria-hidden="true" size={20} />
-              <span className="text-2xs leading-none">{m.corto}</span>
-            </button>
-          );
-        })}
-      </nav>
+      {/* `tabIndex={-1}` lo hace enfocable por código sin meterlo en el orden de tabulación. */}
+      <main id="contenido" tabIndex={-1} className="flex-1 overflow-auto outline-none">
+        {children}
+      </main>
     </div>
   );
 }

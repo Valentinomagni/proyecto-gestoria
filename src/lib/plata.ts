@@ -158,3 +158,23 @@ export function pesosDesdeTexto(texto: string): number | null {
   const centavos = parsear(texto);
   return centavos === null ? null : aPesos(centavos);
 }
+
+/**
+ * ============================================================================
+ *  LA CIFRA GRANDE, SIN LOS CENTAVOS CUANDO SON CERO
+ * ============================================================================
+ *
+ * `$ 9.435.000` se lee de un golpe; `$ 9.435.000,00` obliga a contar. En una pantalla donde el
+ * numero grande es lo primero que se mira, esos dos ceros son ruido.
+ *
+ * SOLO PARA LAS CIFRAS GRANDES del resumen y del encabezado de la empresa. En el extracto y en el
+ * presupuesto los centavos van SIEMPRE, porque ahi la exactitud es el punto: un importe que se
+ * compara contra el sitio de Habitualista no se puede leer redondeado.
+ *
+ * Y SOLO SE ESCONDEN CUANDO SON CERO. `$ 11.940.627,92` se muestra entero: esconder un centavo
+ * que existe seria mentir, y en una pantalla de plata eso es peor que ser largo.
+ */
+export function formatearCorto(centavos: number): string {
+  const completo = formatear(centavos);
+  return centavos % 100 === 0 ? completo.slice(0, -3) : completo;
+}

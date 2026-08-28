@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { aCentavos, aDecimal, formatear, parsear, pesosDesdeTexto, sumar } from "./plata";
+import {
+  aCentavos,
+  aDecimal,
+  formatear,
+  formatearCorto,
+  parsear,
+  pesosDesdeTexto,
+  sumar,
+} from "./plata";
 
 /**
  * Los numeros de estos tests NO son inventados: salen de las imagenes del pedido.
@@ -148,5 +156,26 @@ describe("pesosDesdeTexto", () => {
   it("devuelve null cuando no se entiende, en vez de adivinar", () => {
     expect(pesosDesdeTexto("seiscientos mil")).toBeNull();
     expect(pesosDesdeTexto("")).toBeNull();
+  });
+});
+
+describe("la cifra grande esconde los centavos, y solo cuando son cero", () => {
+  it("sin centavos, no los muestra", () => {
+    expect(formatearCorto(943500000)).toBe("$ 9.435.000");
+  });
+
+  it("con centavos, los muestra enteros", () => {
+    // Esconder un centavo que existe seria mentir, y en una pantalla de plata eso es peor que
+    // ser largo. Este es el saldo real de Paris Autos el 28/08/2026.
+    expect(formatearCorto(1194062792)).toBe("$ 11.940.627,92");
+  });
+
+  it("en negativo tambien", () => {
+    expect(formatearCorto(-52000000)).toBe("-$ 520.000");
+    expect(formatearCorto(-52000042)).toBe("-$ 520.000,42");
+  });
+
+  it("y el cero es cero, no vacio", () => {
+    expect(formatearCorto(0)).toBe("$ 0");
   });
 });

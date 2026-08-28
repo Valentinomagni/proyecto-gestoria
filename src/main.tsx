@@ -3,7 +3,8 @@ import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { App } from "./App";
+import { RouterProvider } from "@tanstack/react-router";
+import { router } from "./rutas";
 import { iniciarMonitoreo } from "./lib/monitoreo";
 import "./index.css";
 
@@ -47,7 +48,7 @@ createRoot(raiz).render(
             <SistemaVisual />
           </Suspense>
         ) : (
-          <App />
+          <RouterProvider router={router} />
         )}
         <Toaster position="bottom-right" />
       </QueryClientProvider>
