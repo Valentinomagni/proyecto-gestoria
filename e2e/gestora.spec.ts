@@ -72,6 +72,30 @@ test("y lo que si tiene plata trae su boton", async ({ page }) => {
   await expect(teToca.first().locator("[data-boton-accion]")).toHaveCount(1);
 });
 
+test("arriba muestra el saldo de las tarjetas donde tiene trabajo, y ninguna otra", async ({
+  page,
+}) => {
+  /*
+    SIN SELECTOR DE TARJETA (spec 5). Un selector la obligaría a saber de antemano por qué empresa
+    preguntar, y ella no piensa por empresa: piensa por trámite.
+
+    LA LISTA NO LA ARMA LA PANTALLA, LA ARMA EL PERMISO: son las tarjetas con `puedo_ver`, que es
+    la misma respuesta que usa la app de la oficina.
+  */
+  await entrarComo(page, "gestora");
+
+  const saldo = page.locator("[data-saldo-de-arriba]");
+  await expect(saldo).toBeVisible();
+
+  // Donde trabaja, con el número de verdad y no un cero.
+  await expect(saldo).toContainText("Paris Autos SA");
+  await expect(saldo).toContainText("$ 11.940.627,92");
+
+  // Y las que no puede ver no se dibujan: ahí no hay saldo que mostrar, ni siquiera un cero.
+  await expect(saldo).not.toContainText("Paris Motor");
+  await expect(saldo).not.toContainText("Paris Trac");
+});
+
 test("un bloque vacio lo dice con palabras, y no queda en blanco", async ({ page }) => {
   await entrarComo(page, "gestora");
 

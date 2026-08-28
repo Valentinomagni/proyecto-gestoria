@@ -4,6 +4,7 @@ import { useSesion } from "@/lib/sesion";
 import { Panel } from "@/components/Panel";
 import { SkeletonLineas } from "@/components/Skeleton";
 import { TarjetaDeTramite } from "./TarjetaDeTramite";
+import { SaldoDeArriba } from "./SaldoDeArriba";
 
 /**
  * ============================================================================
@@ -41,7 +42,10 @@ export function Cola() {
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-4 p-4">
-      <h1 className="text-xl">Hola {perfil?.nombre ?? ""}</h1>
+      <div>
+        <h1 className="text-xl">Hola {perfil?.nombre ?? ""}</h1>
+        <SaldoDeArriba />
+      </div>
 
       {BLOQUES.map((b) => {
         const filas = porBloque[b.valor];
