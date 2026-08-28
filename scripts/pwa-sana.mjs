@@ -40,10 +40,8 @@ if (!existsSync(SW)) {
 const sw = readFileSync(SW, "utf8");
 
 /*
-  Se busca el dominio de Supabase de cualquier forma en que pueda aparecer: en una URL literal, en
-  una expresion regular de ruta, o partido. Si aparece en el service worker, algo lo esta mirando.
-*/
-/*
+  Si el dominio de Supabase aparece en el service worker, algo lo esta mirando.
+
   LOS PUNTOS Y LAS BARRAS ACEPTAN LA FORMA ESCAPADA. Cuando una regla de cache llega al service
   worker generado, llega como EXPRESION REGULAR: `supabase\.co`, no `supabase.co`. La primera
   version de este guardian buscaba el punto literal y contestaba OK con la regla puesta — o sea

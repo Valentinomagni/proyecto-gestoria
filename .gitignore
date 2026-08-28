@@ -2,6 +2,8 @@
 node_modules/
 dist/
 dist-ssr/
+# La salida del service worker en desarrollo. Es generada, como dist/.
+dev-dist/
 *.local
 .vite/
 

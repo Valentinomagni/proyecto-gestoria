@@ -43,18 +43,48 @@ export default defineConfig({
     {
       name: "chrome",
       use: { ...devices["Desktop Chrome"], channel: "chrome" },
+      testIgnore: "instalada.spec.ts",
     },
     {
       // La gestora trabaja parada en el registro, con una mano. Su app se prueba en el tamaño
       // real de un teléfono, no en una ventana angosta de escritorio.
       name: "telefono",
       use: { ...devices["Pixel 7"], channel: "chrome" },
+      testIgnore: "instalada.spec.ts",
+    },
+    {
+      /*
+        ============================================================================
+         LA APP CONSTRUIDA, QUE ES LA QUE SE INSTALA
+        ============================================================================
+
+        EN DESARROLLO LA APP NO ARRANCA SIN RED, Y NO ES UN DEFECTO: Vite sirve cada módulo por
+        separado y el service worker de desarrollo no los precachea. Medido — al cortar la red y
+        recargar, cinco recursos daban ERR_INTERNET_DISCONNECTED y saltaba el ErrorBoundary.
+
+        Todo lo que dependa del armazón cacheado —abrir sin señal, el manifiesto, el service
+        worker de verdad— tiene que probarse contra el BUILD servido, o no se está probando lo
+        que se publica. Por eso este proyecto y su servidor aparte.
+      */
+      name: "instalada",
+      use: { ...devices["Pixel 7"], channel: "chrome", baseURL: "http://localhost:4173" },
+      testMatch: "instalada.spec.ts",
     },
   ],
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:5173",
-    reuseExistingServer: true,
-    timeout: 120_000,
-  },
+  webServer: [
+    {
+      command: "npm run dev",
+      url: "http://localhost:5173",
+      reuseExistingServer: true,
+      timeout: 120_000,
+    },
+    {
+      // El build, servido. `--strictPort` por la misma razón que el de desarrollo: un puerto que
+      // se corre solo produce fallos que no hablan del puerto.
+      command: "npm run build && npx vite preview --port 4173 --strictPort",
+      url: "http://localhost:4173",
+      reuseExistingServer: true,
+      timeout: 180_000,
+    },
+  ],
 });

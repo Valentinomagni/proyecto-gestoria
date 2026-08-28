@@ -37,6 +37,15 @@ export default defineConfig({
     */
     VitePWA({
       registerType: "autoUpdate",
+      /*
+        EL SERVICE WORKER TAMBIEN EN DESARROLLO. Sin esto, `npm run dev` no lo registra y la
+        pantalla de "sin conexion" no se puede probar de punta a punta: al cortar la red el
+        navegador contesta ERR_INTERNET_DISCONNECTED antes de que la app llegue a dibujarse.
+
+        Y hay una razon mejor que la prueba: un service worker que solo existe en produccion es un
+        service worker que se ve por primera vez en produccion.
+      */
+      devOptions: { enabled: true, type: "module" },
       workbox: {
         globPatterns: ["**/*.{js,css,html,woff2,png,svg}"],
         clientsClaim: true,

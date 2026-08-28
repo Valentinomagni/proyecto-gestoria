@@ -27,24 +27,25 @@ test("el resumen muestra las cinco empresas, y la Diferencia de cada una", async
   );
 });
 
-test("a quien no la puede ver, una empresa le dice Sin datos y no un cero", async ({ page }) => {
-  /*
-    ES EL DEFECTO DEL 27/08/2026 CONVERTIDO EN PRUEBA. Toda gestora veía las cinco tarjetas en
-    `$ 0,00` mientras Paris Autos tenía ocho millones y medio, y salía al registro creyendo que no
-    había con qué pagar.
+/*
+  ============================================================================
+   SE FUE LA PRUEBA DEL "SIN DATOS" DE LA GESTORA, Y LA REGLA QUEDO MEJOR CUIDADA
+  ============================================================================
 
-    Un cero es un número y se lee como un hecho. "Sin datos" no.
+  Habia dos pruebas acá que entraban como GESTORA a esta pantalla —el resumen de empresas— para
+  comprobar el defecto del 27/08/2026: que no le aparezca `$ 0,00` en una tarjeta que no puede
+  ver, porque un cero se lee como un hecho y la deja sin salir a pagar.
 
-    ENTRA COMO GESTORA, Y ESO ES EL ARREGLO DEL 28/08/2026: esta misma prueba entraba como
-    GERENCIA y exigía que la dueña leyera "Sin datos" en sus propias empresas vacías. Estaba
-    defendiendo el defecto de al lado. La intención era correcta y el rol no.
-  */
-  await entrarComo(page, "gestora");
+  Desde el plan C la gestora NO LLEGA A ESTA PANTALLA: `/` le dibuja su cola. Las dos pruebas
+  seguían pasando por casualidad hasta que dejó de existir el camino, y una prueba que comprueba
+  una pantalla que su rol no puede abrir no protege nada.
 
-  const doral = page.getByRole("link", { name: /DORAL CHEVROLET/ });
-  await expect(doral).toContainText("Sin datos");
-  await expect(doral).not.toContainText("$ 0");
-});
+  LA REGLA NO SE FUE, SE MUDO: la comprueba `e2e/gestora.spec.ts`, en "arriba muestra el saldo de
+  las tarjetas donde tiene trabajo, y ninguna otra", contra la pantalla que ella sí ve. Es más
+  fuerte, porque prueba el lugar donde el defecto puede volver a aparecer.
+
+  Es el mismo movimiento que se le hizo a `menu.ts` en el plan B, y por el mismo motivo.
+*/
 
 test("pero a gerencia una empresa vacia le muestra sus ceros, que son ciertos", async ({
   page,
@@ -61,15 +62,27 @@ test("pero a gerencia una empresa vacia le muestra sus ceros, que son ciertos", 
 
     Puede verlos, y no depende de tener trámites: es la dueña. Ahora decide `puedo_ver`, que es
     una respuesta de permiso y no un conteo.
+
+    ============================================================================
+     POR QUE PARIS TRAC Y NO DORAL CHEVROLET
+    ============================================================================
+
+    Esta prueba usaba DORAL, y DORAL DEJO DE ESTAR VACIA el 28/08/2026: el plan C necesitaba un
+    trámite esperando plata para poder probar el salto, y el único lugar donde puede haber uno es
+    una tarjeta en cero. Ese trámite le dejó su reserva, así que la tarjeta ya tiene historia.
+
+    Queda anotado porque es la clase de cosa que se descubre tarde: una prueba se apoyaba en que
+    una fila NO existiera, y otra prueba la creó. Mientras la base de desarrollo sea la misma que
+    la de producción, esto va a volver a pasar.
   */
   await entrarComo(page, "gerencia");
 
-  const doral = page.getByRole("link", { name: /DORAL CHEVROLET/ });
-  await expect(doral).not.toContainText("Sin datos");
-  await expect(doral).toContainText("$ 0");
+  const vacia = page.getByRole("link", { name: /PARIS TRAC/ });
+  await expect(vacia).not.toContainText("Sin datos");
+  await expect(vacia).toContainText("$ 0");
 
-  await doral.click();
-  await expect(page.getByRole("heading", { name: /Doral Chevrolet/i })).toBeVisible();
+  await vacia.click();
+  await expect(page.getByRole("heading", { name: /PARIS TRAC/i })).toBeVisible();
 
   // La frase que no puede aparecerle NUNCA a la oficina.
   await expect(page.getByText(/No podés ver los movimientos/)).toHaveCount(0);
@@ -132,19 +145,6 @@ test("y una direccion que no existe tampoco", async ({ page }) => {
   await entrarComo(page, "gerencia", "/estonoexiste");
 
   await expect(page.getByRole("heading", { name: "Esa dirección no existe" })).toBeVisible();
-});
-
-test("la gestora ve el saldo de su empresa, no ceros", async ({ page }) => {
-  /*
-    La otra mitad del defecto del 27/08. La gestora tiene que ver números de verdad en las
-    empresas donde tiene trámites, y "Sin datos" en las otras — nunca un cero que se lea como
-    un hecho.
-  */
-  await entrarComo(page, "gestora");
-
-  const conDatos = page.getByRole("link", { name: /PARIS AUTOS/ });
-  await expect(conDatos).toBeVisible();
-  await expect(conDatos).not.toContainText("Sin datos");
 });
 
 test("las secciones arrancan segun su criterio, y se pliegan", async ({ page }) => {
@@ -247,19 +247,34 @@ test("la oficina ve + Tramite y + Dinero adentro de la empresa", async ({ page }
   ]);
 });
 
-test("y la gestora NO los ve", async ({ page }) => {
+test("y la gestora NO los ve, ni entrando por la direccion", async ({ page }) => {
   /*
     La base ya lo impide —`movimientos_insert` exige `es_oficina()`— así que un botón visible
     fallaría al apretarlo. Un botón que va a fallar es PEOR que no tenerlo: enseña a desconfiar de
     la pantalla, y quien desconfía de una pantalla de plata vuelve al cuaderno.
-  */
-  await entrarComo(page, "gestora");
-  await page.getByRole("link", { name: /PARIS AUTOS/ }).click();
 
+    ENTRA POR LA DIRECCION Y NO POR EL RESUMEN. Desde el plan C la gestora no llega a esta
+    pantalla navegando: `/` le dibuja su cola. Escribir la dirección a mano es justamente el caso
+    que hay que comprobar —el que queda cuando alguien le pasa un enlace— y es más exigente que el
+    que había antes, porque no depende de que la navegación se lo impida.
+  */
+  await entrarComo(page, "gerencia");
+  await page.getByRole("link", { name: /PARIS AUTOS/ }).click();
+  await expect(page).toHaveURL(/\/empresa\/[0-9a-f-]{36}$/);
+  const direccion = new URL(page.url()).pathname;
+
+  const otra = await page.context().browser()?.newContext();
+  await page.close();
+
+  const comoGestora = await (otra ?? page.context()).newPage();
+  await entrarComo(comoGestora, "gestora", direccion);
+
+  await expect(comoGestora.getByRole("heading", { name: "PARIS AUTOS" })).toBeVisible();
   await Promise.all([
-    expect(page.getByRole("link", { name: "Trámite", exact: true })).toHaveCount(0),
-    expect(page.getByRole("link", { name: "Dinero", exact: true })).toHaveCount(0),
+    expect(comoGestora.getByRole("link", { name: "Trámite", exact: true })).toHaveCount(0),
+    expect(comoGestora.getByRole("link", { name: "Dinero", exact: true })).toHaveCount(0),
   ]);
+  await otra?.close();
 });
 
 test("cargar dinero no pregunta la tarjeta: la pantalla ya la sabe", async ({ page }) => {

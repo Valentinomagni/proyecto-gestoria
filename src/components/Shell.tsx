@@ -14,6 +14,7 @@ import { Novedades } from "./Novedades";
 import { Migas } from "./Migas";
 import { MenuDeUsuario } from "./MenuDeUsuario";
 import { Panel } from "./Panel";
+import { SinConexion, useHayConexion } from "./SinConexion";
 
 /**
  * La cáscara: decide qué se ve según quién entró.
@@ -50,7 +51,8 @@ import { Panel } from "./Panel";
 export function Shell({ children }: { children: ReactNode }) {
   const cliente = useQueryClient();
   const navegar = useNavigate();
-  const { cargando, session, perfil } = useSesion();
+  const { cargando, session, perfil, fallo } = useSesion();
+  const hayConexion = useHayConexion();
 
   // El saldo se entera solo cuando otro lo mueve. Es la función central del producto: sin esto,
   // dos personas miran el mismo número viejo y comprometen la misma plata.
@@ -74,6 +76,38 @@ export function Shell({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.getElementById("contenido")?.focus();
   }, [ruta]);
+
+  /*
+    ============================================================================
+     SIN CONEXION SE DICE ACA ARRIBA, ANTES QUE NADA
+    ============================================================================
+
+    ESTO ARREGLA UN DEFECTO QUE YA EXISTIA, y era feo: sin red, `traerPerfil` no puede leer
+    `perfiles`, `perfil` queda en null, y tres renglones más abajo la app dice
+
+        "Tu cuenta todavía no está habilitada. Ya entraste, pero falta que gerencia te asigne un
+         rol. Avisale y probá de nuevo en un rato."
+
+    O sea que a quien se le corta la señal en la calle —que es donde trabaja la gestora— la app le
+    dice que le desactivaron la cuenta. Es falso, es alarmante, y termina en una llamada a la
+    oficina.
+
+    ============================================================================
+     SON DOS SEÑALES Y NO UNA, Y LA IMPORTANTE ES LA SEGUNDA
+    ============================================================================
+
+    `navigator.onLine` contesta "¿hay una placa de red?", NO "¿llego a Supabase?". Un teléfono con
+    mala señal en el subsuelo de un registro —que es exactamente donde trabaja la gestora— dice
+    que sí. Medido: con la red cortada de verdad, el navegador seguía informando `onLine: true`.
+
+    Sirve igual en una dirección: cuando dice que NO, no hay. Por eso queda, pero como atajo.
+
+    LA SEÑAL QUE DE VERDAD SABE es `fallo`: la consulta a `perfiles` se hizo y volvió con error.
+    Eso no se puede confundir con nada — es "no pude preguntar", que es distinto de "preguntá y no
+    hay nadie". La misma distinción de ausencia contra rechazo que el proyecto ya tiene escrita
+    para la base, de este lado.
+  */
+  if (!hayConexion || fallo) return <SinConexion />;
 
   if (cargando) {
     return (
