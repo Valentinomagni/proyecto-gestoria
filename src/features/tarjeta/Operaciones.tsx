@@ -91,7 +91,7 @@ export function Operaciones({
                 <th className="py-2 text-left font-normal">Fecha</th>
                 <th className="py-2 text-left font-normal">Concepto</th>
                 <th className="py-2 text-right font-normal">Importe</th>
-                <th className="py-2 text-left font-normal">Estado</th>
+                <th className="py-2 pl-3 text-left font-normal">Estado</th>
                 {puedeAnular && <th className="py-2 text-right font-normal"> </th>}
               </tr>
             </thead>
@@ -112,7 +112,7 @@ export function Operaciones({
                   >
                     {formatear(aCentavos(m.importe))}
                   </td>
-                  <td className="py-2 text-2xs text-ink2">
+                  <td className="py-2 pl-3 text-2xs text-ink2">
                     {m.anulado
                       ? "anulado"
                       : m.fecha_acreditacion > hoyArgentina()

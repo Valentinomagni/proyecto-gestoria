@@ -49,7 +49,7 @@ export function nombreDeEstado(v: string): string {
   return ESTADOS.find((e) => e.valor === v)?.nombre ?? v;
 }
 
-const TIPOS: Record<string, string> = {
+export const TIPOS: Record<string, string> = {
   patentamiento_0km: "Patentamiento 0km",
   transferencia_a_cliente: "Transferencia a cliente",
   transferencia_al_concesionario: "Transferencia al concesionario",
@@ -62,7 +62,7 @@ const TIPOS: Record<string, string> = {
  * `medio_pago`. Y una transferencia directamente no tiene modalidad — la base lo impide con un
  * check, asi que este diccionario nunca recibe una.
  */
-const MODALIDADES: Record<string, string> = {
+export const MODALIDADES: Record<string, string> = {
   plan_ahorro: "Plan de ahorro",
   venta_directa: "Venta directa 0km",
 };

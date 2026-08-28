@@ -162,3 +162,42 @@ test("y en la lista no hay ninguna cuenta por gestora", async ({ page }) => {
     expect(t).not.toMatch(/Carla|Mariana/);
   }
 });
+
+test("el extracto arranca plegado y abre en hoy", async ({ page }) => {
+  /*
+    El pedido fue textual: "que la solapa de operaciones sea plegable para que no se acumulen
+    tantas operaciones viejas, que aparezcan principalmente los movimientos del día".
+  */
+  await entrarComo(page, "gerencia");
+  await page.getByRole("link", { name: /PARIS AUTOS/ }).click();
+
+  const extracto = page.getByRole("button", { name: /Movimientos de la tarjeta/ });
+  await expect(extracto).toHaveAttribute("aria-expanded", "false");
+
+  await extracto.click();
+  await expect(extracto).toHaveAttribute("aria-expanded", "true");
+  await expect(extracto).toContainText("de hoy");
+});
+
+test("las columnas del extracto no se tocan entre si", async ({ page }) => {
+  /*
+    SE VIO MIRANDO LA PANTALLA. El importe va alineado a la derecha y el estado a la izquierda, y
+    sin separacion el encabezado se leia "ImporteEstado" y una fila anulada decia "$ 1,00anulado".
+  */
+  await entrarComo(page, "gerencia");
+  await page.getByRole("link", { name: /PARIS AUTOS/ }).click();
+  await page.getByRole("button", { name: /Movimientos de la tarjeta/ }).click();
+  await page.waitForSelector("table thead");
+
+  const encabezado = await page.locator("table thead").innerText();
+  expect(encabezado).not.toContain("ImporteEstado");
+});
+
+test("el boton de Excel esta en la empresa, y baja lo de esa empresa", async ({ page }) => {
+  await entrarComo(page, "gerencia");
+  await page.getByRole("link", { name: /PARIS AUTOS/ }).click();
+
+  const boton = page.getByRole("button", { name: /Bajar a Excel/ });
+  await expect(boton).toBeVisible();
+  await expect(boton).toBeEnabled();
+});

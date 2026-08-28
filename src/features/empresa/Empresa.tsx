@@ -1,12 +1,18 @@
+import { useState } from "react";
+import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import { Panel } from "../../components/Panel";
 import { SkeletonLineas } from "../../components/Skeleton";
 import { EmptyState } from "../../components/EmptyState";
-import { Inbox } from "lucide-react";
+import { Download, Inbox } from "lucide-react";
 import { aCentavos, formatearCorto } from "../../lib/plata";
 import { useEmpresa } from "../../lib/resumen";
 import { useEsperandoPlata, useGestoras, useTramites, type Tramite } from "../../lib/datos";
 import { rutaEmpresa } from "../../rutas";
+import { BOTON_SUAVE } from "../../lib/campos";
+import { clasificarFalla } from "../../lib/fallas";
+import { MODALIDADES, nombreDeEstado, TIPOS } from "../tramites/Listado";
+import { MovimientosPlegados } from "./MovimientosPlegados";
 import { SeccionPlegable } from "./SeccionPlegable";
 import { FilaDeTramite } from "./FilaDeTramite";
 
@@ -61,7 +67,10 @@ export function Empresa() {
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4 p-6">
-      <h1 className="text-xl">{e.nombre}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl">{e.nombre}</h1>
+        <BajarAExcel razonSocialId={razonSocialId} nombreDeEmpresa={e.nombre} />
+      </div>
 
       {!seVe ? (
         <Panel>
@@ -86,6 +95,8 @@ export function Empresa() {
       )}
 
       <SeccionesDeTramites razonSocialId={razonSocialId} />
+
+      {e.tarjeta_id !== null && seVe && <MovimientosPlegados tarjetaId={e.tarjeta_id} />}
     </div>
   );
 }
@@ -262,5 +273,68 @@ function Cifra({
         {formatearCorto(centavos)}
       </p>
     </div>
+  );
+}
+
+/**
+ * ============================================================================
+ *  BAJA LO QUE SE ESTA MIRANDO, NO EL GRUPO ENTERO
+ * ============================================================================
+ *
+ *  Los trámites de ESTA empresa. Quien quiera todo lo baja empresa por empresa — que es
+ *  exactamente como está su planilla hoy, una hoja por empresa.
+ *
+ *  Bajar el grupo entero desde una pantalla que muestra una empresa produce un archivo que no se
+ *  parece a lo que estaba en la pantalla, y entonces hay que revisarlo a mano para confiar en él.
+ *  Eso es volver al trabajo del que se venía escapando.
+ *
+ *  Y el aviso dice CUÁNTOS salieron: "Se bajaron 11 trámites" se puede comparar de un vistazo con
+ *  lo que hay en pantalla. "Listo" no dice si salieron todos.
+ */
+function BajarAExcel({
+  razonSocialId,
+  nombreDeEmpresa,
+}: {
+  razonSocialId: string;
+  nombreDeEmpresa: string;
+}) {
+  const [bajando, setBajando] = useState(false);
+  const tramites = useTramites({ razonSocialId });
+
+  async function bajar(): Promise<void> {
+    const filas = tramites.data ?? [];
+    if (filas.length === 0) return;
+    setBajando(true);
+    try {
+      /*
+        SE CARGA RECIEN CUANDO SE APRIETA. Son 20 kB comprimidos, y quien mas los pagaria es la
+        gestora, con datos moviles, parada en el registro — que es justamente la que menos va a
+        bajar planillas. Que el peso lo pague quien usa la funcion.
+      */
+      const { bajarTramites } = await import("../../lib/excel");
+      const cuantos = await bajarTramites(filas, {
+        estado: nombreDeEstado,
+        tipo: (v) => TIPOS[v] ?? v,
+        subtipo: (v) => (v === null ? "" : (MODALIDADES[v] ?? v)),
+      });
+      toast.success(`Se bajaron ${String(cuantos)} trámites de ${nombreDeEmpresa}`);
+    } catch (error) {
+      const falla = clasificarFalla(error, navigator.onLine);
+      toast.error(falla.titulo, { description: falla.explicacion });
+    } finally {
+      setBajando(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={bajando || (tramites.data ?? []).length === 0}
+      onClick={() => void bajar()}
+      className={BOTON_SUAVE}
+    >
+      <Download aria-hidden="true" size={14} />
+      {bajando ? "Armando el archivo" : "Bajar a Excel"}
+    </button>
   );
 }
