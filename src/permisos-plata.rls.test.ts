@@ -710,3 +710,95 @@ describe("el resumen de empresas", () => {
     expect(error).not.toBeNull();
   });
 });
+
+/**
+ * ============================================================================
+ *  LA COLA DE LA GESTORA
+ * ============================================================================
+ *
+ *  El bloque y la acción los decide LA BASE. Si esto se calculara en el navegador, el día que
+ *  cambie el criterio de "la tarjeta cubre" la pantalla de la gestora seguiría con el viejo — y
+ *  no daría error: mostraría una tarjeta en el bloque equivocado. Es el defecto de
+ *  `frenado_por_saldo` con otra forma.
+ */
+describe("la cola de la gestora", () => {
+  const COLUMNAS =
+    "tramite_id, cliente_nombre, empresa, estado, bloque, accion, pide, falta, desde";
+
+  it("le devuelve SOLO sus tramites", async () => {
+    const { data, error } = await gestora.from("v_cola_de_gestora").select(COLUMNAS);
+    expect(error).toBeNull();
+    expect(data?.length ?? 0, "la gestora de prueba no tiene ningun tramite vivo").toBeGreaterThan(
+      0,
+    );
+
+    // Contra la lista cruda: los ids de la cola tienen que estar TODOS entre los suyos.
+    const { data: suyos } = await gestora.from("tramites").select("id");
+    const mios = new Set((suyos ?? []).map((t) => String(t.id)));
+    const ajenos = (data ?? []).filter((f) => !mios.has(String(f.tramite_id)));
+    expect(ajenos.length, "la cola trae tramites que no son de ella").toBe(0);
+  });
+
+  it("cada fila tiene un bloque y una accion de los permitidos", async () => {
+    const { data } = await gestora.from("v_cola_de_gestora").select(COLUMNAS);
+    const BLOQUES = ["te_toca", "esperando", "terminado"];
+    const ACCIONES = ["presupuestar", "ir_al_registro", "devolver", "ninguna"];
+    for (const f of data ?? []) {
+      expect(BLOQUES, `bloque desconocido en ${String(f.cliente_nombre)}`).toContain(f.bloque);
+      expect(ACCIONES, `accion desconocida en ${String(f.cliente_nombre)}`).toContain(f.accion);
+    }
+  });
+
+  it("lo que espera plata NO tiene accion, y lo dice con cuanto falta", async () => {
+    /*
+      ES EL CORAZON DEL PRODUCTO. Un boton en un tramite sin plata la manda al registro a que la
+      rebote el cajero. La ausencia de boton tiene que venir con el numero de por que.
+    */
+    const { data } = await gestora.from("v_cola_de_gestora").select(COLUMNAS);
+    const esperando = (data ?? []).filter((x) => x.bloque === "esperando");
+
+    /*
+      SE EXIGE QUE HAYA AL MENOS UNO. Sin esta linea el `for` de abajo recorreria una lista vacia
+      y la prueba pasaria sin comprobar nada — que es la forma exacta en que este proyecto ya se
+      lastimo con `menu.test.ts`.
+    */
+    expect(
+      esperando.length,
+      "no hay ningun tramite esperando plata: preparalo antes, o esta prueba no comprueba nada",
+    ).toBeGreaterThan(0);
+
+    for (const f of esperando) {
+      expect(f.accion, `${String(f.cliente_nombre)} espera plata y tiene boton`).toBe("ninguna");
+      expect(
+        Number(f.falta),
+        `${String(f.cliente_nombre)} espera plata sin decir cuanta`,
+      ).toBeGreaterThan(0);
+    }
+  });
+
+  it("y coincide con v_esperando_plata, que es la unica que sabe repartir la plata", async () => {
+    /*
+      LAS DOS LISTAS SE COMPARAN A PROPOSITO. Si algun dia la vista de la cola calculara por su
+      cuenta si la tarjeta cubre, esta prueba seria lo unico que lo notaria.
+    */
+    const { data: cola } = await gestora.from("v_cola_de_gestora").select("tramite_id, bloque");
+    const { data: esperando } = await gestora.from("v_esperando_plata").select("tramite_id");
+
+    const enEspera = new Set((esperando ?? []).map((e) => String(e.tramite_id)));
+    const enBloque = new Set(
+      (cola ?? []).filter((c) => c.bloque === "esperando").map((c) => String(c.tramite_id)),
+    );
+    expect([...enBloque].toSorted()).toEqual([...enEspera].toSorted());
+  });
+
+  it("la oficina no la usa: su cola viene vacia", async () => {
+    /*
+      Gerencia puede hacer lo que hace una gestora, pero desde la ficha del tramite y no desde una
+      cola (spec 5). Que la vista le devuelva vacio no es una restriccion: es que la pregunta
+      "que me toca a MI" no tiene sentido para quien no lleva tramites.
+    */
+    const { data, error } = await gerencia.from("v_cola_de_gestora").select("tramite_id");
+    expect(error).toBeNull();
+    expect(data?.length ?? 0).toBe(0);
+  });
+});

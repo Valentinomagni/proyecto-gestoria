@@ -106,6 +106,13 @@ export type Database = {
             foreignKeyName: "cobros_tramite_id_fkey"
             columns: ["tramite_id"]
             isOneToOne: true
+            referencedRelation: "v_cola_de_gestora"
+            referencedColumns: ["tramite_id"]
+          },
+          {
+            foreignKeyName: "cobros_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: true
             referencedRelation: "v_esperando_plata"
             referencedColumns: ["tramite_id"]
           },
@@ -317,6 +324,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tramites"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimientos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_de_gestora"
+            referencedColumns: ["tramite_id"]
           },
           {
             foreignKeyName: "movimientos_tramite_id_fkey"
@@ -661,6 +675,13 @@ export type Database = {
             foreignKeyName: "presupuesto_historial_tramite_id_fkey"
             columns: ["tramite_id"]
             isOneToOne: false
+            referencedRelation: "v_cola_de_gestora"
+            referencedColumns: ["tramite_id"]
+          },
+          {
+            foreignKeyName: "presupuesto_historial_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
             referencedRelation: "v_esperando_plata"
             referencedColumns: ["tramite_id"]
           },
@@ -740,6 +761,13 @@ export type Database = {
             foreignKeyName: "tramite_conceptos_tramite_id_fkey"
             columns: ["tramite_id"]
             isOneToOne: false
+            referencedRelation: "v_cola_de_gestora"
+            referencedColumns: ["tramite_id"]
+          },
+          {
+            foreignKeyName: "tramite_conceptos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
             referencedRelation: "v_esperando_plata"
             referencedColumns: ["tramite_id"]
           },
@@ -809,6 +837,13 @@ export type Database = {
             foreignKeyName: "tramite_eventos_tramite_id_fkey"
             columns: ["tramite_id"]
             isOneToOne: false
+            referencedRelation: "v_cola_de_gestora"
+            referencedColumns: ["tramite_id"]
+          },
+          {
+            foreignKeyName: "tramite_eventos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
             referencedRelation: "v_esperando_plata"
             referencedColumns: ["tramite_id"]
           },
@@ -864,6 +899,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tramites"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramite_notas_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_de_gestora"
+            referencedColumns: ["tramite_id"]
           },
           {
             foreignKeyName: "tramite_notas_tramite_id_fkey"
@@ -937,6 +979,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tramites"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramite_requisitos_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_de_gestora"
+            referencedColumns: ["tramite_id"]
           },
           {
             foreignKeyName: "tramite_requisitos_tramite_id_fkey"
@@ -1171,6 +1220,53 @@ export type Database = {
       }
     }
     Views: {
+      v_cola_de_gestora: {
+        Row: {
+          accion: string | null
+          bloque: string | null
+          cliente_nombre: string | null
+          desde: string | null
+          dominio: string | null
+          empresa: string | null
+          estado: string | null
+          falta: number | null
+          oferta_referencia: string | null
+          pide: number | null
+          razon_social_id: string | null
+          tarjeta_id: string | null
+          tramite_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tramites_razon_social_id_fkey"
+            columns: ["razon_social_id"]
+            isOneToOne: false
+            referencedRelation: "razones_sociales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramites_razon_social_id_fkey"
+            columns: ["razon_social_id"]
+            isOneToOne: false
+            referencedRelation: "v_resumen_empresas"
+            referencedColumns: ["razon_social_id"]
+          },
+          {
+            foreignKeyName: "tramites_tarjeta_id_fkey"
+            columns: ["tarjeta_id"]
+            isOneToOne: false
+            referencedRelation: "tarjetas_habitualista"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramites_tarjeta_id_fkey"
+            columns: ["tarjeta_id"]
+            isOneToOne: false
+            referencedRelation: "v_saldos"
+            referencedColumns: ["tarjeta_id"]
+          },
+        ]
+      }
       v_esperando_plata: {
         Row: {
           cliente_nombre: string | null
@@ -1347,6 +1443,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tramites"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramite_notas_tramite_id_fkey"
+            columns: ["tramite_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_de_gestora"
+            referencedColumns: ["tramite_id"]
           },
           {
             foreignKeyName: "tramite_notas_tramite_id_fkey"
