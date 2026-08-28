@@ -118,8 +118,14 @@ export interface Tramite {
   factura_fecha: string | null;
 }
 
-/** Los importes llegan de PostgREST como texto o numero segun la version. Se normaliza acá. */
-function aNumero(v: unknown): number {
+/**
+ * Los importes llegan de PostgREST como texto o numero segun la version. Se normaliza acá.
+ *
+ * SE EXPORTA para que `resumen.ts` lea las cifras de la misma forma. Tener dos normalizaciones de
+ * importes conviviendo es como una empieza a redondear distinto que la otra, y despues dos
+ * pantallas del mismo sistema muestran cifras que no coinciden por un centavo.
+ */
+export function aNumero(v: unknown): number {
   if (typeof v === "number") return v;
   if (typeof v === "string" && v.trim() !== "") return Number(v);
   return 0;
@@ -428,11 +434,20 @@ export function useSaldosEnVivo(cliente: QueryClient): void {
           desmarcar. Dejarla sin invalidar seria reponer el mismo defecto con otra forma.
         */
         void cliente.invalidateQueries({ queryKey: ["esperando_plata"] });
+        /*
+          Y EL RESUMEN TAMBIEN, por lo mismo. Si contable carga un deposito en San Luis, la
+          pantalla de las cinco empresas tiene que cambiar en San Juan sin que nadie recargue.
+          Dejarlo afuera dejaria al resumen mostrando un numero viejo mientras la empresa, un
+          nivel mas adentro, muestra el nuevo: dos pantallas del mismo sistema diciendo cosas
+          distintas de la misma plata.
+        */
+        void cliente.invalidateQueries({ queryKey: ["resumen"] });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "tramites" }, () => {
         void cliente.invalidateQueries({ queryKey: ["tramites"] });
         void cliente.invalidateQueries({ queryKey: ["saldos"] });
         void cliente.invalidateQueries({ queryKey: ["esperando_plata"] });
+        void cliente.invalidateQueries({ queryKey: ["resumen"] });
       })
       .subscribe();
     return () => void supabase.removeChannel(canal);

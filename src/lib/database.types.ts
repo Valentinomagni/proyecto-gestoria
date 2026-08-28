@@ -1140,6 +1140,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "tramites_razon_social_id_fkey"
+            columns: ["razon_social_id"]
+            isOneToOne: false
+            referencedRelation: "v_resumen_empresas"
+            referencedColumns: ["razon_social_id"]
+          },
+          {
             foreignKeyName: "tramites_sucursal_id_fkey"
             columns: ["sucursal_id"]
             isOneToOne: false
@@ -1191,6 +1198,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "razones_sociales"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramites_razon_social_id_fkey"
+            columns: ["razon_social_id"]
+            isOneToOne: false
+            referencedRelation: "v_resumen_empresas"
+            referencedColumns: ["razon_social_id"]
           },
           {
             foreignKeyName: "tramites_tarjeta_id_fkey"
@@ -1249,6 +1263,36 @@ export type Database = {
           verificado_por?: string | null
         }
         Relationships: []
+      }
+      v_resumen_empresas: {
+        Row: {
+          comprometido: number | null
+          contable: number | null
+          diferencia: number | null
+          en_transito: number | null
+          esperan: number | null
+          movimientos_visibles: number | null
+          nombre: string | null
+          orden: number | null
+          razon_social_id: string | null
+          tarjeta_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "razones_sociales_tarjeta_id_fkey"
+            columns: ["tarjeta_id"]
+            isOneToOne: false
+            referencedRelation: "tarjetas_habitualista"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "razones_sociales_tarjeta_id_fkey"
+            columns: ["tarjeta_id"]
+            isOneToOne: false
+            referencedRelation: "v_saldos"
+            referencedColumns: ["tarjeta_id"]
+          },
+        ]
       }
       v_saldos: {
         Row: {
@@ -1412,6 +1456,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "razones_sociales"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tramites_razon_social_id_fkey"
+            columns: ["razon_social_id"]
+            isOneToOne: false
+            referencedRelation: "v_resumen_empresas"
+            referencedColumns: ["razon_social_id"]
           },
           {
             foreignKeyName: "tramites_sucursal_id_fkey"

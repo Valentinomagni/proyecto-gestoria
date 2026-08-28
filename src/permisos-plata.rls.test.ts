@@ -577,3 +577,66 @@ describe("los sellos de la cadena no los escribe una gestora", () => {
     expect(error, "una gestora pudo escribir pagado_at").not.toBeNull();
   });
 });
+
+/**
+ * ============================================================================
+ *  EL RESUMEN DE EMPRESAS, QUE ES LA PUERTA DE ENTRADA DE LA OFICINA
+ * ============================================================================
+ *
+ *  La prueba que importa acá es la de la suma. `v_resumen_empresas` une `razones_sociales` con
+ *  `v_saldos` por `tarjeta_id`: hoy hay una razón social por tarjeta, uno a uno, y por eso el
+ *  `left join` no duplica. Si algún día dos apuntaran a la misma, la plata de esa tarjeta se
+ *  contaría DOS VECES en el total del grupo — y el total es lo primero que se mira.
+ */
+describe("el resumen de empresas", () => {
+  const COLUMNAS =
+    "razon_social_id, nombre, contable, comprometido, diferencia, esperan, movimientos_visibles";
+
+  it("la oficina ve las cinco empresas, con numeros de verdad", async () => {
+    const { data, error } = await gerencia.from("v_resumen_empresas").select(COLUMNAS);
+    expect(error).toBeNull();
+    expect(data?.length ?? 0).toBeGreaterThanOrEqual(5);
+
+    const conDatos = (data ?? []).filter((e) => Number(e.movimientos_visibles) > 0);
+    expect(conDatos.length, "la oficina no ve ninguna empresa con movimientos").toBeGreaterThan(0);
+  });
+
+  it("y la suma cierra contra v_saldos", async () => {
+    const { data: resumen } = await gerencia.from("v_resumen_empresas").select("contable");
+    const { data: saldos } = await gerencia.from("v_saldos").select("contable");
+    const sumar = (f: { contable: unknown }[] | null) =>
+      (f ?? []).reduce((t, x) => t + Number(x.contable), 0);
+
+    expect(
+      sumar(resumen),
+      "el total del grupo no coincide con la suma de las tarjetas: el join esta duplicando plata",
+    ).toBe(sumar(saldos));
+  });
+
+  it("la diferencia es contable menos comprometido, y no otra cosa", async () => {
+    // Es el numero con el que se decide si se manda a presentar. Que salga de la vista y no del
+    // front es lo que hace que la oficina y la gestora vean el mismo.
+    const { data } = await gerencia
+      .from("v_resumen_empresas")
+      .select("nombre, contable, comprometido, diferencia");
+    for (const e of data ?? []) {
+      expect(Number(e.diferencia), `la diferencia de ${String(e.nombre)}`).toBe(
+        Number(e.contable) - Number(e.comprometido),
+      );
+    }
+  });
+
+  it("sin sesion devuelve CERO FILAS, no un error", async () => {
+    const { data, error } = await anonimo.from("v_resumen_empresas").select(COLUMNAS);
+    expect(error).toBeNull();
+    expect(data).toEqual([]);
+  });
+
+  it("y no se puede escribir: es una vista", async () => {
+    const { error } = await gerencia
+      .from("v_resumen_empresas")
+      .delete()
+      .eq("razon_social_id", "00000000-0000-0000-0000-000000000000");
+    expect(error).not.toBeNull();
+  });
+});
