@@ -96,6 +96,67 @@ test("arriba muestra el saldo de las tarjetas donde tiene trabajo, y ninguna otr
   await expect(saldo).not.toContainText("Paris Trac");
 });
 
+test("tocar el nombre abre la ficha reducida, con su direccion propia", async ({ page }) => {
+  await entrarComo(page, "gestora");
+
+  const primera = page.locator("[data-tarjeta-tramite]").first();
+  /*
+    EL NOMBRE SE SACA DEL ENLACE, no de `textContent()` de la tarjeta: el texto de la tarjeta
+    viene todo pegado sin saltos de línea, así que un `split("\n")[0]` devuelve la tarjeta entera
+    —cliente, dominio, empresa y el texto del botón— y el `getByRole` de abajo busca un encabezado
+    con ese engendro.
+  */
+  const enlace = primera.getByRole("link").first();
+  const cliente = ((await enlace.textContent()) ?? "").trim();
+  await enlace.click();
+
+  /*
+    LA DIRECCION NO CUELGA DE LA EMPRESA. Ella no navegó por empresa para llegar acá: llegó desde
+    su cola, que no tiene empresas. Pedirle un `razonSocialId` en la dirección sería pedirle un
+    dato que su pantalla nunca le dio.
+  */
+  /*
+    EL PATRON VA ANCLADO AL ORIGEN. Sin `localhost:5173` adelante, `/empresa/x/tramite/y` TAMBIEN
+    termina en `/tramite/y`, así que la prueba pasaba con la ruta vieja de la oficina y no
+    comprobaba nada de lo que dice. Es el mismo defecto que tuvo la prueba de rutas del plan B.
+  */
+  await expect(page).toHaveURL(/localhost:5173\/tramite\/[0-9a-f-]{36}$/);
+  await expect(page.getByRole("heading", { name: cliente })).toBeVisible();
+});
+
+test("y NO le muestra lo que no es de ella", async ({ page }) => {
+  /*
+    Spec 5: no ve el historial de estados, ni los cambios, ni el costo real, ni ninguna cifra de
+    la empresa que no sea el saldo de su tarjeta.
+
+    ESTO NO ES SOLO PANTALLA: la RLS ya lo impide. La prueba está igual porque una pantalla que
+    PIDE lo que no puede leer se llena de errores en consola y de bloques vacíos, y eso se ve.
+  */
+  await entrarComo(page, "gestora");
+  await page.locator("[data-tarjeta-tramite]").first().getByRole("link").first().click();
+  await expect(page).toHaveURL(/localhost:5173\/tramite\//);
+
+  await expect(page.getByText(/Historial de cambios/)).toHaveCount(0);
+  await expect(page.getByText(/Costo real/)).toHaveCount(0);
+  await expect(page.getByText(/Saldo día de hoy/)).toHaveCount(0);
+});
+
+test("desde la ficha se vuelve a la cola con el boton atras", async ({ page }) => {
+  await entrarComo(page, "gestora");
+  await page.locator("[data-tarjeta-tramite]").first().getByRole("link").first().click();
+  await expect(page).toHaveURL(/localhost:5173\/tramite\//);
+
+  await page.goBack();
+  await expect(page.getByRole("heading", { name: /Te toca a vos/ })).toBeVisible();
+});
+
+test("un tramite que no es suyo lo dice, y no deja la pantalla en blanco", async ({ page }) => {
+  await entrarComo(page, "gestora", "/tramite/00000000-0000-0000-0000-000000000000");
+
+  await expect(page.getByRole("heading", { name: /no está en tu lista/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Volver a mis trámites/ })).toBeVisible();
+});
+
 test("un bloque vacio lo dice con palabras, y no queda en blanco", async ({ page }) => {
   await entrarComo(page, "gestora");
 

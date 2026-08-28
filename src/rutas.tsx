@@ -11,6 +11,7 @@ import { Shell } from "./components/Shell";
 import { SkeletonLineas } from "./components/Skeleton";
 import { Resumen } from "./features/resumen/Resumen";
 import { Cola } from "./features/gestora/Cola";
+import { FichaReducida } from "./features/gestora/FichaReducida";
 import { useSesion } from "./lib/sesion";
 import { Empresa } from "./features/empresa/Empresa";
 import { Ficha } from "./features/tramites/Ficha";
@@ -123,6 +124,23 @@ export const rutaNuevoMovimiento = createRoute({
   component: NuevoMovimiento,
 });
 
+/**
+ * La ficha de la gestora vive en `/tramite/$id` y no cuelga de la empresa.
+ *
+ * POR QUE UNA DIRECCION MAS CORTA: ella no navegó por empresa para llegar acá — llegó desde su
+ * cola, que no tiene empresas. Obligarla a llevar un `razonSocialId` en la dirección sería pedirle
+ * un dato que su pantalla nunca le dio, y el día que quiera mandarle el link a la oficina tendría
+ * que inventarlo.
+ */
+export const rutaTramiteDeGestora = createRoute({
+  getParentRoute: () => rutaRaiz,
+  path: "/tramite/$tramiteId",
+  component: function FichaDeGestoraEnRuta() {
+    const { tramiteId } = rutaTramiteDeGestora.useParams();
+    return <FichaReducida tramiteId={tramiteId} />;
+  },
+});
+
 const rutaAdmin = createRoute({
   getParentRoute: () => rutaRaiz,
   path: "/administracion",
@@ -183,6 +201,7 @@ const arbol = rutaRaiz.addChildren([
   rutaNuevoTramite,
   rutaNuevoMovimiento,
   rutaTramite,
+  rutaTramiteDeGestora,
   rutaAdmin,
 ]);
 

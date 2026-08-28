@@ -30,8 +30,8 @@ export function TarjetaDeTramite({ fila }: { fila: FilaDeCola }) {
       className="flex flex-col gap-1 border-b border-line px-4 py-3 last:border-b-0"
     >
       <Link
-        to="/empresa/$razonSocialId/tramite/$tramiteId"
-        params={{ razonSocialId: fila.razon_social_id, tramiteId: fila.tramite_id }}
+        to="/tramite/$tramiteId"
+        params={{ tramiteId: fila.tramite_id }}
         className="text-sm underline-offset-2 hover:underline"
       >
         {fila.cliente_nombre}
@@ -46,8 +46,8 @@ export function TarjetaDeTramite({ fila }: { fila: FilaDeCola }) {
       {boton !== null && (
         <Link
           data-boton-accion="true"
-          to="/empresa/$razonSocialId/tramite/$tramiteId"
-          params={{ razonSocialId: fila.razon_social_id, tramiteId: fila.tramite_id }}
+          to="/tramite/$tramiteId"
+          params={{ tramiteId: fila.tramite_id }}
           /*
             `min-h-11` son 44px, el mínimo táctil que usa el resto de esta app. Con menos, en un
             teléfono, se le erra — y errarle a este botón es abrir el trámite equivocado.
