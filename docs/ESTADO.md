@@ -15,11 +15,17 @@ no de recordar.
 **Son dos productos sobre una base.** `/` dibuja el resumen para gerencia y administración, y la
 cola para la gestora. Nadie elige: lo decide el rol, que lo decide la base.
 
-**Todo el portón en verde:** 17 guardianes, 165 pruebas, 71 de permisos contra la base real y 103
+**Todo el portón en verde:** 18 guardianes, 165 pruebas, 76 de permisos contra la base real y 103
 en el Chrome de verdad, incluidas las que corren contra la app construida.
 
-**La deuda más grande es que la revisión independiente no se hizo**, ni del Plan B ni del Plan C:
-los revisores murieron cuatro veces por el límite de gasto. Está detallado al final.
+**La revisión de seguridad se hizo el 28/08** y encontró cinco cosas, dos de ellas importantes y
+de esa misma semana. Están arregladas y contadas al final, con lo que se midió para comprobarlo.
+
+**Falta la de producto**, que murió cinco veces por el límite de gasto. Sus comprobaciones
+mecánicas las corrí yo y dieron limpio, pero eso no es una mirada independiente.
+
+**Para probar la app hay una guía:** `docs/QUE-PROBAR.md`, con el recorrido por rol y lo que tiene
+que pasar en cada paso.
 
 ---
 
@@ -28,11 +34,11 @@ los revisores murieron cuatro veces por el límite de gasto. Está detallado al 
 | Qué | Cuánto | Comando |
 |---|---|---|
 | Tests, todos verdes | **165** en 21 archivos | `npx vitest run` |
-| Pruebas de permisos contra la API real | **71** en 2 archivos | `npm run test:rls` |
+| Pruebas de permisos contra la API real | **76** en 2 archivos | `npm run test:rls` |
 | Pruebas en el Chrome de verdad | **103** en 7 archivos, 2 navegadores + la app construida | `npm run e2e` |
-| Guardianes | **17** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `pruebas`, `migraciones`, `secretos`, `permisos`, `indices`, `colores`, `estados`, `formato`, `espacios`, `contraste`, `pwa` |
-| Migraciones aplicadas | **42** de 42 escritas | `npx supabase migration list --linked` |
-| Tablas en la base | **21**, más **8 vistas** | consulta a `pg_class` |
+| Guardianes | **18** | `tipografia`, `Panel`, `casa`, `plata`, `fechas`, `campos`, `pruebas`, `migraciones`, `secretos`, `permisos`, `indices`, `colores`, `estados`, `formato`, `espacios`, `contraste`, `pwa`, `deadcode` |
+| Migraciones aplicadas | **44** de 44 escritas | `npx supabase migration list --linked` |
+| Tablas en la base | **21**, más **9 vistas** | consulta a `pg_class` |
 | Módulos de lógica en `src/lib` | 42 | `ls src/lib/*.ts` |
 | Archivos de código | 89, **15.452 líneas** | `find src -name "*.ts*"` |
 | `CLAUDE.md` | **118 líneas**, más 4 skills | `wc -l CLAUDE.md` |
@@ -569,19 +575,78 @@ plan C necesita para probar el salto le dejó su reserva: **una prueba se apoyab
 existiera y otra prueba la creó**. La cuarta ahora entra por la dirección en vez de navegando, que
 es más exigente.
 
+---
+
+## La revisión de seguridad, por fin — 28/08/2026
+
+Se hizo, a la sexta. Encontró **cinco cosas, y las dos importantes eran de esta misma semana.**
+
+### Lo que encontró
+
+**1. El cartel de "Sin conexión" se trababa.** `fallo` no volvía a `false` por el camino corto —el
+de "no hay sesión"— y el efecto se monta una sola vez, así que recuperar la señal no alcanzaba: la
+app seguía diciendo que no hasta que el token se renovara, **hasta una hora**. Y no había botón.
+
+La gestora sale del subsuelo del registro, tiene señal, mira el teléfono, y el teléfono le miente.
+Es el arreglo del día anterior, a medio hacer.
+
+**2. Cualquier error de la base se mostraba como "Sin conexión"**, que es mentira. Un 42P17 —la
+recursión en `perfiles`, la trampa número uno del CLAUDE.md, que devuelve 500 en todas las tablas—
+se veía como un problema de señal, mandando a revisar el WiFi mientras la base está rota. Y el
+error se descartaba: no iba a Sentry ni a ningún lado.
+
+**3. Una gestora podía leer los apellidos de los clientes de otra gestora.** `movimientos_select`
+es por tarjeta —tiene que serlo: el saldo es la suma de la tarjeta— pero el trigger escribe el
+nombre del cliente **adentro del concepto**: `'Presupuesto - ' || t.cliente_nombre`. Y la pantalla
+caía al concepto crudo justo cuando la RLS había escondido el trámite.
+
+Reproducido y medido: pasando un trámite de PARIS AUTOS a otra gestora, leyendo la tabla se recibía
+`"Presupuesto - HERMOZA KARINA"`; leyendo la vista nueva, `null`. Estaba en cero filas —hay una
+sola gestora con trámites— y **se activa el día que sean dos, que es el caso normal de esta
+empresa.**
+
+**4. El guardián de la PWA daba verde a un caché escrito a mano.** Sus cuatro sospechas eran todas
+de Workbox; un service worker de siete líneas con `caches.open` cacheaba **todos los saldos** y
+salía con el cartel "el armazón se cachea y los datos no".
+
+**5. Siete helpers `security definer` seguían con EXECUTE para PUBLIC**, contra una decisión
+escrita en su propia migración. De ahí salía que el encabezado de la migración de la cola dijera
+que `mi_gestora_id` tiene `anon` a propósito, cuando era **por accidente**.
+
+### Lo que la revisión probó y no falló
+
+Las ocho vistas con `security_invoker`; `anon` recibiendo ausencia y no rechazo; el aislamiento de
+la cola entre dos gestoras con JWT simulados; ninguna policy aplicando a `public`; RLS activa en
+las 21 tablas y `force` en ninguna; ninguna vista tocando `perfiles` —o sea, sin forma de 42P17—;
+el `autor` de una nota imposible de falsificar; cero secretos en el bundle; `npm audit` en cero; y
+el caso de la cuenta desactivada de verdad, que sigue sano.
+
+### Y lo que quedó sin revisar
+
+**La revisión de producto murió por el límite de gasto**, la quinta vez que pasa. Sus
+comprobaciones mecánicas —emojis, medir personas, mensajes crudos de la base, textos hablándole al
+rol equivocado— las corrí yo y dieron limpio, pero eso no es una mirada independiente.
+
+---
+
 ### Lo que queda abierto, y hay que saberlo
 
-- **La revisión independiente sigue sin hacerse**, ahora de dos tandas. Los revisores murieron
-  cuatro veces por el límite de gasto en el plan B y en el plan C no se lanzaron por lo mismo. Todo
-  lo de arriba lo revisé yo sobre mi propio trabajo, que es más débil por definición. **Es la deuda
-  más grande que tiene el proyecto hoy.**
-- **Una sola base de Supabase.** Ahora hay instructivo: `docs/SEGUNDA-BASE.md`. El cartel de la
-  pantalla se apaga solo cuando se separen.
+- **La revisión de producto no se hizo.** Cinco intentos, cinco muertes por el límite de gasto. Es
+  lo único de la deuda vieja que sigue abierto.
+- **Una sola base de Supabase.** Instructivo en `docs/SEGUNDA-BASE.md`. El cartel de la pantalla se
+  apaga solo cuando se separen.
 - **El arnés y las pruebas del salto dejan filas en la base que mirás.** Todas anuladas y
   compensadas —el saldo cierra— pero se ven en el extracto. Se termina con la segunda base.
 - **Hay un trámite de prueba vivo**, "PRUEBA ESPERANDO PLATA" en DORAL CHEVROLET, con su reserva de
   45.000. Existe para que la prueba del salto tenga algo que mover; sin él esa prueba se saltearía
   sola y no comprobaría nada. Se anula el día que haya saldos reales.
-- **`npm run deadcode` sigue en rojo.** No entra al portón todavía.
-- **El pre-commit sale con 0 si falta `node_modules`**, y `permisos` si falta el token. Salir en
-  verde y no haber mirado nada se ven iguales.
+- **Las contraseñas genéricas.** Decisión tomada mientras dure la prueba.
+
+### Y lo que se cerró el mismo día
+
+- **`npm run deadcode` en verde**, y en el portón. Se fueron seis dependencias sin usar y una
+  pantalla de 202 líneas que nadie dibujaba.
+- **Los tres guardianes que consultan la base ya no se saltean en silencio**: en una máquina avisan,
+  **en CI fallan**. Probado en los dos caminos.
+- **Seis guardianes que sólo corrían en el pre-commit entran a CI.** Un hook se saltea con
+  `--no-verify`; CI no.
